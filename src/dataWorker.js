@@ -16,12 +16,12 @@ self.onmessage = ({ data: { count, seriesCount } }) => {
     // Deterministic seed for reproducible placement per series
     const seed = (i) => ((seriesIdx * 7919 + i * 7877) % 100000) / 100000;
 
-    // 1. Spikes: 5-10 per series, 1-3 pts wide, amplitude 50-150
+    // 1. Spikes: 5-10 per series, 2-5 pts wide, amplitude 500-1500 (drastic)
     const spikeCount = 5 + (seriesIdx % 6);
     for (let s = 0; s < spikeCount; s++) {
       const center = Math.floor(seed(s * 13) * (count - 10)) + 5;
-      const width = 1 + Math.floor(seed(s * 17) * 3);
-      const amp = 50 + seed(s * 19) * 100;
+      const width = 2 + Math.floor(seed(s * 17) * 4);
+      const amp = 500 + seed(s * 19) * 1000;
       const sign = seed(s * 23) > 0.5 ? 1 : -1;
       for (let w = 0; w < width && center + w < count; w++) {
         buf[center + w] += sign * amp * (1 - w / Math.max(width, 1));
