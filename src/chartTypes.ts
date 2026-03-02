@@ -10,6 +10,8 @@ export interface GenericChartData {
   series?: ArrayLike<number>[] | number[][]
   /** Y values per series (alias for series, for compatibility) */
   ys?: ArrayLike<number>[] | number[][]
+  /** Optional names per series (falls back to "Series 0", "Series 1", ...) */
+  seriesNames?: string[]
   /** Optional colors per series (falls back to default palette) */
   seriesColors?: string[]
 }

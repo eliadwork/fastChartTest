@@ -13,7 +13,7 @@ function convertToSciChartData(data: GenericChartData): ChartData {
   const x = toFloat64Array(data.x)
   const series = data.series ?? data.ys ?? []
   const ys = series.map((s) => toFloat64Array(s))
-  return { x, ys }
+  return { x, ys, seriesNames: data.seriesNames }
 }
 
 function convertToSciChartShapes(shapes: GenericChartShape[] = []): ChartShape[] {

@@ -21,6 +21,7 @@ function App() {
       setChartData({
         x: new Float64Array(x),
         ys: ys.map((b: ArrayBuffer) => new Float64Array(b)),
+        seriesNames: Array.from({ length: SERIES_COUNT }, (_, i) => `Series ${i}`),
       })
       worker.terminate()
     }

@@ -1,8 +1,10 @@
 import {
   EModifierMouseArgKey,
+  ELegendPlacement,
   EResamplingMode,
   FastLineRenderableSeries,
   HorizontalLineAnnotation,
+  LegendModifier,
   MouseWheelZoomModifier,
   NumericAxis,
   RolloverModifier,
@@ -11,13 +13,16 @@ import {
   VerticalLineAnnotation,
   XyDataSeries,
   ZoomExtentsModifier,
+  ZoomPanModifier,
 } from 'scichart'
 import { AxisStretchModifier } from './AxisStretchModifier'
+import { ZoomHistoryModifier } from './ZoomHistoryModifier'
 import { SciChartReact } from 'scichart-react'
 
 export interface ChartData {
   x: Float64Array
   ys: Float64Array[]
+  seriesNames?: string[]
 }
 
 export interface ChartShape {
@@ -78,12 +83,14 @@ export function ChartWithResampling({
         sciChartSurface.xAxes.add(xAxis)
         sciChartSurface.yAxes.add(yAxis)
 
+        const seriesNames = data.seriesNames ?? data.ys.map((_, i) => `Series ${i}`)
         for (let i = 0; i < data.ys.length; i++) {
           const dataSeries = new XyDataSeries(wasmContext, {
             xValues: data.x,
             yValues: data.ys[i],
             isSorted: true,
             containsNaN: false,
+            dataSeriesName: seriesNames[i] ?? `Series ${i}`,
           })
 
           const series = new FastLineRenderableSeries(wasmContext, {
@@ -119,6 +126,7 @@ export function ChartWithResampling({
 
         const stretchKey = MODIFIER_KEY_MAP[stretchModifierKey]
         sciChartSurface.chartModifiers.add(
+          new ZoomHistoryModifier(),
           new RubberBandXyZoomModifier({
             executeCondition: { key: EModifierMouseArgKey.None },
           }),
@@ -126,12 +134,21 @@ export function ChartWithResampling({
             executeCondition: { key: stretchKey },
             sensitivity: 0.5,
           }),
+          new ZoomPanModifier({
+            executeCondition: { key: EModifierMouseArgKey.Ctrl },
+          }),
           new MouseWheelZoomModifier(),
           new ZoomExtentsModifier(),
+          new LegendModifier({
+            showSeriesMarkers: true,
+            showCheckboxes: false,
+            placement: ELegendPlacement.TopLeft,
+          }),
           new RolloverModifier({
-            tooltipDataTemplate: (seriesInfo, _tooltipTitle, tooltipLabelX, tooltipLabelY) => [
-              `${tooltipLabelX}: ${seriesInfo.formattedXValue}`,
-              `${tooltipLabelY}: ${seriesInfo.formattedYValue}`,
+            tooltipDataTemplate: (seriesInfo) => [
+              `${seriesInfo.seriesName}:`,
+              `X: ${seriesInfo.formattedXValue}`,
+              `Y: ${seriesInfo.formattedYValue}`,
             ],
             rolloverLineStroke,
             rolloverLineStrokeDashArray,
