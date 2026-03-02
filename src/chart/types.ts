@@ -97,6 +97,11 @@ export interface ChartOptions {
   clipZoomToData?: boolean
   /** Color for the zero axis lines (x=0, y=0). Default: white. */
   zeroLineColor?: string
+  /**
+   * Group key per series (parallel to series array). Series with the same key are grouped
+   * in the legend and can be toggled on/off together. Undefined/empty = ungrouped.
+   */
+  seriesGroupKeys?: (string | undefined)[]
 }
 
 export interface ChartProps {

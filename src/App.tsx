@@ -112,6 +112,7 @@ function App() {
 
   const sharedOptions = {
     note: 'this is the chart example',
+    seriesGroupKeys: [...Array(4).fill('Group one'), ...Array(6).fill(undefined)],
     seriesLines: [
       {},
       {},

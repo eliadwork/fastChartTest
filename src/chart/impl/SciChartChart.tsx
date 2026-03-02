@@ -303,6 +303,7 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         backgroundColor={options.legendBackgroundColor ?? options.backgroundColor}
         textColor={options.textColor ?? '#ffffff'}
         seriesVisibility={options.seriesVisibility}
+        seriesGroupKeys={options.seriesGroupKeys}
       />
     </SciChartReact>
     </Box>
