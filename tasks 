@@ -1,0 +1,33 @@
+done
+* streching with shift key
+*  zoom in/ out with mouse wheel
+* panning with ctrl key
+* return to previous zoomed position 
+* add line name to the tooltip and side of the chart
+* add an option to hide/disable  a linegraph
+* make the background color customizable
+* make the picks 
+* make it so you cant go outside the graph by zooming in/out
+* width of graph
+* graph stripes 
+* add icon on pick - the icon should be injected from outside (for the current example now make the icon a gray circle) the icon should be responsive and get smaller and bigger according to the zoom of the graph
+
+
+ need to do:
+* right click streching
+* is picked value
+* add the option to group graph at the glossary
+* add the axis outlines
+* create plotly graph for comparesent using the same data
+
+cr and code cleam up:
+* make a cr for yourself make the code clean clear and readable and optiomize the graph 
+* use mui and mui styled and mui icons where you can and move all the css files into a styled 
+
+need to do partly related:
+* make a info mark with all the options the graph has like zoom in/out, panning, streching, etc. and how to use them
+
+
+didnt succeded:
+* remove the scichart water marke
+* moving with the arrow keys

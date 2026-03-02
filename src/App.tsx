@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
 import { useSnackbar } from 'notistack'
 import { SciChartSurface } from 'scichart'
+import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
 import type { ChartData } from './chart'
 import { usePointMarkStore } from './store/pointMarkStore'
 import { getInterpolatedPointAtX } from './utils/chartDataLookup'
-import './App.css'
+import {
+  ChartComparison,
+  ChartComparisonGrid,
+  ChartPanel,
+  ChartPlaceholder,
+  PointMarkModalOverlay,
+  PointMarkModalTitle,
+  PointMarkModalButtons,
+  PointMarkModalButton,
+  PointMarkModalCancel,
+} from './styled'
 
 const POINTS_PER_SERIES = 500_000
 const SERIES_COUNT = 10
@@ -89,9 +101,12 @@ function App() {
     [markedXValues, markedYValue, chartDataForModal, chartIdForModal, addIcon, enqueueSnackbar, closeSeriesPicker]
   )
 
-  const sharedOptions = {
+  const chartThemeOverride = {
     pointMarkIcon: '●',
     pointMarkIconColor: '#888888',
+  }
+
+  const sharedOptions = {
     seriesLines: [
       {},
       {},
@@ -117,72 +132,74 @@ function App() {
   }
 
   return (
-    <div className="chart-comparison">
-      <div className="chart-comparison-grid">
-      <div className="chart-panel">
-        {chartData ? (
-          <ChartWrapper
-            chartId="resampled"
-            title="Resampled (precision 1.0)"
-            data={chartData}
-            options={{
-              ...sharedOptions,
-              resampling: true,
-              resamplingPrecision: 1,
-              onPointMark: handleResampledPointMark,
-            }}
-            icons={iconsByChart['resampled']}
-          />
-        ) : (
-          <div className="chart-placeholder">Loading data...</div>
-        )}
-      </div>
-      <div className="chart-panel">
-        {chartData ? (
-          <ChartWrapper
-            chartId="no-loss"
-            title="No-loss (every point)"
-            data={chartData}
-            options={{
-              ...sharedOptions,
-              resampling: false,
-              onPointMark: handleNoLossPointMark,
-            }}
-            icons={iconsByChart['no-loss']}
-          />
-        ) : (
-          <div className="chart-placeholder">Loading data...</div>
-        )}
-      </div>
-      </div>
+    <ChartThemeProvider theme={chartThemeOverride}>
+    <ChartComparison>
+      <ChartComparisonGrid>
+        <ChartPanel>
+          {chartData ? (
+            <ChartWrapper
+              chartId="resampled"
+              title="Resampled (precision 1.0)"
+              data={chartData}
+              options={{
+                ...sharedOptions,
+                resampling: true,
+                resamplingPrecision: 1,
+                onPointMark: handleResampledPointMark,
+              }}
+              icons={iconsByChart['resampled']}
+            />
+          ) : (
+            <ChartPlaceholder>Loading data...</ChartPlaceholder>
+          )}
+        </ChartPanel>
+        <ChartPanel>
+          {chartData ? (
+            <ChartWrapper
+              chartId="no-loss"
+              title="No-loss (every point)"
+              data={chartData}
+              options={{
+                ...sharedOptions,
+                resampling: false,
+                onPointMark: handleNoLossPointMark,
+              }}
+              icons={iconsByChart['no-loss']}
+            />
+          ) : (
+            <ChartPlaceholder>Loading data...</ChartPlaceholder>
+          )}
+        </ChartPanel>
+      </ChartComparisonGrid>
 
-      {seriesPickerOpen && chartDataForModal && (
-        <div className="point-mark-modal-overlay" onClick={closeSeriesPicker}>
-          <div
-            className="point-mark-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h4>Which series should the middle point be connected to?</h4>
-            <div className="point-mark-modal-buttons">
-              {(chartDataForModal.seriesNames ?? chartDataForModal.ys.map((_, i) => `Series ${i}`)).map(
-                (name, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSeriesPick(i)}
-                    className="point-mark-modal-btn"
-                  >
-                    {name}
-                  </button>
-                )
-              )}
-            </div>
-            <button onClick={closeSeriesPicker} className="point-mark-modal-cancel">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+      <PointMarkModalOverlay
+        open={seriesPickerOpen && !!chartDataForModal}
+        onClose={closeSeriesPicker}
+      >
+        <Box component="div" onClick={(e: React.MouseEvent) => e.stopPropagation()} sx={{ p: 2, maxWidth: '90vw' }}>
+          <PointMarkModalTitle variant="h6">
+            Which series should the middle point be connected to?
+          </PointMarkModalTitle>
+          <PointMarkModalButtons>
+            {(chartDataForModal?.seriesNames ?? chartDataForModal?.ys.map((_, i) => `Series ${i}`) ?? []).map(
+              (name, i) => (
+                <PointMarkModalButton
+                  key={i}
+                  variant="contained"
+                  onClick={() => handleSeriesPick(i)}
+                >
+                  {name}
+                </PointMarkModalButton>
+              )
+            )}
+          </PointMarkModalButtons>
+          <PointMarkModalCancel variant="outlined" onClick={closeSeriesPicker}>
+            Cancel
+          </PointMarkModalCancel>
+        </Box>
+      </PointMarkModalOverlay>
+    </ChartComparison>
+    </ChartThemeProvider>
   )
 }
 

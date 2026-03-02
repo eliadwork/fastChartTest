@@ -1,26 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Chart } from './chart'
 import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
+import { useChartTheme } from './ChartThemeContext'
+import { ChartPanelHeader, ChartPanelTitle, ChartToolbarButton, ChartWrapperBox } from './styled'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 const DEFAULT_OPTIONS: ChartOptions = {
   stretchTrigger: 'Ctrl',
   panTrigger: 'Shift',
-  rolloverStroke: '#FF0000',
-  rolloverDash: [8, 4],
   clipZoomToData: true,
-  defaultSeriesColors: [
-    '#3ca832',
-    '#eb911c',
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-  ],
-  defaultStrokeThickness: 2,
   resampling: true,
   resamplingPrecision: 1,
 }
@@ -54,14 +43,22 @@ export function ChartWrapper({
   title,
   showDisableAllButton = true,
 }: ChartWrapperProps) {
+  const chartTheme = useChartTheme()
   const [allGraphsDisabled, setAllGraphsDisabled] = useState(false)
   const seriesCount = (data.ys ?? data.series ?? []).length
 
   const mergedOptions = useMemo(
     () => ({
       ...DEFAULT_OPTIONS,
+      defaultSeriesColors: chartTheme.defaultSeriesColors,
+      defaultStrokeThickness: chartTheme.defaultStrokeThickness ?? 2,
+      rolloverStroke: chartTheme.rolloverStroke,
+      rolloverDash: chartTheme.rolloverDash,
+      backgroundColor: chartTheme.backgroundColor,
+      pointMarkIcon: chartTheme.pointMarkIcon,
+      pointMarkIconColor: chartTheme.pointMarkIconColor,
       ...options,
-      defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? 2,
+      defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? chartTheme.defaultStrokeThickness ?? 2,
       seriesLines: lines ?? options.seriesLines,
       icons: icons ?? options.icons,
       pointMarkers: pointMarkers ?? options.pointMarkers,
@@ -69,26 +66,27 @@ export function ChartWrapper({
         options.seriesVisibility ??
         (allGraphsDisabled ? Array.from({ length: seriesCount }, () => false) : undefined),
     }),
-    [options, lines, defaultLineThickness, icons, pointMarkers, allGraphsDisabled, seriesCount]
+    [chartTheme, options, lines, defaultLineThickness, icons, pointMarkers, allGraphsDisabled, seriesCount]
   )
 
   const showHeader = title != null || showDisableAllButton
 
   return (
-    <div className="chart-wrapper">
+    <ChartWrapperBox>
       {showHeader && (
-        <div className="chart-panel-header">
-          {title != null && <h3>{title}</h3>}
+        <ChartPanelHeader>
+          {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
           {showDisableAllButton && (
-            <button
-              type="button"
-              className="chart-toolbar-btn"
+            <ChartToolbarButton
+              variant="outlined"
+              size="small"
+              startIcon={allGraphsDisabled ? <VisibilityIcon /> : <VisibilityOffIcon />}
               onClick={() => setAllGraphsDisabled((v) => !v)}
             >
               {allGraphsDisabled ? 'Enable all' : 'Disable all'}
-            </button>
+            </ChartToolbarButton>
           )}
-        </div>
+        </ChartPanelHeader>
       )}
       <Chart
         data={data}
@@ -96,6 +94,6 @@ export function ChartWrapper({
         style={style ?? { width: '100%', height: '100%', flex: 1, minHeight: 0 }}
         lines={lines}
       />
-    </div>
+    </ChartWrapperBox>
   )
 }
