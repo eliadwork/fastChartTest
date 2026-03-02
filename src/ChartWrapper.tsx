@@ -3,21 +3,29 @@ import type {
   GenericChartData,
   GenericChartOptions,
   GenericChartShape,
+  GenericLineStyle,
 } from './chartTypes'
 import { toFloat64Array } from './chartTypes'
 import { ChartWithResampling } from './ChartWithResampling'
 import type { ChartData, ChartShape } from './ChartWithResampling'
 import { EResamplingMode } from 'scichart'
 
-function convertToSciChartData(data: GenericChartData, options?: GenericChartOptions): ChartData {
+function convertToSciChartData(
+  data: GenericChartData,
+  options?: GenericChartOptions,
+  linesProp?: GenericLineStyle[]
+): ChartData {
   const x = toFloat64Array(data.x)
   const series = data.series ?? data.ys ?? []
   const ys = series.map((s) => toFloat64Array(s))
+  const seriesLines = linesProp ?? options?.seriesLines
   return {
     x,
     ys,
     seriesNames: data.seriesNames,
+    seriesColors: data.seriesColors,
     seriesVisibility: options?.seriesVisibility,
+    seriesLines,
   }
 }
 
@@ -52,6 +60,7 @@ function SciChartImplementation({
       stretchModifierKey={options.stretchModifierKey}
       rolloverLineStroke={options.rolloverLineStroke}
       rolloverLineStrokeDashArray={options.rolloverLineStrokeDashArray}
+      backgroundColor={options.backgroundColor}
     />
   )
 }
@@ -66,8 +75,9 @@ export function ChartWrapper({
   options = {},
   library = 'scichart',
   style = { width: '100%', height: '100%' },
+  lines,
 }: ChartWrapperProps) {
-  const chartData = convertToSciChartData(data, options)
+  const chartData = convertToSciChartData(data, options, lines)
 
   switch (library) {
     case 'scichart':

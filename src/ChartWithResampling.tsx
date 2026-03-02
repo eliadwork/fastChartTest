@@ -19,12 +19,21 @@ import { AxisStretchModifier } from './AxisStretchModifier'
 import { ZoomHistoryModifier } from './ZoomHistoryModifier'
 import { SciChartReact } from 'scichart-react'
 
+export interface ChartLineStyle {
+  color?: string
+  thickness?: number
+  dash?: number[]
+}
+
 export interface ChartData {
   x: Float64Array
   ys: Float64Array[]
   seriesNames?: string[]
+  seriesColors?: string[]
   /** Per-series visibility: true = show, false = hide. Undefined = show. */
   seriesVisibility?: boolean[]
+  /** Per-series line styling. Injected from outside. */
+  seriesLines?: ChartLineStyle[]
 }
 
 export interface ChartShape {
@@ -43,6 +52,8 @@ interface ChartWithResamplingProps {
   stretchModifierKey?: 'Shift' | 'Ctrl' | 'Alt'
   rolloverLineStroke?: string
   rolloverLineStrokeDashArray?: number[]
+  /** Chart background color (HTML color code) */
+  backgroundColor?: string
 }
 
 const SERIES_COLORS = [
@@ -73,12 +84,14 @@ export function ChartWithResampling({
   stretchModifierKey = 'Shift',
   rolloverLineStroke = '#FF0000',
   rolloverLineStrokeDashArray = [8, 4],
+  backgroundColor,
 }: ChartWithResamplingProps) {
   return (
     <SciChartReact
       style={style}
       initChart={async (rootElement) => {
-        const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement)
+        const createOptions = backgroundColor != null ? { background: backgroundColor } : undefined
+        const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement, createOptions)
 
         const xAxis = new NumericAxis(wasmContext)
         const yAxis = new NumericAxis(wasmContext)
@@ -87,6 +100,8 @@ export function ChartWithResampling({
 
         const seriesNames = data.seriesNames ?? data.ys.map((_, i) => `Series ${i}`)
         const seriesVisibility = data.seriesVisibility
+        const seriesLines = data.seriesLines
+        const seriesColors = data.seriesColors
         for (let i = 0; i < data.ys.length; i++) {
           const dataSeries = new XyDataSeries(wasmContext, {
             xValues: data.x,
@@ -96,11 +111,15 @@ export function ChartWithResampling({
             dataSeriesName: seriesNames[i] ?? `Series ${i}`,
           })
 
+          const lineStyle = seriesLines?.[i]
           const isVisible = seriesVisibility?.[i] ?? true
+          const strokeColor =
+            lineStyle?.color ?? seriesColors?.[i] ?? SERIES_COLORS[i % SERIES_COLORS.length]
           const series = new FastLineRenderableSeries(wasmContext, {
             dataSeries,
-            stroke: SERIES_COLORS[i % SERIES_COLORS.length],
-            strokeThickness: 2,
+            stroke: strokeColor,
+            strokeThickness: lineStyle?.thickness ?? 2,
+            strokeDashArray: lineStyle?.dash,
             resamplingMode,
             resamplingPrecision,
             isVisible,

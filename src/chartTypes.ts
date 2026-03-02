@@ -22,6 +22,13 @@ export interface GenericChartShape {
   value: number
 }
 
+/** Per-series line styling. All fields optional; falls back to defaults. */
+export interface GenericLineStyle {
+  color?: string
+  thickness?: number
+  dash?: number[]
+}
+
 export interface GenericChartOptions {
   /** Enable resampling for performance (library-specific) */
   resampling?: boolean
@@ -37,6 +44,10 @@ export interface GenericChartOptions {
   rolloverLineStrokeDashArray?: number[]
   /** Per-series visibility: true = show, false = hide. Undefined = show. Enables legend checkboxes. */
   seriesVisibility?: boolean[]
+  /** Chart background color (HTML color code, e.g. '#ffffff' or 'transparent') */
+  backgroundColor?: string
+  /** Per-series line styling: color, thickness, dash. Injected from outside the wrapper. */
+  seriesLines?: GenericLineStyle[]
 }
 
 export type ChartLibrary = 'scichart'
@@ -46,6 +57,8 @@ export interface ChartWrapperProps {
   options?: GenericChartOptions
   library?: ChartLibrary
   style?: React.CSSProperties
+  /** Shorthand: inject line styles from outside. Merged with options.seriesLines. */
+  lines?: GenericLineStyle[]
 }
 
 /** Convert ArrayLike to Float64Array (no-op if already Float64Array) */
