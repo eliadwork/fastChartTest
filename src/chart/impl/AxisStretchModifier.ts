@@ -54,7 +54,10 @@ export class AxisStretchModifier extends ChartModifierBase2D {
 
   modifierMouseMove(args: ModifierMouseArgs): void {
     super.modifierMouseMove(args)
-    if (!this.pointFrom || !this.isActive(args)) return
+    // During drag, move events often have button=0; only require isActive on mouseDown
+    const inDrag = !!this.pointFrom
+    const active = inDrag || this.isActive(args)
+    if (!this.pointFrom || !active) return
     const { seriesViewRect } = this.parentSurface
     const deltaX = args.mousePoint.x - this.pointFrom.x
     const deltaY = this.pointFrom.y - args.mousePoint.y

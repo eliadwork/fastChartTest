@@ -60,7 +60,7 @@ export interface SciChartChartProps {
 
 export function SciChartChart({ data, options, style, chartId }: SciChartChartProps) {
   const { lines: lineShapes, boxes } = convertShapes(options.shapes)
-  const stretchTrigger = options.stretchTrigger ?? 'Ctrl'
+  const stretchTrigger = options.stretchTrigger ?? 'rightClick'
   const stretchOnRightClick = stretchTrigger === 'rightClick'
   const stretchKey = stretchOnRightClick ? undefined : MODIFIER_KEY_MAP[stretchTrigger as ModifierKey]
   const panTrigger = options.panTrigger ?? options.panKey ?? 'Shift'
@@ -269,10 +269,10 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
             executeCondition: { key: EModifierMouseArgKey.None },
           }),
           new AxisStretchModifier({
-            executeOnRightClick: stretchOnRightClick,
-            executeCondition: stretchKey != null ? { key: stretchKey } : undefined,
-            sensitivity: 0.5,
-          }),
+              executeOnRightClick: stretchOnRightClick,
+              executeCondition: stretchKey != null ? { key: stretchKey } : undefined,
+              sensitivity: 0.5,
+            }),
           new (panOnShift
             ? ShiftLeftClickZoomPanModifier
             : panOnLeftClick

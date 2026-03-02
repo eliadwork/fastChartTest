@@ -11,7 +11,7 @@ import UndoIcon from '@mui/icons-material/Undo'
 import { useZoomBackStore } from './store/zoomBackStore'
 
 const DEFAULT_OPTIONS: ChartOptions = {
-  stretchTrigger: 'Ctrl',
+  stretchTrigger: 'rightClick',
   panTrigger: 'Shift',
   clipZoomToData: true,
   resampling: true,
