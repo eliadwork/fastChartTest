@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
 import { SciChartSurface } from 'scichart'
 import { ChartWrapper } from './ChartWrapper'
-import type { GenericChartData } from './chartTypes'
+import type { ChartData } from './chart'
 import { usePointMarkStore } from './store/pointMarkStore'
+import { getNearestPointAtX } from './utils/chartDataLookup'
 import './App.css'
 
 const POINTS_PER_SERIES = 500_000
@@ -12,33 +13,8 @@ const SERIES_COUNT = 10
 // Load WASM from CDN (no build config required)
 SciChartSurface.loadWasmFromCDN()
 
-function findNearestPoint(
-  x: ArrayLike<number>,
-  y: ArrayLike<number>,
-  xTarget: number
-): { x: number; y: number } {
-  const n = x.length
-  if (n === 0) return { x: NaN, y: NaN }
-  if (xTarget <= x[0]) return { x: Number(x[0]), y: Number(y[0]) }
-  if (xTarget >= x[n - 1]) return { x: Number(x[n - 1]), y: Number(y[n - 1]) }
-
-  let lo = 0
-  let hi = n - 1
-  while (hi - lo > 1) {
-    const mid = (lo + hi) >> 1
-    if (x[mid] <= xTarget) lo = mid
-    else hi = mid
-  }
-  const x0 = Number(x[lo])
-  const x1 = Number(x[hi])
-  const dist0 = Math.abs(xTarget - x0)
-  const dist1 = Math.abs(xTarget - x1)
-  const idx = dist0 <= dist1 ? lo : hi
-  return { x: Number(x[idx]), y: Number(y[idx]) }
-}
-
 function App() {
-  const [chartData, setChartData] = useState<GenericChartData | null>(null)
+  const [chartData, setChartData] = useState<ChartData | null>(null)
   const { enqueueSnackbar } = useSnackbar()
   const seriesPickerOpen = usePointMarkStore((s) => s.seriesPickerOpen)
   const markedXValues = usePointMarkStore((s) => s.markedXValues)
@@ -92,12 +68,11 @@ function App() {
     (seriesIndex: number) => {
       if (!markedXValues || !chartDataForModal) return
       const middleX = markedXValues[1]
-      const yValues = chartDataForModal.ys[seriesIndex]
-      if (!yValues) return
-      const { x, y } = findNearestPoint(chartDataForModal.x, yValues, middleX)
+      const point = getNearestPointAtX(chartDataForModal, middleX, seriesIndex)
+      if (!point) return
       const seriesName =
         chartDataForModal.seriesNames?.[seriesIndex] ?? `Series ${seriesIndex}`
-      enqueueSnackbar(`Y at nearest point (${x}): ${y} (${seriesName})`, {
+      enqueueSnackbar(`Y at nearest point (${point.x}): ${point.y} (${seriesName})`, {
         autoHideDuration: 60000,
       })
       closeSeriesPicker()

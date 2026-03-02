@@ -6,22 +6,21 @@ import {
   translateFromCanvasToSeriesViewRect,
   VerticalLineAnnotation,
 } from 'scichart'
-import type { ChartShape } from './ChartWithResampling'
+import type { ConvertedShape } from '../convert'
 
 const CLICK_THRESHOLD_PX = 5
 
 export interface IPointMarkModifierOptions {
-  onPointMark?: (xValue: number) => ChartShape | ChartShape[] | null
+  onPointMark?: (xValue: number) => ConvertedShape | ConvertedShape[] | null
 }
 
 /**
- * Point mark modifier: fires on click (not box drag) with x value. Calls optional handler;
- * if handler returns shape(s), adds them as vertical line annotations.
- * Only triggers when mouseUp happens near mouseDown (click), not when user dragged (box zoom).
+ * Point mark modifier: fires on click (not box drag) with x value.
+ * Calls optional handler; if handler returns shape(s), adds them as vertical line annotations.
  */
 export class PointMarkModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
-  private onPointMark?: (xValue: number) => ChartShape | ChartShape[] | null
+  private onPointMark?: (xValue: number) => ConvertedShape | ConvertedShape[] | null
   private mouseDownPoint: Point | undefined
 
   constructor(options?: IPointMarkModifierOptions) {

@@ -10,11 +10,6 @@ interface StoredRange {
   y: NumberRange
 }
 
-/**
- * Zoom history modifier: captures state at the START of zoom gestures (mouseDown, wheel)
- * and restores on "Back" button click. This ensures we always capture the exact
- * state before box zoom, stretch, pan, or scroll zoom.
- */
 export class ZoomHistoryModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
   private history: StoredRange[] = []
@@ -36,6 +31,11 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     this.pushCurrentState()
   }
 
+  onDetach(): void {
+    this.removeBackButton()
+    super.onDetach()
+  }
+
   private pushCurrentState(): void {
     if (this.isRestoring) return
     const current = this.captureRange()
@@ -50,11 +50,6 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
       x: new NumberRange(r.x.min, r.x.max),
       y: new NumberRange(r.y.min, r.y.max),
     }
-  }
-
-  onDetach(): void {
-    this.removeBackButton()
-    super.onDetach()
   }
 
   private captureRange(): StoredRange | null {

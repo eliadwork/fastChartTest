@@ -1,109 +1,52 @@
-import type {
-  ChartWrapperProps,
-  GenericChartData,
-  GenericChartOptions,
-  GenericChartShape,
-  GenericLineStyle,
-} from './chartTypes'
-import { toFloat64Array } from './chartTypes'
-import { ChartWithResampling } from './ChartWithResampling'
-import type { ChartData, ChartShape } from './ChartWithResampling'
-import { EResamplingMode } from 'scichart'
+import { useMemo } from 'react'
+import { Chart } from './chart'
+import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 
-function convertToSciChartData(
-  data: GenericChartData,
-  options?: GenericChartOptions,
-  linesProp?: GenericLineStyle[]
-): ChartData {
-  const x = toFloat64Array(data.x)
-  const series = data.series ?? data.ys ?? []
-  const ys = series.map((s) => toFloat64Array(s))
-  const seriesLines = linesProp ?? options?.seriesLines
-  return {
-    x,
-    ys,
-    seriesNames: data.seriesNames,
-    seriesColors: data.seriesColors,
-    seriesVisibility: options?.seriesVisibility,
-    seriesLines,
-  }
+const DEFAULT_OPTIONS: ChartOptions = {
+  stretchKey: 'Shift',
+  panKey: 'Ctrl',
+  rolloverStroke: '#FF0000',
+  rolloverDash: [8, 4],
+  defaultSeriesColors: [
+    '#3ca832',
+    '#eb911c',
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+  ],
+  defaultStrokeThickness: 2,
+  resampling: true,
+  resamplingPrecision: 1,
 }
 
-function convertToSciChartShapes(shapes: GenericChartShape[] = []): ChartShape[] {
-  return shapes.map((s) => ({
-    color: s.color,
-    lineAxis: s.axis,
-    lineValue: s.value,
-    strokeDashArray: s.strokeDashArray,
-  }))
-}
-
-function convertToChartShape(
-  s: GenericChartShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; strokeDashArray?: number[] }
-): ChartShape {
-  if ('lineAxis' in s && 'lineValue' in s) {
-    return { color: s.color, lineAxis: s.lineAxis, lineValue: s.lineValue, strokeDashArray: s.strokeDashArray }
-  }
-  const g = s as GenericChartShape
-  return { color: g.color, lineAxis: g.axis, lineValue: g.value, strokeDashArray: g.strokeDashArray }
-}
-
-function SciChartImplementation({
-  data,
-  options,
-  style,
-}: {
+export interface ChartWrapperProps {
   data: ChartData
-  options: GenericChartOptions
+  options?: ChartOptions
   style?: React.CSSProperties
-}) {
-  const shapes = convertToSciChartShapes(options.shapes)
-  const resamplingMode = options.resampling !== false ? EResamplingMode.Auto : EResamplingMode.None
-  const resamplingPrecision = options.resamplingPrecision ?? (options.resampling ? 1 : 0)
+  lines?: ChartLineStyle[]
+}
+
+export function ChartWrapper({ data, options = {}, style, lines }: ChartWrapperProps) {
+  const mergedOptions = useMemo(
+    () => ({
+      ...DEFAULT_OPTIONS,
+      ...options,
+      seriesLines: lines ?? options.seriesLines,
+    }),
+    [options, lines]
+  )
 
   return (
-    <ChartWithResampling
+    <Chart
       data={data}
-      resamplingMode={resamplingMode}
-      resamplingPrecision={resamplingPrecision}
-      style={style}
-      shapes={shapes}
-      stretchModifierKey={options.stretchModifierKey}
-      rolloverLineStroke={options.rolloverLineStroke}
-      rolloverLineStrokeDashArray={options.rolloverLineStrokeDashArray}
-      backgroundColor={options.backgroundColor}
-      onPointMark={
-        options.onPointMark
-          ? (xValue) => {
-              const result = options.onPointMark!(xValue)
-              if (!result) return null
-              const arr = Array.isArray(result) ? result : [result]
-              return arr.map(convertToChartShape) as ChartShape[]
-            }
-          : undefined
-      }
+      options={mergedOptions}
+      style={style ?? { width: '100%', height: '100%' }}
+      lines={lines}
     />
   )
-}
-
-/**
- * Generic chart wrapper - library-agnostic interface.
- * Converts generic data/options to the active chart implementation.
- * Swap library via the `library` prop (e.g. future: 'uplot').
- */
-export function ChartWrapper({
-  data,
-  options = {},
-  library = 'scichart',
-  style = { width: '100%', height: '100%' },
-  lines,
-}: ChartWrapperProps) {
-  const chartData = convertToSciChartData(data, options, lines)
-
-  switch (library) {
-    case 'scichart':
-      return <SciChartImplementation data={chartData} options={options} style={style} />
-    default:
-      return <SciChartImplementation data={chartData} options={options} style={style} />
-  }
 }

@@ -11,15 +11,9 @@ const DEFAULT_SENSITIVITY = 0.002
 
 export interface IAxisStretchModifierOptions {
   executeCondition?: { key: EModifierMouseArgKey }
-  /** Sensitivity: pixel delta / chart dimension = fraction. Higher = more stretch per pixel */
   sensitivity?: number
 }
 
-/**
- * Axis stretch modifier: Shift+drag to independently zoom X and Y axes.
- * Horizontal drag stretches X axis, vertical drag stretches Y axis.
- * Lets you control aspect ratio between X and Y (1:1, stretch X, stretch Y, etc).
- */
 export class AxisStretchModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
   private pointFrom: Point | undefined
@@ -50,7 +44,7 @@ export class AxisStretchModifier extends ChartModifierBase2D {
     if (!this.pointFrom || !this.checkExecuteConditions(args).isPrimary) return
     const { seriesViewRect } = this.parentSurface
     const deltaX = args.mousePoint.x - this.pointFrom.x
-    const deltaY = this.pointFrom.y - args.mousePoint.y // Y flipped: up = positive
+    const deltaY = this.pointFrom.y - args.mousePoint.y
 
     const horizontalFraction = (deltaX / seriesViewRect.width) * this.sensitivity
     const verticalFraction = (deltaY / seriesViewRect.height) * this.sensitivity
