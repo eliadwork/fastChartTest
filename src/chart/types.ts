@@ -95,6 +95,8 @@ export interface ChartOptions {
   pointMarkers?: Array<{ x: number; y: number; icon?: string; color?: string }>
   /** When true, zoom/pan cannot go outside the data bounds. Default: true */
   clipZoomToData?: boolean
+  /** Color for the zero axis lines (x=0, y=0). Default: white. */
+  zeroLineColor?: string
 }
 
 export interface ChartProps {

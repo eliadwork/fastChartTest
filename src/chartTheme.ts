@@ -22,6 +22,8 @@ export interface ChartTheme {
   pointMarkIconColor?: string
   /** Text color for header, axis labels (steps), and legend (graph names). Default: white. */
   textColor?: string
+  /** Color for the zero axis lines (x=0, y=0). Default: white. */
+  zeroLineColor?: string
 }
 
 /** Add opacity to a hex or rgb/rgba color string. */
@@ -61,6 +63,7 @@ export const defaultChartTheme: ChartTheme = {
   pointMarkIcon: '📍',
   pointMarkIconColor: '#3388ff',
   textColor: '#ffffff',
+  zeroLineColor: '#ffffff',
 }
 
 export function createChartTheme(overrides: Partial<ChartTheme> = {}): ChartTheme {

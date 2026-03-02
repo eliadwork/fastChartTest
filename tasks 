@@ -11,14 +11,16 @@ done
 * width of graph
 * graph stripes 
 * add icon on pick - the icon should be injected from outside (for the current example now make the icon a gray circle) the icon should be responsive and get smaller and bigger according to the zoom of the graph
+* add the axis outlines
 
 
  need to do:
 * right click streching
 * is picked value
 * add the option to group graph at the glossary
-* add the axis outlines
 * create plotly graph for comparesent using the same data
+* make a warapper that can be moved and made bigger and smaller
+
 
 cr and code cleam up:
 * make a cr for yourself make the code clean clear and readable and optiomize the graph 

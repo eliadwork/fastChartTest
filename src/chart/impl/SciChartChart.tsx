@@ -176,6 +176,25 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
           sciChartSurface.renderableSeries.add(series)
         }
 
+        // Zero axis lines (x=0 and y=0)
+        const zeroLineColor = options.zeroLineColor ?? '#ffffff'
+        sciChartSurface.annotations.add(
+          new VerticalLineAnnotation({
+            x1: 0,
+            stroke: zeroLineColor,
+            strokeThickness: 1,
+            strokeDashArray: [4, 4],
+          })
+        )
+        sciChartSurface.annotations.add(
+          new HorizontalLineAnnotation({
+            y1: 0,
+            stroke: zeroLineColor,
+            strokeThickness: 1,
+            strokeDashArray: [4, 4],
+          })
+        )
+
         for (const shape of lineShapes) {
           if (shape.lineAxis === 'x') {
             sciChartSurface.annotations.add(
