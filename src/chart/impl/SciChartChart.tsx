@@ -3,11 +3,9 @@ import {
   ECoordinateMode,
   EHorizontalAnchorPoint,
   EModifierMouseArgKey,
-  ELegendPlacement,
   EResamplingMode,
   FastLineRenderableSeries,
   HorizontalLineAnnotation,
-  LegendModifier,
   MouseWheelZoomModifier,
   NativeTextAnnotation,
   NumberRange,
@@ -19,6 +17,7 @@ import {
   ZoomExtentsModifier,
   ZoomPanModifier,
 } from 'scichart'
+import Box from '@mui/material/Box'
 import { SciChartReact } from 'scichart-react'
 import type { ChartOptions, ModifierKey } from '../types'
 import type { ConvertedData } from '../convert'
@@ -28,6 +27,7 @@ import { LeftClickRubberBandXyZoomModifier } from './LeftClickRubberBandXyZoomMo
 import { PointMarkersSync } from './PointMarkersSync'
 import { SeriesVisibilitySync } from './SeriesVisibilitySync'
 import { LeftClickZoomPanModifier } from './LeftClickZoomPanModifier'
+import { LegendSync } from './LegendSync'
 import { PointMarkModifier } from './PointMarkModifier'
 import { ShiftLeftClickZoomPanModifier } from './ShiftLeftClickZoomPanModifier'
 import { ZoomHistoryModifier } from './ZoomHistoryModifier'
@@ -95,9 +95,13 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
     : undefined
 
   return (
-    <SciChartReact
-      style={style}
-      initChart={async (rootElement) => {
+    <Box
+      component="div"
+      sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}
+    >
+      <SciChartReact
+        style={style}
+        initChart={async (rootElement) => {
         const createOptions = options.backgroundColor != null ? { background: options.backgroundColor } : undefined
         const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement, createOptions)
 
@@ -255,13 +259,6 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
           }),
           new MouseWheelZoomModifier(),
           new ZoomExtentsModifier(),
-          new LegendModifier({
-            showSeriesMarkers: true,
-            showCheckboxes: true,
-            placement: ELegendPlacement.TopLeft,
-            backgroundColor: options.legendBackgroundColor ?? options.backgroundColor,
-            textColor: options.textColor ?? '#ffffff',
-          }),
           new RolloverModifier({
             tooltipDataTemplate: (seriesInfo) => [
               `${seriesInfo.seriesName}:`,
@@ -283,6 +280,11 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         defaultColor={pointMarkIconColor}
       />
       <SeriesVisibilitySync seriesVisibility={options.seriesVisibility} />
+      <LegendSync
+        backgroundColor={options.legendBackgroundColor ?? options.backgroundColor}
+        textColor={options.textColor ?? '#ffffff'}
+      />
     </SciChartReact>
+    </Box>
   )
 }
