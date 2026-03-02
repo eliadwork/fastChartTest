@@ -42,6 +42,8 @@ export interface ChartOptions {
   resampling?: boolean
   resamplingPrecision?: number
   onPointMark?: (xValue: number) => ChartShape | ChartShape[] | null
+  /** When true, zoom/pan cannot go outside the data bounds. Default: true */
+  clipZoomToData?: boolean
 }
 
 export interface ChartProps {

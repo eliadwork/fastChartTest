@@ -6,6 +6,7 @@ import {
   HorizontalLineAnnotation,
   LegendModifier,
   MouseWheelZoomModifier,
+  NumberRange,
   NumericAxis,
   RolloverModifier,
   RubberBandXyZoomModifier,
@@ -79,6 +80,34 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
         const yAxis = new NumericAxis(wasmContext)
         sciChartSurface.xAxes.add(xAxis)
         sciChartSurface.yAxes.add(yAxis)
+
+        const clipZoomToData = options.clipZoomToData !== false
+        if (clipZoomToData && data.x.length > 0 && data.ys.length > 0) {
+          const xMin = Math.min(...data.x)
+          const xMax = Math.max(...data.x)
+          let yMin = Infinity
+          let yMax = -Infinity
+          for (const yArr of data.ys) {
+            for (let i = 0; i < yArr.length; i++) {
+              const v = yArr[i]
+              if (Number.isFinite(v)) {
+                yMin = Math.min(yMin, v)
+                yMax = Math.max(yMax, v)
+              }
+            }
+          }
+          const pad = (n: number) => (n === 0 ? 1 : Math.abs(n) * 1e-6)
+          xAxis.visibleRangeLimit = new NumberRange(
+            xMin - pad(xMin),
+            xMax + pad(xMax)
+          )
+          if (Number.isFinite(yMin) && Number.isFinite(yMax)) {
+            yAxis.visibleRangeLimit = new NumberRange(
+              yMin - pad(yMin),
+              yMax + pad(yMax)
+            )
+          }
+        }
 
         const seriesNames = data.seriesNames ?? data.ys.map((_, i) => `Series ${i}`)
         for (let i = 0; i < data.ys.length; i++) {

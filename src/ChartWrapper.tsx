@@ -7,6 +7,7 @@ const DEFAULT_OPTIONS: ChartOptions = {
   panKey: 'Ctrl',
   rolloverStroke: '#FF0000',
   rolloverDash: [8, 4],
+  clipZoomToData: true,
   defaultSeriesColors: [
     '#3ca832',
     '#eb911c',
