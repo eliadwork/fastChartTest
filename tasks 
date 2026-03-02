@@ -1,4 +1,5 @@
 done
+* create plotly graph for comparesent using the same data
 * streching with shift key
 *  zoom in/ out with mouse wheel
 * panning with ctrl key
@@ -12,13 +13,12 @@ done
 * graph stripes 
 * add icon on pick - the icon should be injected from outside (for the current example now make the icon a gray circle) the icon should be responsive and get smaller and bigger according to the zoom of the graph
 * add the axis outlines
+* add the option to group graph at the glossary
 
 
  need to do:
 * right click streching
 * is picked value
-* add the option to group graph at the glossary
-* create plotly graph for comparesent using the same data
 * make a warapper that can be moved and made bigger and smaller
 
 

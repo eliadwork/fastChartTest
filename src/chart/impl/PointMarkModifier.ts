@@ -20,8 +20,12 @@ export type PointMarkResult =
   | { type: 'marker'; x: number; icon?: string; color?: string }
   | (ConvertedShape | { type: 'marker'; x: number; icon?: string; color?: string })[]
 
+export interface PointMarkContext {
+  getSeriesVisibility: () => boolean[]
+}
+
 export interface IPointMarkModifierOptions {
-  onPointMark?: (xValue: number, yValue: number) => PointMarkResult | null
+  onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
 }
 
 /**
@@ -30,7 +34,7 @@ export interface IPointMarkModifierOptions {
  */
 export class PointMarkModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
-  private onPointMark?: (xValue: number, yValue: number) => PointMarkResult | null
+  private onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
   private mouseDownPoint: Point | undefined
 
   constructor(options?: IPointMarkModifierOptions) {
@@ -76,7 +80,11 @@ export class PointMarkModifier extends ChartModifierBase2D {
     const yAxis = this.getIncludedYAxis()[0]
     const yCoordCalc = yAxis?.getCurrentCoordinateCalculator()
     const yValue = yCoordCalc ? yCoordCalc.getDataValue(translated.y) : 0
-    const result = this.onPointMark(xValue, yValue)
+    const context: PointMarkContext = {
+      getSeriesVisibility: () =>
+        this.parentSurface.renderableSeries.asArray().map((rs) => (rs as { isVisible: boolean }).isVisible),
+    }
+    const result = this.onPointMark(xValue, yValue, context)
     if (!result) return
 
     const toAdd = Array.isArray(result) ? result : [result]

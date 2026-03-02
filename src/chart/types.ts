@@ -50,6 +50,8 @@ export interface ChartLineStyle {
   dash?: number[]
   /** When true, applies a dashed pattern [6, 4] for a striped look */
   striped?: boolean
+  /** When false, series cannot be bound in the 3-click point mark flow. Default: true. */
+  bindable?: boolean
 }
 
 export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
@@ -84,7 +86,11 @@ export interface ChartOptions {
   defaultStrokeThickness?: number
   resampling?: boolean
   resamplingPrecision?: number
-  onPointMark?: (xValue: number, yValue: number) => ChartLineShape | ChartMarkerShape | (ChartLineShape | ChartMarkerShape)[] | null
+  onPointMark?: (
+    xValue: number,
+    yValue: number,
+    context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }
+  ) => ChartLineShape | ChartMarkerShape | (ChartLineShape | ChartMarkerShape)[] | null
   /** Icon for the middle-click marker (3-click pick). E.g. '●' for circle. Default: '📍' */
   pointMarkIcon?: string
   /** Color for the point mark icon. Default: '#3388ff' */

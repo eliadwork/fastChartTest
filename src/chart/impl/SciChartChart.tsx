@@ -77,8 +77,13 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
   const pointMarkIcon = options.pointMarkIcon ?? '📍'
   const pointMarkIconColor = options.pointMarkIconColor ?? '#3388ff'
   const onPointMark = options.onPointMark
-    ? (xValue: number, yValue: number) => {
-        const result = options.onPointMark!(xValue, yValue)
+    ? (xValue: number, yValue: number, context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }) => {
+        const contextWithBindable = {
+          ...context,
+          getSeriesVisibility: context?.getSeriesVisibility ?? (() => [] as boolean[]),
+          seriesBindable: context?.seriesBindable ?? data.seriesBindable,
+        }
+        const result = options.onPointMark!(xValue, yValue, contextWithBindable)
         if (!result) return null
         const arr = Array.isArray(result) ? result : [result]
         return arr.map((item) => {

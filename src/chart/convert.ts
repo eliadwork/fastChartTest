@@ -12,6 +12,8 @@ export interface ConvertedData {
   seriesColors?: string[]
   seriesVisibility?: boolean[]
   seriesLines?: ChartLineStyle[]
+  /** Per-series bindable (from seriesLines[].bindable). Default: true. */
+  seriesBindable?: boolean[]
 }
 
 export interface ConvertedShape {
@@ -40,13 +42,19 @@ export function convertData(
   const x = toFloat64Array(data.x)
   const series = data.ys ?? data.series ?? []
   const ys = series.map((s) => toFloat64Array(s))
+  const seriesLines = linesProp ?? options?.seriesLines
+  const seriesBindable = Array.from(
+    { length: ys.length },
+    (_, i) => (seriesLines?.[i]?.bindable !== false)
+  )
   return {
     x,
     ys,
     seriesNames: data.seriesNames,
     seriesColors: data.seriesColors,
     seriesVisibility: options?.seriesVisibility,
-    seriesLines: linesProp ?? options?.seriesLines,
+    seriesLines,
+    seriesBindable,
   }
 }
 

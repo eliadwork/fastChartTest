@@ -1,9 +1,15 @@
 import { create } from 'zustand'
+import { getInterpolatedPointAtX } from '../utils/chartDataLookup'
 
 export interface ChartDataForModal {
   x: ArrayLike<number> | number[]
   ys: (ArrayLike<number> | number[])[]
   seriesNames?: string[]
+}
+
+export interface PointMarkOptions {
+  seriesBindable?: boolean[]
+  seriesVisibility?: boolean[]
 }
 
 export interface ChartShapeForMark {
@@ -50,13 +56,20 @@ interface PointMarkState {
   markedYValue: number | null
   chartDataForModal: ChartDataForModal | null
   chartIdForModal: string | null
+  bindableIndices: number[]
   seriesPickerOpen: boolean
   pointMarkersByChart: Record<string, PointMarker[]>
   iconsByChart: Record<string, ChartIcon[]>
 }
 
 interface PointMarkActions {
-  addPointMark: (chartId: string, xValue: number, yValue: number, chartData: ChartDataForModal) => PointMarkResult | null
+  addPointMark: (
+    chartId: string,
+    xValue: number,
+    yValue: number,
+    chartData: ChartDataForModal,
+    options?: PointMarkOptions
+  ) => PointMarkResult | null
   addPointMarker: (chartId: string, marker: PointMarker) => void
   addIcon: (chartId: string, icon: ChartIcon) => void
   closeSeriesPicker: () => void
@@ -69,25 +82,71 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
     markedYValue: null,
     chartDataForModal: null,
     chartIdForModal: null,
+    bindableIndices: [],
     seriesPickerOpen: false,
     pointMarkersByChart: {},
     iconsByChart: {},
 
-    addPointMark: (chartId, xValue, yValue, chartData) => {
-      const { clicksByChart } = get()
+    addPointMark: (chartId, xValue, yValue, chartData, options) => {
+      const { clicksByChart, addIcon } = get()
       const clicks = [...(clicksByChart[chartId] ?? []), { x: xValue, y: yValue }]
       const index = clicks.length - 1
+      const seriesCount = chartData.ys?.length ?? 0
+
+      const seriesBindable = options?.seriesBindable
+      const seriesVisibility = options?.seriesVisibility ?? Array.from({ length: seriesCount }, () => true)
+
+      const bindableIndices =
+        seriesBindable != null
+          ? Array.from({ length: seriesCount }, (_, i) => i).filter((i) => seriesBindable[i] !== false)
+          : Array.from({ length: seriesCount }, (_, i) => i)
 
       if (clicks.length === 3) {
+        const middleX = clicks[1].x
+        let openModal = false
+        let autoBindIndex: number | null = null
+
+        if (bindableIndices.length === 0) {
+          openModal = false
+        } else if (bindableIndices.length === 1) {
+          autoBindIndex = bindableIndices[0]!
+        } else {
+          const visibleBindable = bindableIndices.filter((i) => seriesVisibility[i])
+          if (visibleBindable.length === 1) {
+            autoBindIndex = visibleBindable[0]!
+          } else {
+            openModal = true
+          }
+        }
+
+        if (autoBindIndex != null) {
+          const point = getInterpolatedPointAtX(chartData, middleX, autoBindIndex)
+          if (point) {
+            addIcon(chartId, {
+              iconImage: '●',
+              location: { x: point.x, y: point.y },
+              color: '#888888',
+            })
+          }
+        }
+
         set({
           clicksByChart: { ...clicksByChart, [chartId]: [] },
           markedXValues: [clicks[0].x, clicks[1].x, clicks[2].x],
           markedYValue: clicks[1].y,
-          chartDataForModal: chartData,
-          chartIdForModal: chartId,
-          seriesPickerOpen: true,
+          chartDataForModal: openModal ? chartData : null,
+          chartIdForModal: openModal ? chartId : null,
+          bindableIndices: openModal ? bindableIndices : [],
+          seriesPickerOpen: openModal,
         })
-      } else {
+
+      }
+
+      if (bindableIndices.length === 0) {
+        return []
+      }
+
+      if (clicks.length !== 3) {
         set({
           clicksByChart: { ...clicksByChart, [chartId]: clicks },
         })
@@ -122,6 +181,7 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
         markedYValue: null,
         chartDataForModal: null,
         chartIdForModal: null,
+        bindableIndices: [],
         seriesPickerOpen: false,
       }),
   })

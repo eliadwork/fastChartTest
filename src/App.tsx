@@ -35,6 +35,7 @@ function App() {
   const markedYValue = usePointMarkStore((s) => s.markedYValue)
   const chartDataForModal = usePointMarkStore((s) => s.chartDataForModal)
   const chartIdForModal = usePointMarkStore((s) => s.chartIdForModal)
+  const bindableIndices = usePointMarkStore((s) => s.bindableIndices)
   const addPointMark = usePointMarkStore((s) => s.addPointMark)
   const addIcon = usePointMarkStore((s) => s.addIcon)
   const iconsByChart = usePointMarkStore((s) => s.iconsByChart)
@@ -56,29 +57,24 @@ function App() {
     return () => worker.terminate()
   }, [])
 
-  const handleResampledPointMark = useCallback(
-    (xValue: number, yValue: number) => {
-      if (!chartData) return null
-      const chartDataForStore = {
-        x: chartData.x,
-        ys: chartData.ys ?? (chartData.series ?? []),
-        seriesNames: chartData.seriesNames,
-      }
-      return addPointMark('resampled', xValue, yValue, chartDataForStore)
-    },
-    [chartData, addPointMark]
-  )
-
-  const handleNoLossPointMark = useCallback(
-    (xValue: number, yValue: number) => {
-      if (!chartData) return null
-      const chartDataForStore = {
-        x: chartData.x,
-        ys: chartData.ys ?? (chartData.series ?? []),
-        seriesNames: chartData.seriesNames,
-      }
-      return addPointMark('no-loss', xValue, yValue, chartDataForStore)
-    },
+  const createPointMarkHandler = useCallback(
+    (chartId: string) =>
+      (
+        xValue: number,
+        yValue: number,
+        context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }
+      ) => {
+        if (!chartData) return null
+        const chartDataForStore = {
+          x: chartData.x,
+          ys: chartData.ys ?? (chartData.series ?? []),
+          seriesNames: chartData.seriesNames,
+        }
+        return addPointMark(chartId, xValue, yValue, chartDataForStore, {
+          seriesBindable: context?.seriesBindable,
+          seriesVisibility: context?.getSeriesVisibility?.(),
+        })
+      },
     [chartData, addPointMark]
   )
 
@@ -114,10 +110,16 @@ function App() {
     note: 'this is the chart example',
     seriesGroupKeys: [...Array(4).fill('Group one'), ...Array(6).fill(undefined)],
     seriesLines: [
-      {},
-      {},
-      { thickness: 4 },
-      { thickness: 1, striped: true },
+      { bindable: true },
+      { bindable: true },
+      { thickness: 4, bindable: true },
+      { thickness: 1, striped: true, bindable: true },
+      { bindable: false },
+      { bindable: false },
+      { bindable: false },
+      { bindable: false },
+      { bindable: false },
+      { bindable: false },
     ],
     shapes: [
       { color: '#ff0000', axis: 'x' as const, value: 100 },
@@ -151,7 +153,7 @@ function App() {
                 ...sharedOptions,
                 resampling: true,
                 resamplingPrecision: 1,
-                onPointMark: handleResampledPointMark,
+                onPointMark: createPointMarkHandler('resampled'),
               }}
               icons={iconsByChart['resampled']}
             />
@@ -168,7 +170,7 @@ function App() {
               options={{
                 ...sharedOptions,
                 resampling: false,
-                onPointMark: handleNoLossPointMark,
+                onPointMark: createPointMarkHandler('no-loss'),
               }}
               icons={iconsByChart['no-loss']}
             />
@@ -187,17 +189,26 @@ function App() {
             Which series should the middle point be connected to?
           </PointMarkModalTitle>
           <PointMarkModalButtons>
-            {(chartDataForModal?.seriesNames ?? chartDataForModal?.ys.map((_, i) => `Series ${i}`) ?? []).map(
-              (name, i) => (
+            {(bindableIndices.length > 0
+              ? bindableIndices
+              : chartDataForModal?.seriesNames
+                ? Array.from({ length: chartDataForModal.seriesNames.length }, (_, i) => i)
+                : chartDataForModal?.ys
+                  ? Array.from({ length: chartDataForModal.ys.length }, (_, i) => i)
+                  : []
+            ).map((seriesIndex) => {
+              const names = chartDataForModal?.seriesNames ?? chartDataForModal?.ys?.map((_, i) => `Series ${i}`) ?? []
+              const name = names[seriesIndex] ?? `Series ${seriesIndex}`
+              return (
                 <PointMarkModalButton
-                  key={i}
+                  key={seriesIndex}
                   variant="contained"
-                  onClick={() => handleSeriesPick(i)}
+                  onClick={() => handleSeriesPick(seriesIndex)}
                 >
                   {name}
                 </PointMarkModalButton>
               )
-            )}
+            })}
           </PointMarkModalButtons>
           <PointMarkModalCancel variant="outlined" onClick={closeSeriesPicker}>
             Cancel
