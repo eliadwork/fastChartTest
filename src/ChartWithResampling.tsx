@@ -1,9 +1,14 @@
 import {
+  EModifierMouseArgKey,
   EResamplingMode,
   FastLineRenderableSeries,
+  HorizontalLineAnnotation,
   MouseWheelZoomModifier,
   NumericAxis,
+  RolloverModifier,
+  RubberBandXyZoomModifier,
   SciChartSurface,
+  VerticalLineAnnotation,
   XyDataSeries,
   ZoomExtentsModifier,
   ZoomPanModifier,
@@ -15,11 +20,21 @@ export interface ChartData {
   ys: Float64Array[]
 }
 
+export interface ChartShape {
+  color: string
+  lineAxis: 'x' | 'y'
+  lineValue: number
+}
+
 interface ChartWithResamplingProps {
   data: ChartData
   resamplingMode: EResamplingMode
   resamplingPrecision: number
   style?: React.CSSProperties
+  shapes?: ChartShape[]
+  stretchModifierKey?: 'Shift' | 'Ctrl' | 'Alt'
+  rolloverLineStroke?: string
+  rolloverLineStrokeDashArray?: number[]
 }
 
 const SERIES_COLORS = [
@@ -35,11 +50,21 @@ const SERIES_COLORS = [
   '#7f7f7f',
 ]
 
+const MODIFIER_KEY_MAP = {
+  Shift: EModifierMouseArgKey.Shift,
+  Ctrl: EModifierMouseArgKey.Ctrl,
+  Alt: EModifierMouseArgKey.Alt,
+} as const
+
 export function ChartWithResampling({
   data,
   resamplingMode,
   resamplingPrecision,
   style = { width: '100%', height: '100%' },
+  shapes = [],
+  stretchModifierKey = 'Shift',
+  rolloverLineStroke = '#FF0000',
+  rolloverLineStrokeDashArray = [8, 4],
 }: ChartWithResamplingProps) {
   return (
     <SciChartReact
@@ -71,10 +96,42 @@ export function ChartWithResampling({
           sciChartSurface.renderableSeries.add(series)
         }
 
+        for (const shape of shapes) {
+          if (shape.lineAxis === 'x') {
+            sciChartSurface.annotations.add(
+              new VerticalLineAnnotation({
+                x1: shape.lineValue,
+                stroke: shape.color,
+                strokeThickness: 2,
+              })
+            )
+          } else {
+            sciChartSurface.annotations.add(
+              new HorizontalLineAnnotation({
+                y1: shape.lineValue,
+                stroke: shape.color,
+                strokeThickness: 2,
+              })
+            )
+          }
+        }
+
+        const stretchKey = MODIFIER_KEY_MAP[stretchModifierKey]
         sciChartSurface.chartModifiers.add(
+          new RubberBandXyZoomModifier({
+            executeCondition: { key: stretchKey },
+          }),
           new ZoomPanModifier(),
           new MouseWheelZoomModifier(),
-          new ZoomExtentsModifier()
+          new ZoomExtentsModifier(),
+          new RolloverModifier({
+            tooltipDataTemplate: (seriesInfo, _tooltipTitle, tooltipLabelX, tooltipLabelY) => [
+              `${tooltipLabelX}: ${seriesInfo.formattedXValue}`,
+              `${tooltipLabelY}: ${seriesInfo.formattedYValue}`,
+            ],
+            rolloverLineStroke,
+            rolloverLineStrokeDashArray,
+          })
         )
 
         return { sciChartSurface }
