@@ -141,11 +141,13 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
           const isVisible = data.seriesVisibility?.[i] ?? true
           const strokeColor =
             lineStyle?.color ?? data.seriesColors?.[i] ?? seriesColors[i % seriesColors.length]
+          const strokeDashArray =
+            lineStyle?.dash ?? (lineStyle?.striped ? [6, 4] : undefined)
           const series = new FastLineRenderableSeries(wasmContext, {
             dataSeries,
             stroke: strokeColor,
             strokeThickness: lineStyle?.thickness ?? strokeThickness,
-            strokeDashArray: lineStyle?.dash,
+            strokeDashArray,
             resamplingMode,
             resamplingPrecision,
             isVisible,

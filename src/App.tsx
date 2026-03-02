@@ -85,7 +85,7 @@ function App() {
       {},
       {},
       { thickness: 4 },
-      { thickness: 1 },
+      { thickness: 1, striped: true },
     ],
     shapes: [
       { color: '#ff0000', axis: 'x' as const, value: 100 },

@@ -41,6 +41,8 @@ export interface ChartLineStyle {
   color?: string
   thickness?: number
   dash?: number[]
+  /** When true, applies a dashed pattern [6, 4] for a striped look */
+  striped?: boolean
 }
 
 export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
