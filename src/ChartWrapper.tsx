@@ -51,12 +51,11 @@ export function ChartWrapper({
     () => ({
       ...DEFAULT_OPTIONS,
       defaultSeriesColors: chartTheme.defaultSeriesColors,
-      defaultStrokeThickness: chartTheme.defaultStrokeThickness ?? 2,
       rolloverStroke: chartTheme.rolloverStroke,
       rolloverDash: chartTheme.rolloverDash,
-      backgroundColor: chartTheme.backgroundColor,
       pointMarkIcon: chartTheme.pointMarkIcon,
       pointMarkIconColor: chartTheme.pointMarkIconColor,
+      backgroundColor: chartTheme.backgroundColor,
       ...options,
       defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? chartTheme.defaultStrokeThickness ?? 2,
       seriesLines: lines ?? options.seriesLines,
