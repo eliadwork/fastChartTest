@@ -21,6 +21,12 @@ export interface ConvertedShape {
   strokeDashArray?: number[]
 }
 
+export interface ConvertedMarker {
+  type: 'marker'
+  x: number
+  icon?: string
+}
+
 export function toFloat64Array(arr: ArrayLike<number> | number[]): Float64Array {
   if (arr instanceof Float64Array) return arr
   return new Float64Array(arr)

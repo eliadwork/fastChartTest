@@ -37,6 +37,13 @@ export interface ChartBoxShape {
 
 export type ChartShape = ChartLineShape | ChartBoxShape
 
+export interface ChartMarkerShape {
+  type: 'marker'
+  x: number
+  icon?: string
+  color?: string
+}
+
 export interface ChartLineStyle {
   color?: string
   thickness?: number
@@ -48,6 +55,12 @@ export interface ChartLineStyle {
 export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
 
 export type StretchTrigger = ModifierKey | 'rightClick'
+
+export interface ChartIcon {
+  iconImage: string
+  location: { x: number; y: number }
+  color?: string
+}
 
 export interface ChartOptions {
   shapes?: ChartShape[]
@@ -67,7 +80,15 @@ export interface ChartOptions {
   defaultStrokeThickness?: number
   resampling?: boolean
   resamplingPrecision?: number
-  onPointMark?: (xValue: number) => ChartLineShape | ChartLineShape[] | null
+  onPointMark?: (xValue: number, yValue: number) => ChartLineShape | ChartMarkerShape | (ChartLineShape | ChartMarkerShape)[] | null
+  /** Icon for the middle-click marker (3-click pick). E.g. '●' for circle. Default: '📍' */
+  pointMarkIcon?: string
+  /** Color for the point mark icon. Default: '#3388ff' */
+  pointMarkIconColor?: string
+  /** Icons rendered at chart locations. iconImage: SVG string, image URL, or character. color for character fallback. */
+  icons?: ChartIcon[]
+  /** @deprecated Use icons instead. Markers from 3-click flow. */
+  pointMarkers?: Array<{ x: number; y: number; icon?: string; color?: string }>
   /** When true, zoom/pan cannot go outside the data bounds. Default: true */
   clipZoomToData?: boolean
 }

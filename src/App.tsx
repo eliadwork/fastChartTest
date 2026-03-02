@@ -18,8 +18,12 @@ function App() {
   const { enqueueSnackbar } = useSnackbar()
   const seriesPickerOpen = usePointMarkStore((s) => s.seriesPickerOpen)
   const markedXValues = usePointMarkStore((s) => s.markedXValues)
+  const markedYValue = usePointMarkStore((s) => s.markedYValue)
   const chartDataForModal = usePointMarkStore((s) => s.chartDataForModal)
+  const chartIdForModal = usePointMarkStore((s) => s.chartIdForModal)
   const addPointMark = usePointMarkStore((s) => s.addPointMark)
+  const addIcon = usePointMarkStore((s) => s.addIcon)
+  const iconsByChart = usePointMarkStore((s) => s.iconsByChart)
   const closeSeriesPicker = usePointMarkStore((s) => s.closeSeriesPicker)
 
   useEffect(() => {
@@ -39,37 +43,42 @@ function App() {
   }, [])
 
   const handleResampledPointMark = useCallback(
-    (xValue: number) => {
+    (xValue: number, yValue: number) => {
       if (!chartData) return null
       const chartDataForStore = {
         x: chartData.x,
         ys: chartData.ys ?? (chartData.series ?? []),
         seriesNames: chartData.seriesNames,
       }
-      return addPointMark('resampled', xValue, chartDataForStore)
+      return addPointMark('resampled', xValue, yValue, chartDataForStore)
     },
     [chartData, addPointMark]
   )
 
   const handleNoLossPointMark = useCallback(
-    (xValue: number) => {
+    (xValue: number, yValue: number) => {
       if (!chartData) return null
       const chartDataForStore = {
         x: chartData.x,
         ys: chartData.ys ?? (chartData.series ?? []),
         seriesNames: chartData.seriesNames,
       }
-      return addPointMark('no-loss', xValue, chartDataForStore)
+      return addPointMark('no-loss', xValue, yValue, chartDataForStore)
     },
     [chartData, addPointMark]
   )
 
   const handleSeriesPick = useCallback(
     (seriesIndex: number) => {
-      if (!markedXValues || !chartDataForModal) return
+      if (!markedXValues || markedYValue == null || !chartDataForModal || !chartIdForModal) return
       const middleX = markedXValues[1]
       const point = getNearestPointAtX(chartDataForModal, middleX, seriesIndex)
       if (!point) return
+      addIcon(chartIdForModal, {
+        iconImage: '●',
+        location: { x: middleX, y: point.y },
+        color: '#888888',
+      })
       const seriesName =
         chartDataForModal.seriesNames?.[seriesIndex] ?? `Series ${seriesIndex}`
       enqueueSnackbar(`Y at nearest point (${point.x}): ${point.y} (${seriesName})`, {
@@ -77,10 +86,12 @@ function App() {
       })
       closeSeriesPicker()
     },
-    [markedXValues, chartDataForModal, enqueueSnackbar, closeSeriesPicker]
+    [markedXValues, markedYValue, chartDataForModal, chartIdForModal, addIcon, enqueueSnackbar, closeSeriesPicker]
   )
 
   const sharedOptions = {
+    pointMarkIcon: '●',
+    pointMarkIconColor: '#888888',
     seriesLines: [
       {},
       {},
@@ -111,6 +122,7 @@ function App() {
         <h3>Resampled (precision 1.0)</h3>
         {chartData ? (
           <ChartWrapper
+            chartId="resampled"
             data={chartData}
             options={{
               ...sharedOptions,
@@ -118,6 +130,7 @@ function App() {
               resamplingPrecision: 1,
               onPointMark: handleResampledPointMark,
             }}
+            icons={iconsByChart['resampled']}
           />
         ) : (
           <div className="chart-placeholder">Loading data...</div>
@@ -127,12 +140,14 @@ function App() {
         <h3>No-loss (every point)</h3>
         {chartData ? (
           <ChartWrapper
+            chartId="no-loss"
             data={chartData}
             options={{
               ...sharedOptions,
               resampling: false,
               onPointMark: handleNoLossPointMark,
             }}
+            icons={iconsByChart['no-loss']}
           />
         ) : (
           <div className="chart-placeholder">Loading data...</div>

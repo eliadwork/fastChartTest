@@ -21,10 +21,11 @@ import {
 } from 'scichart'
 import { SciChartReact } from 'scichart-react'
 import type { ChartOptions, ModifierKey } from '../types'
-import type { ConvertedData, ConvertedShape } from '../convert'
+import type { ConvertedData } from '../convert'
 import { convertShapes, normalizeShape } from '../convert'
 import { AxisStretchModifier } from './AxisStretchModifier'
 import { LeftClickRubberBandXyZoomModifier } from './LeftClickRubberBandXyZoomModifier'
+import { PointMarkersSync } from './PointMarkersSync'
 import { LeftClickZoomPanModifier } from './LeftClickZoomPanModifier'
 import { PointMarkModifier } from './PointMarkModifier'
 import { ShiftLeftClickZoomPanModifier } from './ShiftLeftClickZoomPanModifier'
@@ -71,12 +72,23 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
   const resamplingMode = options.resampling !== false ? EResamplingMode.Auto : EResamplingMode.None
   const resamplingPrecision = options.resamplingPrecision ?? (options.resampling ? 1 : 0)
 
+  const pointMarkIcon = options.pointMarkIcon ?? '📍'
+  const pointMarkIconColor = options.pointMarkIconColor ?? '#3388ff'
   const onPointMark = options.onPointMark
-    ? (xValue: number) => {
-        const result = options.onPointMark!(xValue)
+    ? (xValue: number, yValue: number) => {
+        const result = options.onPointMark!(xValue, yValue)
         if (!result) return null
         const arr = Array.isArray(result) ? result : [result]
-        return arr.map(normalizeShape) as ConvertedShape[]
+        return arr.map((item) => {
+          if ('type' in item && item.type === 'marker') {
+            return {
+              ...item,
+              icon: item.icon ?? pointMarkIcon,
+              color: item.color ?? pointMarkIconColor,
+            }
+          }
+          return normalizeShape(item as Parameters<typeof normalizeShape>[0])
+        })
       }
     : undefined
 
@@ -272,6 +284,13 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
 
         return { sciChartSurface }
       }}
-    />
+    >
+      <PointMarkersSync
+        icons={options.icons ?? []}
+        pointMarkers={options.pointMarkers ?? []}
+        defaultIcon={pointMarkIcon}
+        defaultColor={pointMarkIconColor}
+      />
+    </SciChartReact>
   )
 }

@@ -26,23 +26,30 @@ const DEFAULT_OPTIONS: ChartOptions = {
 }
 
 export interface ChartWrapperProps {
+  chartId?: string
   data: ChartData
   options?: ChartOptions
   style?: React.CSSProperties
   lines?: ChartLineStyle[]
   /** Default line thickness for all series. Override per-series via lines[].thickness */
   defaultLineThickness?: number
+  /** Icons at chart locations. iconImage: SVG string, image URL, or character. */
+  icons?: Array<{ iconImage: string; location: { x: number; y: number } }>
+  /** @deprecated Use icons instead. */
+  pointMarkers?: Array<{ x: number; y: number; icon?: string; color?: string }>
 }
 
-export function ChartWrapper({ data, options = {}, style, lines, defaultLineThickness }: ChartWrapperProps) {
+export function ChartWrapper({ data, options = {}, style, lines, defaultLineThickness, icons, pointMarkers }: ChartWrapperProps) {
   const mergedOptions = useMemo(
     () => ({
       ...DEFAULT_OPTIONS,
       ...options,
       defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? 2,
       seriesLines: lines ?? options.seriesLines,
+      icons: icons ?? options.icons,
+      pointMarkers: pointMarkers ?? options.pointMarkers,
     }),
-    [options, lines, defaultLineThickness]
+    [options, lines, defaultLineThickness, icons, pointMarkers]
   )
 
   return (
