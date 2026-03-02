@@ -15,9 +15,11 @@ interface SeriesInfo {
 interface LegendSyncProps {
   backgroundColor?: string
   textColor?: string
+  /** When provided (e.g. from "disable all"), used for display; otherwise read from chart. */
+  seriesVisibility?: boolean[]
 }
 
-export function LegendSync({ backgroundColor, textColor }: LegendSyncProps) {
+export function LegendSync({ backgroundColor, textColor, seriesVisibility }: LegendSyncProps) {
   const initResult = useContext(SciChartSurfaceContext)
   const [, forceUpdate] = useState(0)
 
@@ -35,12 +37,13 @@ export function LegendSync({ backgroundColor, textColor }: LegendSyncProps) {
         dataSeries?: { dataSeriesName?: string }
       }
       const name = rs.dataSeries?.dataSeriesName ?? `Series ${i}`
+      const isVisible = seriesVisibility ? (seriesVisibility[i] ?? true) : rs.isVisible
       seriesList.push({
         name,
         stroke: rs.stroke ?? '#888',
         strokeDashArray: rs.strokeDashArray,
         strokeThickness: rs.strokeThickness ?? 2,
-        isVisible: rs.isVisible,
+        isVisible,
         index: i,
       })
     }

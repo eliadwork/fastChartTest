@@ -283,6 +283,7 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
       <LegendSync
         backgroundColor={options.legendBackgroundColor ?? options.backgroundColor}
         textColor={options.textColor ?? '#ffffff'}
+        seriesVisibility={options.seriesVisibility}
       />
     </SciChartReact>
     </Box>
