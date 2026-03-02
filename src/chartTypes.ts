@@ -20,6 +20,8 @@ export interface GenericChartShape {
   color: string
   axis: 'x' | 'y'
   value: number
+  /** Dash pattern for line, e.g. [8, 4] for dashed. Omit for solid. */
+  strokeDashArray?: number[]
 }
 
 /** Per-series line styling. All fields optional; falls back to defaults. */
@@ -48,6 +50,8 @@ export interface GenericChartOptions {
   backgroundColor?: string
   /** Per-series line styling: color, thickness, dash. Injected from outside the wrapper. */
   seriesLines?: GenericLineStyle[]
+  /** Optional: called on chart click with x value. Handler returns shape(s) to inject. */
+  onPointMark?: (xValue: number) => GenericChartShape | GenericChartShape[] | null
 }
 
 export type ChartLibrary = 'scichart'

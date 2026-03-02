@@ -16,6 +16,7 @@ import {
   ZoomPanModifier,
 } from 'scichart'
 import { AxisStretchModifier } from './AxisStretchModifier'
+import { PointMarkModifier } from './PointMarkModifier'
 import { ZoomHistoryModifier } from './ZoomHistoryModifier'
 import { SciChartReact } from 'scichart-react'
 
@@ -40,6 +41,8 @@ export interface ChartShape {
   color: string
   lineAxis: 'x' | 'y'
   lineValue: number
+  /** Dash pattern for line, e.g. [8, 4] for dashed. Omit for solid. */
+  strokeDashArray?: number[]
 }
 
 interface ChartWithResamplingProps {
@@ -54,6 +57,8 @@ interface ChartWithResamplingProps {
   rolloverLineStrokeDashArray?: number[]
   /** Chart background color (HTML color code) */
   backgroundColor?: string
+  /** Optional: called on chart click with x value. Handler returns shape(s) to inject. */
+  onPointMark?: (xValue: number) => ChartShape | ChartShape[] | null
 }
 
 const SERIES_COLORS = [
@@ -85,6 +90,7 @@ export function ChartWithResampling({
   rolloverLineStroke = '#FF0000',
   rolloverLineStrokeDashArray = [8, 4],
   backgroundColor,
+  onPointMark,
 }: ChartWithResamplingProps) {
   return (
     <SciChartReact
@@ -135,6 +141,7 @@ export function ChartWithResampling({
                 x1: shape.lineValue,
                 stroke: shape.color,
                 strokeThickness: 2,
+                strokeDashArray: shape.strokeDashArray,
               })
             )
           } else {
@@ -143,6 +150,7 @@ export function ChartWithResampling({
                 y1: shape.lineValue,
                 stroke: shape.color,
                 strokeThickness: 2,
+                strokeDashArray: shape.strokeDashArray,
               })
             )
           }
@@ -150,6 +158,7 @@ export function ChartWithResampling({
 
         const stretchKey = MODIFIER_KEY_MAP[stretchModifierKey]
         sciChartSurface.chartModifiers.add(
+          new PointMarkModifier({ onPointMark }),
           new ZoomHistoryModifier(),
           new RubberBandXyZoomModifier({
             executeCondition: { key: EModifierMouseArgKey.None },

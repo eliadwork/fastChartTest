@@ -34,7 +34,18 @@ function convertToSciChartShapes(shapes: GenericChartShape[] = []): ChartShape[]
     color: s.color,
     lineAxis: s.axis,
     lineValue: s.value,
+    strokeDashArray: s.strokeDashArray,
   }))
+}
+
+function convertToChartShape(
+  s: GenericChartShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; strokeDashArray?: number[] }
+): ChartShape {
+  if ('lineAxis' in s && 'lineValue' in s) {
+    return { color: s.color, lineAxis: s.lineAxis, lineValue: s.lineValue, strokeDashArray: s.strokeDashArray }
+  }
+  const g = s as GenericChartShape
+  return { color: g.color, lineAxis: g.axis, lineValue: g.value, strokeDashArray: g.strokeDashArray }
 }
 
 function SciChartImplementation({
@@ -61,6 +72,16 @@ function SciChartImplementation({
       rolloverLineStroke={options.rolloverLineStroke}
       rolloverLineStrokeDashArray={options.rolloverLineStrokeDashArray}
       backgroundColor={options.backgroundColor}
+      onPointMark={
+        options.onPointMark
+          ? (xValue) => {
+              const result = options.onPointMark!(xValue)
+              if (!result) return null
+              const arr = Array.isArray(result) ? result : [result]
+              return arr.map(convertToChartShape) as ChartShape[]
+            }
+          : undefined
+      }
     />
   )
 }

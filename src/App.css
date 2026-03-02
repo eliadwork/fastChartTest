@@ -39,6 +39,63 @@
   min-height: 0;
 }
 
+.point-mark-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.point-mark-modal {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 90vw;
+}
+
+.point-mark-modal h4 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.point-mark-modal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.point-mark-modal-btn,
+.point-mark-modal-cancel {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #555;
+}
+
+.point-mark-modal-btn {
+  background: #333;
+  color: #fff;
+}
+
+.point-mark-modal-btn:hover {
+  background: #444;
+}
+
+.point-mark-modal-cancel {
+  background: transparent;
+  color: #888;
+}
+
+.point-mark-modal-cancel:hover {
+  color: #fff;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
