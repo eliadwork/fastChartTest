@@ -1,11 +1,48 @@
 .chart-comparison {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100vh;
   padding: 0.5rem;
   box-sizing: border-box;
+}
+
+.chart-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.chart-panel-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.chart-toolbar-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #555;
+  background: #333;
+  color: #fff;
+}
+
+.chart-toolbar-btn:hover {
+  background: #444;
+}
+
+.chart-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .chart-panel {
@@ -17,17 +54,17 @@
   min-height: 0;
 }
 
-.chart-panel h3 {
-  margin: 0;
-  padding: 0.5rem 1rem;
-  background: #1a1a1a;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
 
 .chart-panel > div:last-child {
   flex: 1;
   min-height: 0;
+}
+
+.chart-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-placeholder {

@@ -118,11 +118,12 @@ function App() {
 
   return (
     <div className="chart-comparison">
+      <div className="chart-comparison-grid">
       <div className="chart-panel">
-        <h3>Resampled (precision 1.0)</h3>
         {chartData ? (
           <ChartWrapper
             chartId="resampled"
+            title="Resampled (precision 1.0)"
             data={chartData}
             options={{
               ...sharedOptions,
@@ -137,10 +138,10 @@ function App() {
         )}
       </div>
       <div className="chart-panel">
-        <h3>No-loss (every point)</h3>
         {chartData ? (
           <ChartWrapper
             chartId="no-loss"
+            title="No-loss (every point)"
             data={chartData}
             options={{
               ...sharedOptions,
@@ -152,6 +153,7 @@ function App() {
         ) : (
           <div className="chart-placeholder">Loading data...</div>
         )}
+      </div>
       </div>
 
       {seriesPickerOpen && chartDataForModal && (

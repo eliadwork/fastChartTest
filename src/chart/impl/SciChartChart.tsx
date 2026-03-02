@@ -26,6 +26,7 @@ import { convertShapes, normalizeShape } from '../convert'
 import { AxisStretchModifier } from './AxisStretchModifier'
 import { LeftClickRubberBandXyZoomModifier } from './LeftClickRubberBandXyZoomModifier'
 import { PointMarkersSync } from './PointMarkersSync'
+import { SeriesVisibilitySync } from './SeriesVisibilitySync'
 import { LeftClickZoomPanModifier } from './LeftClickZoomPanModifier'
 import { PointMarkModifier } from './PointMarkModifier'
 import { ShiftLeftClickZoomPanModifier } from './ShiftLeftClickZoomPanModifier'
@@ -291,6 +292,7 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
         defaultIcon={pointMarkIcon}
         defaultColor={pointMarkIconColor}
       />
+      <SeriesVisibilitySync seriesVisibility={options.seriesVisibility} />
     </SciChartReact>
   )
 }
