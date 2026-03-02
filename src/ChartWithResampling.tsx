@@ -11,8 +11,8 @@ import {
   VerticalLineAnnotation,
   XyDataSeries,
   ZoomExtentsModifier,
-  ZoomPanModifier,
 } from 'scichart'
+import { AxisStretchModifier } from './AxisStretchModifier'
 import { SciChartReact } from 'scichart-react'
 
 export interface ChartData {
@@ -32,6 +32,7 @@ interface ChartWithResamplingProps {
   resamplingPrecision: number
   style?: React.CSSProperties
   shapes?: ChartShape[]
+  /** Key to hold for axis stretch (box zoom is default drag) */
   stretchModifierKey?: 'Shift' | 'Ctrl' | 'Alt'
   rolloverLineStroke?: string
   rolloverLineStrokeDashArray?: number[]
@@ -119,9 +120,12 @@ export function ChartWithResampling({
         const stretchKey = MODIFIER_KEY_MAP[stretchModifierKey]
         sciChartSurface.chartModifiers.add(
           new RubberBandXyZoomModifier({
-            executeCondition: { key: stretchKey },
+            executeCondition: { key: EModifierMouseArgKey.None },
           }),
-          new ZoomPanModifier(),
+          new AxisStretchModifier({
+            executeCondition: { key: stretchKey },
+            sensitivity: 0.5,
+          }),
           new MouseWheelZoomModifier(),
           new ZoomExtentsModifier(),
           new RolloverModifier({

@@ -27,7 +27,7 @@ export interface GenericChartOptions {
   resamplingPrecision?: number
   /** Reference lines to draw on the chart */
   shapes?: GenericChartShape[]
-  /** Key to hold for stretch/rectangle zoom */
+  /** Key to hold for axis stretch (box zoom is default drag) */
   stretchModifierKey?: 'Shift' | 'Ctrl' | 'Alt'
   /** Hover line color */
   rolloverLineStroke?: string
