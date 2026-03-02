@@ -183,7 +183,6 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
             x1: 0,
             stroke: zeroLineColor,
             strokeThickness: 1,
-            strokeDashArray: [4, 4],
           })
         )
         sciChartSurface.annotations.add(
@@ -191,7 +190,6 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
             y1: 0,
             stroke: zeroLineColor,
             strokeThickness: 1,
-            strokeDashArray: [4, 4],
           })
         )
 
