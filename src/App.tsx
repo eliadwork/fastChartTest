@@ -4,7 +4,7 @@ import { SciChartSurface } from 'scichart'
 import { ChartWrapper } from './ChartWrapper'
 import type { ChartData } from './chart'
 import { usePointMarkStore } from './store/pointMarkStore'
-import { getNearestPointAtX } from './utils/chartDataLookup'
+import { getInterpolatedPointAtX } from './utils/chartDataLookup'
 import './App.css'
 
 const POINTS_PER_SERIES = 500_000
@@ -72,16 +72,16 @@ function App() {
     (seriesIndex: number) => {
       if (!markedXValues || markedYValue == null || !chartDataForModal || !chartIdForModal) return
       const middleX = markedXValues[1]
-      const point = getNearestPointAtX(chartDataForModal, middleX, seriesIndex)
+      const point = getInterpolatedPointAtX(chartDataForModal, middleX, seriesIndex)
       if (!point) return
       addIcon(chartIdForModal, {
         iconImage: '●',
-        location: { x: middleX, y: point.y },
+        location: { x: point.x, y: point.y },
         color: '#888888',
       })
       const seriesName =
         chartDataForModal.seriesNames?.[seriesIndex] ?? `Series ${seriesIndex}`
-      enqueueSnackbar(`Y at nearest point (${point.x}): ${point.y} (${seriesName})`, {
+      enqueueSnackbar(`Y at ${point.x.toFixed(2)}: ${point.y} (${seriesName})`, {
         autoHideDuration: 60000,
       })
       closeSeriesPicker()

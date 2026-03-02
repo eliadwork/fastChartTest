@@ -51,3 +51,36 @@ export function getNearestPointAtX(
   if (!yValues) return null
   return findNearestPoint(chartData.x, yValues, xValue)
 }
+
+/**
+ * Gets the interpolated (x, y) on the line at xValue.
+ * When xValue is between two data points, linearly interpolates y.
+ */
+export function getInterpolatedPointAtX(
+  chartData: ChartDataLike,
+  xValue: number,
+  seriesIndex: number
+): { x: number; y: number } | null {
+  const x = chartData.x
+  const yValues = chartData.ys[seriesIndex]
+  if (!yValues) return null
+  const n = x.length
+  if (n === 0) return null
+  if (xValue <= x[0]) return { x: Number(x[0]), y: Number(yValues[0]) }
+  if (xValue >= x[n - 1]) return { x: Number(x[n - 1]), y: Number(yValues[n - 1]) }
+
+  let lo = 0
+  let hi = n - 1
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (x[mid] <= xValue) lo = mid
+    else hi = mid
+  }
+  const x0 = Number(x[lo])
+  const x1 = Number(x[hi])
+  const y0 = Number(yValues[lo])
+  const y1 = Number(yValues[hi])
+  const t = x1 === x0 ? 0 : (xValue - x0) / (x1 - x0)
+  const y = y0 + t * (y1 - y0)
+  return { x: xValue, y }
+}
