@@ -81,7 +81,22 @@ function App() {
   )
 
   const sharedOptions = {
-    shapes: [{ color: '#ff0000', axis: 'x' as const, value: 100 }],
+    shapes: [
+      { color: '#ff0000', axis: 'x' as const, value: 100 },
+      {
+        shape: 'box' as const,
+        name: 'Target Region',
+        color: '#00BFFF',
+        coordinates: { x1: 200, x2: 400, y1: -0.5, y2: 0.5 },
+      },
+      {
+        shape: 'box' as const,
+        name: 'Full-height band',
+        color: '#FFA500',
+        fill: '#FFA50022',
+        coordinates: { x1: 600, x2: 800 },
+      },
+    ],
   }
 
   return (

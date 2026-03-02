@@ -13,12 +13,29 @@ export interface ChartData {
   seriesColors?: string[]
 }
 
-export interface ChartShape {
+export interface ChartLineShape {
+  shape?: 'line'
   color: string
   axis: 'x' | 'y'
   value: number
   strokeDashArray?: number[]
 }
+
+export interface ChartBoxShape {
+  shape: 'box'
+  name?: string
+  color: string
+  fill?: string
+  coordinates: {
+    x1?: number
+    x2?: number
+    y1?: number
+    y2?: number
+  }
+  strokeDashArray?: number[]
+}
+
+export type ChartShape = ChartLineShape | ChartBoxShape
 
 export interface ChartLineStyle {
   color?: string
@@ -28,9 +45,16 @@ export interface ChartLineStyle {
 
 export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
 
+export type StretchTrigger = ModifierKey | 'rightClick'
+
 export interface ChartOptions {
   shapes?: ChartShape[]
-  stretchKey?: ModifierKey
+  note?: string
+  /** Modifier key for stretch zoom, or 'rightClick' for right-click drag. Default: 'rightClick' */
+  stretchTrigger?: StretchTrigger
+  /** Pan trigger: 'leftClick' for drag-to-pan, or modifier key (e.g. 'Alt'). Default: 'leftClick' */
+  panTrigger?: 'leftClick' | ModifierKey
+  /** @deprecated Use panTrigger instead */
   panKey?: ModifierKey
   rolloverStroke?: string
   rolloverDash?: number[]
@@ -41,7 +65,7 @@ export interface ChartOptions {
   defaultStrokeThickness?: number
   resampling?: boolean
   resamplingPrecision?: number
-  onPointMark?: (xValue: number) => ChartShape | ChartShape[] | null
+  onPointMark?: (xValue: number) => ChartLineShape | ChartLineShape[] | null
   /** When true, zoom/pan cannot go outside the data bounds. Default: true */
   clipZoomToData?: boolean
 }

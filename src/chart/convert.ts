@@ -3,7 +3,7 @@
  * Converts generic types to implementation-ready formats.
  */
 
-import type { ChartData, ChartLineStyle, ChartOptions, ChartShape } from './types'
+import type { ChartData, ChartLineStyle, ChartLineShape, ChartOptions, ChartShape } from './types'
 
 export interface ConvertedData {
   x: Float64Array
@@ -44,17 +44,49 @@ export function convertData(
   }
 }
 
-export function convertShapes(shapes: ChartShape[] = []): ConvertedShape[] {
-  return shapes.map((s) => ({
-    color: s.color,
-    lineAxis: s.axis,
-    lineValue: s.value,
-    strokeDashArray: s.strokeDashArray,
-  }))
+export interface ConvertedBox {
+  name?: string
+  color: string
+  fill?: string
+  x1?: number
+  x2?: number
+  y1?: number
+  y2?: number
+  strokeDashArray?: number[]
+}
+
+export function convertShapes(shapes: ChartShape[] = []): {
+  lines: ConvertedShape[]
+  boxes: ConvertedBox[]
+} {
+  const lines: ConvertedShape[] = []
+  const boxes: ConvertedBox[] = []
+  for (const s of shapes) {
+    if (s.shape === 'box') {
+      boxes.push({
+        name: s.name,
+        color: s.color,
+        fill: s.fill,
+        x1: s.coordinates.x1,
+        x2: s.coordinates.x2,
+        y1: s.coordinates.y1,
+        y2: s.coordinates.y2,
+        strokeDashArray: s.strokeDashArray,
+      })
+    } else {
+      lines.push({
+        color: s.color,
+        lineAxis: s.axis,
+        lineValue: s.value,
+        strokeDashArray: s.strokeDashArray,
+      })
+    }
+  }
+  return { lines, boxes }
 }
 
 export function normalizeShape(
-  s: ChartShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; strokeDashArray?: number[] }
+  s: ChartLineShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; strokeDashArray?: number[] }
 ): ConvertedShape {
   if ('lineAxis' in s && 'lineValue' in s) {
     return {
@@ -64,7 +96,7 @@ export function normalizeShape(
       strokeDashArray: s.strokeDashArray,
     }
   }
-  const g = s as ChartShape
+  const g = s as ChartLineShape
   return {
     color: g.color,
     lineAxis: g.axis,

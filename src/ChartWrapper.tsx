@@ -3,8 +3,8 @@ import { Chart } from './chart'
 import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 
 const DEFAULT_OPTIONS: ChartOptions = {
-  stretchKey: 'Shift',
-  panKey: 'Ctrl',
+  stretchTrigger: 'Ctrl',
+  panTrigger: 'Shift',
   rolloverStroke: '#FF0000',
   rolloverDash: [8, 4],
   clipZoomToData: true,
