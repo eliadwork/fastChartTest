@@ -13,6 +13,7 @@ import {
 import type { ConvertedShape } from '../convert'
 
 const CLICK_THRESHOLD_PX = 5
+const MIDDLE_MOUSE_BUTTON = 1
 
 export type PointMarkResult =
   | ConvertedShape
@@ -24,7 +25,7 @@ export interface IPointMarkModifierOptions {
 }
 
 /**
- * Point mark modifier: fires on click (not box drag) with x value.
+ * Point mark modifier: fires on middle-click (scroll wheel click, not box drag) with x value.
  * Calls optional handler; if handler returns shape(s), adds them as vertical line annotations.
  */
 export class PointMarkModifier extends ChartModifierBase2D {
@@ -39,11 +40,16 @@ export class PointMarkModifier extends ChartModifierBase2D {
 
   modifierMouseDown(args: ModifierMouseArgs): void {
     super.modifierMouseDown(args)
+    if (args.button !== MIDDLE_MOUSE_BUTTON) return
     this.mouseDownPoint = { x: args.mousePoint.x, y: args.mousePoint.y }
   }
 
   modifierMouseUp(args: ModifierMouseArgs): void {
     super.modifierMouseUp(args)
+    if (args.button !== MIDDLE_MOUSE_BUTTON) {
+      this.mouseDownPoint = undefined
+      return
+    }
     const down = this.mouseDownPoint
     this.mouseDownPoint = undefined
     if (!down || !this.onPointMark) return
