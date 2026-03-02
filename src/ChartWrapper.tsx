@@ -30,16 +30,19 @@ export interface ChartWrapperProps {
   options?: ChartOptions
   style?: React.CSSProperties
   lines?: ChartLineStyle[]
+  /** Default line thickness for all series. Override per-series via lines[].thickness */
+  defaultLineThickness?: number
 }
 
-export function ChartWrapper({ data, options = {}, style, lines }: ChartWrapperProps) {
+export function ChartWrapper({ data, options = {}, style, lines, defaultLineThickness }: ChartWrapperProps) {
   const mergedOptions = useMemo(
     () => ({
       ...DEFAULT_OPTIONS,
       ...options,
+      defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? 2,
       seriesLines: lines ?? options.seriesLines,
     }),
-    [options, lines]
+    [options, lines, defaultLineThickness]
   )
 
   return (

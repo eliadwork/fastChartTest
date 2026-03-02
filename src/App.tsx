@@ -81,6 +81,12 @@ function App() {
   )
 
   const sharedOptions = {
+    seriesLines: [
+      {},
+      {},
+      { thickness: 4 },
+      { thickness: 1 },
+    ],
     shapes: [
       { color: '#ff0000', axis: 'x' as const, value: 100 },
       {
