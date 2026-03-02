@@ -14,13 +14,13 @@ done
 * add icon on pick - the icon should be injected from outside (for the current example now make the icon a gray circle) the icon should be responsive and get smaller and bigger according to the zoom of the graph
 * add the axis outlines
 * add the option to group graph at the glossary
+* is picked value
 
 
  need to do:
 * right click streching
-* is picked value
 * make a warapper that can be moved and made bigger and smaller
-
+* make the whole component be relative 
 
 cr and code cleam up:
 * make a cr for yourself make the code clean clear and readable and optiomize the graph 

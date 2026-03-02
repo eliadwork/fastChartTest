@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 import { SciChartSurface } from 'scichart'
+import { DEFAULT_POINT_MARK_ICON_SVG } from './chartTheme'
 import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
 import type { ChartData } from './chart'
@@ -85,9 +86,9 @@ function App() {
       const point = getInterpolatedPointAtX(chartDataForModal, middleX, seriesIndex)
       if (!point) return
       addIcon(chartIdForModal, {
-        iconImage: '●',
-        location: { x: point.x, y: point.y },
-        color: '#888888',
+        iconImage: DEFAULT_POINT_MARK_ICON_SVG,
+        location: { x: 150000, y: 1000 },
+        color: 'pink',
       })
       const seriesName =
         chartDataForModal.seriesNames?.[seriesIndex] ?? `Series ${seriesIndex}`
@@ -100,7 +101,7 @@ function App() {
   )
 
   const chartThemeOverride = {
-    pointMarkIcon: '●',
+    pointMarkIcon: DEFAULT_POINT_MARK_ICON_SVG,
     pointMarkIconColor: '#888888',
     backgroundColor: theme.palette.background.paper,
     textColor: theme.palette.text.primary,
@@ -122,7 +123,12 @@ function App() {
       { bindable: false },
     ],
     shapes: [
-      { color: '#ff0000', axis: 'x' as const, value: 100 },
+      {
+        shape: 'line' as const,
+        color: '#ff0000',
+        axis: 'x' as const,
+        value: 100,
+      },
       {
         shape: 'box' as const,
         name: 'Target Region',
@@ -155,7 +161,14 @@ function App() {
                 resamplingPrecision: 1,
                 onPointMark: createPointMarkHandler('resampled'),
               }}
-              icons={iconsByChart['resampled']}
+              icons={[
+                {
+                  iconImage: DEFAULT_POINT_MARK_ICON_SVG,
+                  location: { x: 150000, y: 1000 },
+                  color: '#888888',
+                },
+                ...(iconsByChart['resampled'] ?? []),
+              ]}
             />
           ) : (
             <ChartPlaceholder>Loading data...</ChartPlaceholder>

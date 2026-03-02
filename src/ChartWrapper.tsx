@@ -62,6 +62,7 @@ export function ChartWrapper({
       rolloverDash: chartTheme.rolloverDash,
       pointMarkIcon: chartTheme.pointMarkIcon,
       pointMarkIconColor: chartTheme.pointMarkIconColor,
+      pointMarkIconSize: options.pointMarkIconSize ?? chartTheme.pointMarkIconSize,
       zeroLineColor: chartTheme.zeroLineColor ?? options.zeroLineColor,
       backgroundColor:
         chartTheme.backgroundColor != null

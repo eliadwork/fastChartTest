@@ -260,7 +260,10 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         }
 
         sciChartSurface.chartModifiers.add(
-          new PointMarkModifier({ onPointMark }),
+          new PointMarkModifier({
+            onPointMark,
+            iconSize: options.pointMarkIconSize ?? 1.5,
+          }),
           new ZoomHistoryModifier({ chartId }),
           new LeftClickRubberBandXyZoomModifier({
             executeCondition: { key: EModifierMouseArgKey.None },
@@ -300,6 +303,7 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         pointMarkers={options.pointMarkers ?? []}
         defaultIcon={pointMarkIcon}
         defaultColor={pointMarkIconColor}
+        iconSize={options.pointMarkIconSize ?? 1.5}
       />
       <SeriesVisibilitySync seriesVisibility={options.seriesVisibility} />
       <LegendSync

@@ -87,12 +87,13 @@ export function convertShapes(shapes: ChartShape[] = []): {
         y2: s.coordinates.y2,
         strokeDashArray: s.strokeDashArray,
       })
-    } else {
+    } else if (s.shape === 'line' || ('axis' in s && 'value' in s)) {
+      const line = s as ChartLineShape
       lines.push({
-        color: s.color,
-        lineAxis: s.axis,
-        lineValue: s.value,
-        strokeDashArray: s.strokeDashArray,
+        color: line.color,
+        lineAxis: line.axis,
+        lineValue: line.value,
+        strokeDashArray: line.strokeDashArray,
       })
     }
   }

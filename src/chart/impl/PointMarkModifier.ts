@@ -1,5 +1,6 @@
 import {
   ChartModifierBase2D,
+  CustomAnnotation,
   ECoordinateMode,
   EHorizontalAnchorPoint,
   EChart2DModifierType,
@@ -11,6 +12,7 @@ import {
   VerticalLineAnnotation,
 } from 'scichart'
 import type { ConvertedShape } from '../convert'
+import { toSvgString } from './iconUtils'
 
 const CLICK_THRESHOLD_PX = 5
 const MIDDLE_MOUSE_BUTTON = 1
@@ -26,20 +28,26 @@ export interface PointMarkContext {
 
 export interface IPointMarkModifierOptions {
   onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
+  /** Icon size multiplier. 1 = default, 1.5 = 50% bigger. */
+  iconSize?: number
 }
 
 /**
  * Point mark modifier: fires on middle-click (scroll wheel click, not box drag) with x value.
  * Calls optional handler; if handler returns shape(s), adds them as vertical line annotations.
  */
+const DEFAULT_ICON_SIZE = 1
+
 export class PointMarkModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
   private onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
   private mouseDownPoint: Point | undefined
+  private iconSize: number
 
   constructor(options?: IPointMarkModifierOptions) {
     super()
     this.onPointMark = options?.onPointMark
+    this.iconSize = options?.iconSize ?? DEFAULT_ICON_SIZE
   }
 
   modifierMouseDown(args: ModifierMouseArgs): void {
@@ -90,32 +98,40 @@ export class PointMarkModifier extends ChartModifierBase2D {
     const toAdd = Array.isArray(result) ? result : [result]
     for (const item of toAdd) {
       if ('type' in item && item.type === 'marker') {
-        const xAxis = this.getIncludedXAxis()[0]
         const yAxis = this.getIncludedYAxis()[0]
-        const xRange = xAxis?.visibleRange
-        const yRange = yAxis?.visibleRange
-        const xSpan = xRange ? xRange.diff : 1
-        const ySpan = yRange ? yRange.diff : 1
-        const deltaX = xSpan * 0.06
-        const deltaY = ySpan * 0.06
         const yCoordCalc = yAxis?.getCurrentCoordinateCalculator()
         const yValue = yCoordCalc ? yCoordCalc.getDataValue(translated.y) : 0
-        this.parentSurface.annotations.add(
-          new NativeTextAnnotation({
-            x1: item.x,
-            x2: item.x + deltaX,
-            y1: yValue,
-            y2: yValue + deltaY,
-            xCoordinateMode: ECoordinateMode.DataValue,
-            yCoordinateMode: ECoordinateMode.DataValue,
-            text: item.icon ?? '📍',
-            textColor: item.color ?? '#3388ff',
-            fontSize: 16,
-            horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
-            verticalAnchorPoint: EVerticalAnchorPoint.Center,
-            scaleOnResize: true,
-          })
-        )
+        const iconStr = item.icon ?? ''
+        const color = item.color ?? '#3388ff'
+        const isSvg = iconStr.startsWith('<')
+        const px = Math.round(24 * this.iconSize)
+        if (isSvg) {
+          this.parentSurface.annotations.add(
+            new CustomAnnotation({
+              x1: item.x,
+              y1: yValue,
+              xCoordinateMode: ECoordinateMode.DataValue,
+              yCoordinateMode: ECoordinateMode.DataValue,
+              horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
+              verticalAnchorPoint: EVerticalAnchorPoint.Center,
+              svgString: toSvgString(iconStr, px, color),
+            })
+          )
+        } else {
+          this.parentSurface.annotations.add(
+            new NativeTextAnnotation({
+              x1: item.x,
+              y1: yValue,
+              xCoordinateMode: ECoordinateMode.DataValue,
+              yCoordinateMode: ECoordinateMode.DataValue,
+              text: iconStr || '●',
+              textColor: color,
+              fontSize: Math.round(16 * this.iconSize),
+              horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
+              verticalAnchorPoint: EVerticalAnchorPoint.Center,
+            })
+          )
+        }
       } else if ('lineAxis' in item && item.lineAxis === 'x') {
         this.parentSurface.annotations.add(
           new VerticalLineAnnotation({

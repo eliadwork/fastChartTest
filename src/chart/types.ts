@@ -14,6 +14,7 @@ export interface ChartData {
 }
 
 export interface ChartLineShape {
+  /** Explicit shape type; omit for shorthand. */
   shape?: 'line'
   color: string
   axis: 'x' | 'y'
@@ -59,6 +60,7 @@ export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
 export type StretchTrigger = ModifierKey | 'rightClick'
 
 export interface ChartIcon {
+  /** SVG string (preferred, use {{color}} for fill), image URL, or legacy character. */
   iconImage: string
   location: { x: number; y: number }
   color?: string
@@ -95,6 +97,8 @@ export interface ChartOptions {
   pointMarkIcon?: string
   /** Color for the point mark icon. Default: '#3388ff' */
   pointMarkIconColor?: string
+  /** Icon size multiplier. 1 = default, 1.5 = 50% bigger. Default: 1.5. */
+  pointMarkIconSize?: number
   /** Icons rendered at chart locations. iconImage: SVG string, image URL, or character. color for character fallback. */
   icons?: ChartIcon[]
   /** @deprecated Use icons instead. Markers from 3-click flow. */

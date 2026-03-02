@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { DEFAULT_POINT_MARK_ICON_SVG } from '../chartTheme'
 import { getInterpolatedPointAtX } from '../utils/chartDataLookup'
 
 export interface ChartDataForModal {
@@ -123,7 +124,7 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
           const point = getInterpolatedPointAtX(chartData, middleX, autoBindIndex)
           if (point) {
             addIcon(chartId, {
-              iconImage: '●',
+              iconImage: DEFAULT_POINT_MARK_ICON_SVG,
               location: { x: point.x, y: point.y },
               color: '#888888',
             })

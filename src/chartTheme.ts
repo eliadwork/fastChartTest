@@ -3,6 +3,10 @@
  * Customize via createChartTheme() or pass overrides to ChartThemeProvider.
  */
 
+/** Default point mark icon: SVG circle. Use {{color}} placeholder for fill (replaced at render). */
+export const DEFAULT_POINT_MARK_ICON_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="{{color}}"/></svg>'
+
 export interface ChartTheme {
   /** Default colors for series when not specified per-series */
   defaultSeriesColors: string[]
@@ -20,6 +24,8 @@ export interface ChartTheme {
   pointMarkIcon?: string
   /** Point mark icon color */
   pointMarkIconColor?: string
+  /** Icon size multiplier. 1 = default, 1.5 = 50% bigger. */
+  pointMarkIconSize?: number
   /** Text color for header, axis labels (steps), and legend (graph names). Default: white. */
   textColor?: string
   /** Color for the zero axis lines (x=0, y=0). Default: white. */
@@ -60,8 +66,9 @@ export const defaultChartTheme: ChartTheme = {
   rolloverStroke: '#FF0000',
   rolloverDash: [8, 4],
   defaultStrokeThickness: 2,
-  pointMarkIcon: '📍',
+  pointMarkIcon: DEFAULT_POINT_MARK_ICON_SVG,
   pointMarkIconColor: '#3388ff',
+  pointMarkIconSize: 1.5,
   textColor: '#ffffff',
   zeroLineColor: '#ffffff',
 }
