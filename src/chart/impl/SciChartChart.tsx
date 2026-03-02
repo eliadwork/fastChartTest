@@ -100,8 +100,10 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
         const createOptions = options.backgroundColor != null ? { background: options.backgroundColor } : undefined
         const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement, createOptions)
 
-        const xAxis = new NumericAxis(wasmContext)
-        const yAxis = new NumericAxis(wasmContext)
+        const axisLabelColor = options.textColor ?? '#ffffff'
+        const axisOptions = { labelStyle: { color: axisLabelColor } }
+        const xAxis = new NumericAxis(wasmContext, axisOptions)
+        const yAxis = new NumericAxis(wasmContext, axisOptions)
         sciChartSurface.xAxes.add(xAxis)
         sciChartSurface.yAxes.add(yAxis)
 
@@ -230,21 +232,6 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
           }
         }
 
-        if (options.note) {
-          sciChartSurface.annotations.add(
-            new NativeTextAnnotation({
-              x1: 0.5,
-              y1: 0,
-              xCoordinateMode: ECoordinateMode.Relative,
-              yCoordinateMode: ECoordinateMode.Relative,
-              text: options.note,
-              textColor: '#FFFFFF',
-              fontSize: 14,
-              horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
-            })
-          )
-        }
-
         sciChartSurface.chartModifiers.add(
           new PointMarkModifier({ onPointMark }),
           new ZoomHistoryModifier(),
@@ -271,6 +258,8 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
             showSeriesMarkers: true,
             showCheckboxes: true,
             placement: ELegendPlacement.TopLeft,
+            backgroundColor: options.legendBackgroundColor ?? options.backgroundColor,
+            textColor: options.textColor ?? '#ffffff',
           }),
           new RolloverModifier({
             tooltipDataTemplate: (seriesInfo) => [

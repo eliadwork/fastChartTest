@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Chart } from './chart'
 import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 import { useChartTheme } from './ChartThemeContext'
-import { ChartPanelHeader, ChartPanelTitle, ChartToolbarButton, ChartWrapperBox } from './styled'
+import { withOpacity } from './chartTheme'
+import { ChartPanelHeader, ChartPanelHeaderText, ChartPanelTitle, ChartPanelNote, ChartToolbarButton, ChartWrapperBox } from './styled'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 
@@ -55,7 +56,15 @@ export function ChartWrapper({
       rolloverDash: chartTheme.rolloverDash,
       pointMarkIcon: chartTheme.pointMarkIcon,
       pointMarkIconColor: chartTheme.pointMarkIconColor,
-      backgroundColor: chartTheme.backgroundColor,
+      backgroundColor:
+        chartTheme.backgroundColor != null
+          ? withOpacity(chartTheme.backgroundColor, chartTheme.chartBackgroundOpacity ?? 0.2)
+          : undefined,
+      legendBackgroundColor:
+        chartTheme.backgroundColor != null
+          ? withOpacity(chartTheme.backgroundColor, chartTheme.chartBackgroundOpacity ?? 0.2)
+          : undefined,
+      textColor: chartTheme.textColor ?? options.textColor,
       ...options,
       defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? chartTheme.defaultStrokeThickness ?? 2,
       seriesLines: lines ?? options.seriesLines,
@@ -68,17 +77,40 @@ export function ChartWrapper({
     [chartTheme, options, lines, defaultLineThickness, icons, pointMarkers, allGraphsDisabled, seriesCount]
   )
 
-  const showHeader = title != null || showDisableAllButton
+  const showHeader = title != null || showDisableAllButton || options.note != null
+
+  const headerBg =
+    chartTheme.backgroundColor != null
+      ? chartTheme.backgroundColor
+      : undefined
+  const textColor = chartTheme.textColor ?? options.textColor
 
   return (
     <ChartWrapperBox>
       {showHeader && (
-        <ChartPanelHeader>
-          {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
+        <ChartPanelHeader
+          sx={{
+            ...(headerBg ? { backgroundColor: headerBg } : {}),
+            ...(textColor ? { color: textColor } : {}),
+          }}
+        >
+          <ChartPanelHeaderText>
+            {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
+            {options.note != null && (
+              <ChartPanelNote variant="body2">
+                {options.note}
+              </ChartPanelNote>
+            )}
+          </ChartPanelHeaderText>
           {showDisableAllButton && (
             <ChartToolbarButton
               variant="outlined"
               size="small"
+              sx={{
+                ...(textColor ? { color: textColor, borderColor: textColor } : {}),
+                alignSelf: 'center',
+                flexShrink: 0,
+              }}
               startIcon={allGraphsDisabled ? <VisibilityIcon /> : <VisibilityOffIcon />}
               onClick={() => setAllGraphsDisabled((v) => !v)}
             >

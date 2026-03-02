@@ -33,7 +33,7 @@ export const ChartPanel = styled(Box)(({ theme }) => ({
 
 export const ChartPanelHeader = styled(Box)({
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'stretch',
   justifyContent: 'space-between',
   gap: '0.5rem',
   margin: 0,
@@ -42,9 +42,25 @@ export const ChartPanelHeader = styled(Box)({
   flexShrink: 0,
 })
 
+export const ChartPanelHeaderText = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minWidth: 0,
+  overflowWrap: 'break-word',
+  wordBreak: 'break-word',
+})
+
 export const ChartPanelTitle = styled(Typography)({
   margin: 0,
   fontSize: '0.9rem',
+})
+
+export const ChartPanelNote = styled(Typography)({
+  margin: '0.15rem 0 0',
+  fontSize: '0.75rem',
+  lineHeight: 1.3,
+  opacity: 0.9,
 })
 
 export const ChartToolbarButton = styled(Button)({

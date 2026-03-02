@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
+import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 import { SciChartSurface } from 'scichart'
 import { ChartThemeProvider } from './ChartThemeContext'
@@ -26,6 +27,7 @@ const SERIES_COUNT = 10
 SciChartSurface.loadWasmFromCDN()
 
 function App() {
+  const theme = useTheme()
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const { enqueueSnackbar } = useSnackbar()
   const seriesPickerOpen = usePointMarkStore((s) => s.seriesPickerOpen)
@@ -104,9 +106,12 @@ function App() {
   const chartThemeOverride = {
     pointMarkIcon: '●',
     pointMarkIconColor: '#888888',
+    backgroundColor: theme.palette.background.paper,
+    textColor: theme.palette.text.primary,
   }
 
   const sharedOptions = {
+    note: 'this is the chart example',
     seriesLines: [
       {},
       {},

@@ -74,6 +74,10 @@ export interface ChartOptions {
   rolloverStroke?: string
   rolloverDash?: number[]
   backgroundColor?: string
+  /** Legend (glossary) background color. Defaults to same as chart (backgroundColor with chartBackgroundOpacity). */
+  legendBackgroundColor?: string
+  /** Text color for header, axis labels, and legend. Default: white. */
+  textColor?: string
   seriesVisibility?: boolean[]
   seriesLines?: ChartLineStyle[]
   defaultSeriesColors?: string[]
