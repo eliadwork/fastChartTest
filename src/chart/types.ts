@@ -102,4 +102,5 @@ export interface ChartProps {
   options?: ChartOptions
   style?: React.CSSProperties
   lines?: ChartLineStyle[]
+  chartId?: string
 }

@@ -55,9 +55,10 @@ export interface SciChartChartProps {
   data: ConvertedData
   options: ChartOptions
   style?: React.CSSProperties
+  chartId?: string
 }
 
-export function SciChartChart({ data, options, style }: SciChartChartProps) {
+export function SciChartChart({ data, options, style, chartId }: SciChartChartProps) {
   const { lines: lineShapes, boxes } = convertShapes(options.shapes)
   const stretchTrigger = options.stretchTrigger ?? 'Ctrl'
   const stretchOnRightClick = stretchTrigger === 'rightClick'
@@ -234,7 +235,7 @@ export function SciChartChart({ data, options, style }: SciChartChartProps) {
 
         sciChartSurface.chartModifiers.add(
           new PointMarkModifier({ onPointMark }),
-          new ZoomHistoryModifier(),
+          new ZoomHistoryModifier({ chartId }),
           new LeftClickRubberBandXyZoomModifier({
             executeCondition: { key: EModifierMouseArgKey.None },
           }),

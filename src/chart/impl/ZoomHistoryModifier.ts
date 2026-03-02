@@ -4,21 +4,38 @@ import {
   ModifierMouseArgs,
   NumberRange,
 } from 'scichart'
+import { useZoomBackStore } from '../../store/zoomBackStore'
 
 interface StoredRange {
   x: NumberRange
   y: NumberRange
 }
 
+export interface ZoomHistoryModifierOptions {
+  chartId?: string
+}
+
 export class ZoomHistoryModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
   private history: StoredRange[] = []
   private isRestoring = false
-  private backButton: HTMLButtonElement | null = null
+  private chartId: string | undefined
+  private unregister: (() => void) | undefined
+
+  constructor(options?: ZoomHistoryModifierOptions) {
+    super()
+    this.chartId = options?.chartId
+  }
 
   onAttach(): void {
     super.onAttach()
-    this.addBackButton()
+    if (this.chartId) {
+      this.unregister = useZoomBackStore.getState().register(
+        this.chartId,
+        () => this.restorePrevious()
+      )
+      this.updateStoreCanZoomBack()
+    }
   }
 
   modifierMouseDown(args: ModifierMouseArgs): void {
@@ -32,7 +49,8 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
   }
 
   onDetach(): void {
-    this.removeBackButton()
+    this.unregister?.()
+    this.unregister = undefined
     super.onDetach()
   }
 
@@ -42,7 +60,7 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     if (!current) return
     if (this.history.length > 0 && !this.rangesDiffer(current, this.history[this.history.length - 1])) return
     this.history.push(this.cloneRange(current))
-    this.updateBackButton()
+    this.updateStoreCanZoomBack()
   }
 
   private cloneRange(r: StoredRange): StoredRange {
@@ -72,40 +90,9 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     )
   }
 
-  private addBackButton(): void {
-    const root = this.parentSurface.domCanvas2D?.parentElement
-    if (!root) return
-    const btn = document.createElement('button')
-    btn.textContent = '← Zoom back'
-    btn.className = 'zoom-history-back-btn'
-    btn.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 100;
-      padding: 6px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      background: rgba(255,255,255,0.9);
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    `
-    btn.disabled = true
-    btn.onclick = () => this.restorePrevious()
-    root.style.position = 'relative'
-    root.appendChild(btn)
-    this.backButton = btn
-  }
-
-  private removeBackButton(): void {
-    this.backButton?.remove()
-    this.backButton = null
-  }
-
-  private updateBackButton(): void {
-    if (this.backButton) {
-      this.backButton.disabled = this.history.length === 0
+  private updateStoreCanZoomBack(): void {
+    if (this.chartId) {
+      useZoomBackStore.getState().setCanZoomBack(this.chartId, this.history.length > 0)
     }
   }
 
@@ -119,6 +106,6 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     xAxis.visibleRange = new NumberRange(prev.x.min, prev.x.max)
     yAxis.visibleRange = new NumberRange(prev.y.min, prev.y.max)
     this.isRestoring = false
-    this.updateBackButton()
+    this.updateStoreCanZoomBack()
   }
 }

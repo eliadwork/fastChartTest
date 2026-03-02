@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import Box from '@mui/material/Box'
 import { Chart } from './chart'
 import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 import { useChartTheme } from './ChartThemeContext'
@@ -6,6 +7,8 @@ import { withOpacity } from './chartTheme'
 import { ChartPanelHeader, ChartPanelHeaderText, ChartPanelTitle, ChartPanelNote, ChartToolbarButton, ChartWrapperBox } from './styled'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import UndoIcon from '@mui/icons-material/Undo'
+import { useZoomBackStore } from './store/zoomBackStore'
 
 const DEFAULT_OPTIONS: ChartOptions = {
   stretchTrigger: 'Ctrl',
@@ -34,6 +37,7 @@ export interface ChartWrapperProps {
 }
 
 export function ChartWrapper({
+  chartId,
   data,
   options = {},
   style,
@@ -45,6 +49,8 @@ export function ChartWrapper({
   showDisableAllButton = true,
 }: ChartWrapperProps) {
   const chartTheme = useChartTheme()
+  const zoomBack = useZoomBackStore((s) => s.zoomBack)
+  const canZoomBack = useZoomBackStore((s) => s.canZoomBackFor(chartId ?? ''))
   const [allGraphsDisabled, setAllGraphsDisabled] = useState(false)
   const seriesCount = (data.ys ?? data.series ?? []).length
 
@@ -102,21 +108,37 @@ export function ChartWrapper({
               </ChartPanelNote>
             )}
           </ChartPanelHeaderText>
-          {showDisableAllButton && (
-            <ChartToolbarButton
-              variant="outlined"
-              size="small"
-              sx={{
-                ...(textColor ? { color: textColor, borderColor: textColor } : {}),
-                alignSelf: 'center',
-                flexShrink: 0,
-              }}
-              startIcon={allGraphsDisabled ? <VisibilityIcon /> : <VisibilityOffIcon />}
-              onClick={() => setAllGraphsDisabled((v) => !v)}
-            >
-              {allGraphsDisabled ? 'Enable all' : 'Disable all'}
-            </ChartToolbarButton>
-          )}
+          <Box sx={{ display: 'flex', gap: '0.5rem', alignSelf: 'center', flexShrink: 0 }}>
+            {chartId && (
+              <ChartToolbarButton
+                variant="outlined"
+                size="small"
+                sx={{
+                  ...(textColor ? { color: textColor, borderColor: textColor } : {}),
+                  minWidth: 'auto',
+                  px: 1,
+                }}
+                onClick={() => zoomBack(chartId)}
+                disabled={!canZoomBack}
+                aria-label="Zoom back"
+              >
+                <UndoIcon sx={{ fontSize: '1.1rem' }} />
+              </ChartToolbarButton>
+            )}
+            {showDisableAllButton && (
+              <ChartToolbarButton
+                variant="outlined"
+                size="small"
+                sx={{
+                  ...(textColor ? { color: textColor, borderColor: textColor } : {}),
+                }}
+                startIcon={allGraphsDisabled ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                onClick={() => setAllGraphsDisabled((v) => !v)}
+              >
+                {allGraphsDisabled ? 'Enable all' : 'Disable all'}
+              </ChartToolbarButton>
+            )}
+          </Box>
         </ChartPanelHeader>
       )}
       <Chart
@@ -124,6 +146,7 @@ export function ChartWrapper({
         options={mergedOptions}
         style={style ?? { width: '100%', height: '100%', flex: 1, minHeight: 0 }}
         lines={lines}
+        chartId={chartId}
       />
     </ChartWrapperBox>
   )
