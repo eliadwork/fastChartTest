@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import { SciChartSurface } from 'scichart'
 import { SciChartSurfaceContext } from 'scichart-react'
@@ -15,7 +15,7 @@ interface SeriesInfo {
 interface LegendSyncProps {
   backgroundColor?: string
   textColor?: string
-  /** When provided (e.g. from "disable all"), used for display; otherwise read from chart. */
+  /** When provided, triggers re-render after SeriesVisibilitySync (e.g. "disable all") updates the chart. */
   seriesVisibility?: boolean[]
 }
 
@@ -24,6 +24,13 @@ export function LegendSync({ backgroundColor, textColor, seriesVisibility }: Leg
   const [, forceUpdate] = useState(0)
 
   const surface = initResult?.sciChartSurface as SciChartSurface | undefined
+
+  // Re-render after SeriesVisibilitySync runs (e.g. when "disable all" changes)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => forceUpdate((n) => n + 1))
+    return () => cancelAnimationFrame(id)
+  }, [seriesVisibility])
+
   const seriesList: SeriesInfo[] = []
 
   if (surface) {
@@ -37,13 +44,12 @@ export function LegendSync({ backgroundColor, textColor, seriesVisibility }: Leg
         dataSeries?: { dataSeriesName?: string }
       }
       const name = rs.dataSeries?.dataSeriesName ?? `Series ${i}`
-      const isVisible = seriesVisibility ? (seriesVisibility[i] ?? true) : rs.isVisible
       seriesList.push({
         name,
         stroke: rs.stroke ?? '#888',
         strokeDashArray: rs.strokeDashArray,
         strokeThickness: rs.strokeThickness ?? 2,
-        isVisible,
+        isVisible: rs.isVisible,
         index: i,
       })
     }
