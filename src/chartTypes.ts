@@ -35,6 +35,8 @@ export interface GenericChartOptions {
   rolloverLineStroke?: string
   /** Hover line dash pattern, e.g. [8, 4] for striped */
   rolloverLineStrokeDashArray?: number[]
+  /** Per-series visibility: true = show, false = hide. Undefined = show. Enables legend checkboxes. */
+  seriesVisibility?: boolean[]
 }
 
 export type ChartLibrary = 'scichart'

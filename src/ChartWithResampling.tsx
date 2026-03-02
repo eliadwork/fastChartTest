@@ -23,6 +23,8 @@ export interface ChartData {
   x: Float64Array
   ys: Float64Array[]
   seriesNames?: string[]
+  /** Per-series visibility: true = show, false = hide. Undefined = show. */
+  seriesVisibility?: boolean[]
 }
 
 export interface ChartShape {
@@ -84,6 +86,7 @@ export function ChartWithResampling({
         sciChartSurface.yAxes.add(yAxis)
 
         const seriesNames = data.seriesNames ?? data.ys.map((_, i) => `Series ${i}`)
+        const seriesVisibility = data.seriesVisibility
         for (let i = 0; i < data.ys.length; i++) {
           const dataSeries = new XyDataSeries(wasmContext, {
             xValues: data.x,
@@ -93,12 +96,14 @@ export function ChartWithResampling({
             dataSeriesName: seriesNames[i] ?? `Series ${i}`,
           })
 
+          const isVisible = seriesVisibility?.[i] ?? true
           const series = new FastLineRenderableSeries(wasmContext, {
             dataSeries,
             stroke: SERIES_COLORS[i % SERIES_COLORS.length],
             strokeThickness: 2,
             resamplingMode,
             resamplingPrecision,
+            isVisible,
           })
 
           sciChartSurface.renderableSeries.add(series)
@@ -141,7 +146,7 @@ export function ChartWithResampling({
           new ZoomExtentsModifier(),
           new LegendModifier({
             showSeriesMarkers: true,
-            showCheckboxes: false,
+            showCheckboxes: true,
             placement: ELegendPlacement.TopLeft,
           }),
           new RolloverModifier({

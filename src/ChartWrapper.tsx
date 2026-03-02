@@ -9,11 +9,16 @@ import { ChartWithResampling } from './ChartWithResampling'
 import type { ChartData, ChartShape } from './ChartWithResampling'
 import { EResamplingMode } from 'scichart'
 
-function convertToSciChartData(data: GenericChartData): ChartData {
+function convertToSciChartData(data: GenericChartData, options?: GenericChartOptions): ChartData {
   const x = toFloat64Array(data.x)
   const series = data.series ?? data.ys ?? []
   const ys = series.map((s) => toFloat64Array(s))
-  return { x, ys, seriesNames: data.seriesNames }
+  return {
+    x,
+    ys,
+    seriesNames: data.seriesNames,
+    seriesVisibility: options?.seriesVisibility,
+  }
 }
 
 function convertToSciChartShapes(shapes: GenericChartShape[] = []): ChartShape[] {
@@ -62,7 +67,7 @@ export function ChartWrapper({
   library = 'scichart',
   style = { width: '100%', height: '100%' },
 }: ChartWrapperProps) {
-  const chartData = convertToSciChartData(data)
+  const chartData = convertToSciChartData(data, options)
 
   switch (library) {
     case 'scichart':
