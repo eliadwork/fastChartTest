@@ -26,7 +26,7 @@ export const ChartPanel = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   border: '1px solid',
   borderColor: theme.palette.divider,
-  borderRadius: 8,
+  borderRadius: '0.5rem',
   overflow: 'hidden',
   minHeight: 0,
 }))
@@ -90,7 +90,7 @@ export const PointMarkModalOverlay = styled(Dialog)(({ theme }) => ({
     backgroundColor: theme.palette.background.paper,
     border: '1px solid',
     borderColor: theme.palette.divider,
-    borderRadius: 8,
+    borderRadius: '0.5rem',
     padding: '1.5rem',
     maxWidth: '90vw',
   },

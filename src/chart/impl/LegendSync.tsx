@@ -31,7 +31,7 @@ function LegendLine({
   strokeDashArray?: number[]
 }) {
   return (
-    <svg width="20" height="8" viewBox="0 0 20 8" style={{ flexShrink: 0 }}>
+    <svg width="1.25em" height="0.5em" viewBox="0 0 20 8" style={{ flexShrink: 0 }}>
       <line
         x1="0"
         y1="4"
@@ -149,14 +149,16 @@ export function LegendSync({ backgroundColor, textColor, seriesVisibility, serie
       component="div"
       sx={{
         position: 'absolute',
-        top: 8,
-        left: 8,
+        top: '0.5rem',
+        left: '0.5rem',
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
         gap: '0.35rem',
         padding: '0.4rem 0.6rem',
-        borderRadius: 4,
+        borderRadius: '0.25rem',
+        maxHeight: '90%',
+        overflowY: 'auto',
         backgroundColor: backgroundColor ?? 'rgba(0,0,0,0.6)',
         color: textColor ?? '#ffffff',
         fontSize: '0.8rem',
