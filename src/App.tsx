@@ -87,7 +87,7 @@ function App() {
       if (!point) return
       addIcon(chartIdForModal, {
         iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-        location: { x: 150000, y: 1000 },
+        location: { x: point.x, y: point.y },
         color: 'pink',
       })
       const seriesName =
