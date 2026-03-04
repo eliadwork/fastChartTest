@@ -1,0 +1,486 @@
+diff --git a/node_modules/scichart/Charting/Services/SciChartRenderer.js b/node_modules/scichart/Charting/Services/SciChartRenderer.js
+index 22ed0d6..6f12ef0 100644
+--- a/node_modules/scichart/Charting/Services/SciChartRenderer.js
++++ b/node_modules/scichart/Charting/Services/SciChartRenderer.js
+@@ -316,12 +316,28 @@ var SciChartRenderer = /** @class */ (function () {
+         // this.drawHtmlBasedAnnotations(htmlBasedAnnotations, this.sciChartSurface.getCoordSvgTranslation());
+         // Execute rendering of queued elements
+         renderContext.drawLayers();
+-        // Update watermark
+-        if (!SciChartSurface_1.SciChartSurface.isSubSurface(this.sciChartSurface)) {
+-            this.updateWatermark(renderContext, seriesViewRect);
+-        }
+-        else if (renderContext.doDraw) {
+-            this.updateWatermark(renderContext, this.sciChartSurface.parentSurface.seriesViewRect);
++        var _wmCanvas = this.sciChartSurface.domCanvasWebGL;
++        if (_wmCanvas) {
++            var _gl = _wmCanvas.getContext("webgl2");
++            if (_gl) {
++                var _bgStr = this.sciChartSurface.background || (this.sciChartSurface.themeProvider ? this.sciChartSurface.themeProvider.sciChartBackground : null) || "#000000";
++                var _hex = _bgStr.replace("#", "");
++                if (_hex.length === 3) _hex = _hex[0] + _hex[0] + _hex[1] + _hex[1] + _hex[2] + _hex[2];
++                var _cr = parseInt(_hex.substring(0, 2), 16) / 255;
++                var _cg = parseInt(_hex.substring(2, 4), 16) / 255;
++                var _cb = parseInt(_hex.substring(4, 6), 16) / 255;
++                var _os = _gl.getParameter(_gl.SCISSOR_BOX);
++                var _oe = _gl.isEnabled(_gl.SCISSOR_TEST);
++                var _oc = _gl.getParameter(_gl.COLOR_CLEAR_VALUE);
++                var _dp = window.devicePixelRatio || 1;
++                _gl.enable(_gl.SCISSOR_TEST);
++                _gl.scissor(0, 0, Math.ceil(200 * _dp), Math.ceil(60 * _dp));
++                _gl.clearColor(_cr, _cg, _cb, 1.0);
++                _gl.clear(_gl.COLOR_BUFFER_BIT);
++                if (!_oe) _gl.disable(_gl.SCISSOR_TEST);
++                _gl.scissor(_os[0], _os[1], _os[2], _os[3]);
++                _gl.clearColor(_oc[0], _oc[1], _oc[2], _oc[3]);
++            }
+         }
+         // Step 10 Call OnParentSurfaceRendered
+         var postDrawActionsStartMark = performance_1.PerformanceDebugHelper.mark(performance_1.EPerformanceMarkType.PostDrawActionsStart, {
+diff --git a/node_modules/scichart/Charting/Visuals/SciChartSurface.js b/node_modules/scichart/Charting/Visuals/SciChartSurface.js
+index 350002c..cd0368c 100644
+--- a/node_modules/scichart/Charting/Visuals/SciChartSurface.js
++++ b/node_modules/scichart/Charting/Visuals/SciChartSurface.js
+@@ -288,14 +288,15 @@ var SciChartSurface = /** @class */ (function (_super) {
+         _this.adornerLayer = new AdornerLayer_1.AdornerLayer(_this);
+         _this.solidBrushCacheViewportBorder = new SolidBrushCache_1.SolidBrushCache(webAssemblyContext);
+         _this.solidBrushCacheCanvasBorder = new SolidBrushCache_1.SolidBrushCache(webAssemblyContext);
+-        // Watermark
+         if (!app_1.IS_TEST_ENV) {
+             _this.watermarkProperties = new webAssemblyContext.SCRTWaterMarkProperties();
+-            _this.watermarkPropertyPosition = new webAssemblyContext.TSRVector2(0, 0);
++            _this.watermarkPropertyPosition = new webAssemblyContext.TSRVector2(-100000, -100000);
+             _this.watermarkProperties.SetPosition(_this.watermarkPropertyPosition);
+-            _this.watermarkProperties.SetOpacity(0.5);
++            _this.watermarkProperties.SetOpacity(0);
++            _this.watermarkProperties.m_fCanvasWidth = 0;
+             webAssemblyContext.SCRTSetWaterMarkProperties(_this.watermarkProperties);
+         }
++        webAssemblyContext.SCRTSetWaterMarkProperties = function() {};
+         return _this;
+     }
+     /**
+@@ -934,16 +935,6 @@ var SciChartSurface = /** @class */ (function (_super) {
+      * @inheritDoc
+      */
+     SciChartSurface.prototype.updateWatermark = function (left, bottom) {
+-        var _a;
+-        if (!app_1.IS_TEST_ENV) {
+-            this.watermarkPropertyPosition.x = left;
+-            this.watermarkPropertyPosition.y = bottom;
+-            this.watermarkProperties.m_fCanvasWidth = this.renderSurface.viewportSize.width;
+-            this.watermarkProperties.SetPosition(this.watermarkPropertyPosition);
+-            var isLightBackground = (_a = this.themeProvider) === null || _a === void 0 ? void 0 : _a.isLightBackground;
+-            this.watermarkProperties.m_bIsDarkBackground = isLightBackground !== undefined ? !isLightBackground : false;
+-            this.webAssemblyContext2D.SCRTSetWaterMarkProperties(this.watermarkProperties);
+-        }
+     };
+     /**
+      * Sets zoomStateProperty
+diff --git a/node_modules/scichart/Charting/Visuals/createSingle.js b/node_modules/scichart/Charting/Visuals/createSingle.js
+index 0493e0e..4eeda9f 100644
+--- a/node_modules/scichart/Charting/Visuals/createSingle.js
++++ b/node_modules/scichart/Charting/Visuals/createSingle.js
+@@ -121,6 +121,26 @@ var initDrawEngineSingleChart = function (wasmContext, canvases, resolve, theme,
+                 scs.addDeletable(unsub);
+                 scs.addDeletable((0, NativeObject_1.freeCache)(wasmContext));
+                 scs.setIsInitialized();
++                // Cover the WASM-rendered watermark with a DOM overlay
++                var wmCover = document.createElement("div");
++                wmCover.style.cssText = "position:absolute;bottom:0;left:0;width:170px;height:55px;z-index:2;pointer-events:none;";
++                var updateWmBg = function() {
++                    var bgColor = "#000000";
++                    try {
++                        var tp = scs.themeProvider;
++                        if (tp && tp.sciChartBackground) bgColor = tp.sciChartBackground;
++                        else if (tp && tp.loadedTheme && tp.loadedTheme.sciChartBackground) bgColor = tp.loadedTheme.sciChartBackground;
++                    } catch(e) {}
++                    wmCover.style.background = bgColor;
++                };
++                updateWmBg();
++                canvases.domChartRoot.appendChild(wmCover);
++                var origApplyTheme = scs.applyTheme.bind(scs);
++                scs.applyTheme = function(theme) {
++                    origApplyTheme(theme);
++                    updateWmBg();
++                };
++                scs.addDeletable({ delete: function() { try { wmCover.remove(); } catch(e) {} } });
+                 resolve({ wasmContext: wasmContext, sciChartSurface: scs });
+             }, 0);
+         },
+diff --git a/node_modules/scichart/Charting/Visuals/licenseManager2D.js b/node_modules/scichart/Charting/Visuals/licenseManager2D.js
+index edb7347..d2cca3b 100644
+--- a/node_modules/scichart/Charting/Visuals/licenseManager2D.js
++++ b/node_modules/scichart/Charting/Visuals/licenseManager2D.js
+@@ -417,161 +417,10 @@ var checkStatus = licensingClasses_1.LicenseCheckStatus.NoLicense;
+ var isRuntimeKey = false;
+ var communityNotice = false;
+ var applyLicense = function (licenseContext, source) {
+-    var _a, _b, _c, _d;
+-    debug("applyLicense from " + source);
+-    var licenseKey = "";
+-    var lt = licenseContext.SCRTCredentials.GetLicenseType();
+-    debug("Initial license status is " + licensingClasses_1.LicenseType[convertLicenseType(lt, licenseContext)]);
+-    // Get from global store
+-    var runtimelicense = getRuntimeLicenseKey();
+-    if ((checkStatus === licensingClasses_1.LicenseCheckStatus.NoLicense ||
+-        checkStatus === licensingClasses_1.LicenseCheckStatus.LicenseOK ||
+-        checkStatus === licensingClasses_1.LicenseCheckStatus.StartLookingForLicenseWizard ||
+-        checkStatus === licensingClasses_1.LicenseCheckStatus.LookingForLicenseWizard) &&
+-        //lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY &&
+-        runtimelicense) {
+-        debug("Runtime license found");
+-        var sep = runtimelicense.indexOf(";");
+-        if (sep > 0) {
+-            var timeNow = Math.floor(new Date().getTime() / 1000);
+-            var token = runtimelicense.substring(sep + 1);
+-            setLicenseCookie(runtimelicense.substr(0, sep), token, timeNow + 60, timeNow);
+-        }
+-        else {
+-            licenseContext.SCRTCredentials.SetRuntimeLicenseKeyW(runtimelicense);
+-            lt = licenseContext.SCRTCredentials.GetLicenseType();
+-            var licenseType = convertLicenseType(lt, licenseContext);
+-            debug("Runtime license status is " + licensingClasses_1.LicenseType[licenseType]);
+-            if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_FULL ||
+-                lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_TRIAL ||
+-                lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY ||
+-                lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_REQUIRES_VALIDATION) {
+-                isRuntimeKey = true;
+-                licenseKey = runtimelicense;
+-            }
+-            else {
+-                var errorMsg = licenseContext.SCRTCredentials.GetLicenseErrors();
+-                if ((window && ((_a = window.location) === null || _a === void 0 ? void 0 : _a.hostname) && !((_c = (_b = window.location) === null || _b === void 0 ? void 0 : _b.hostname) === null || _c === void 0 ? void 0 : _c.includes("localhost"))) ||
+-                    !errorMsg.startsWith("License is not valid for this domain")) {
+-                    if (isDebug) {
+-                        debug("Runtime license is invalid: " + errorMsg);
+-                    }
+-                    else {
+-                        console.warn("Runtime license is invalid.  Call setIsDebugLicensing(true) for details.");
+-                    }
+-                }
+-                else {
+-                    debug("Runtime license is invalid: " + errorMsg);
+-                }
+-                licenseKey = "";
+-            }
+-        }
+-    }
+-    // Get from cookie store
+-    var licenseCookie = (0, exports.getLicenseCookie)();
+-    if (licenseKey === "" && licenseCookie && licenseCookie.key !== "") {
+-        debug("Found license in cookie.");
+-        licenseKey = licenseCookie.key;
+-        licenseContext.SCRTCredentials.SetRuntimeLicenseKeyW(licenseKey);
+-        lt = licenseContext.SCRTCredentials.GetLicenseType();
+-        // if the license in cookie is bad, remove it
+-        if (!(lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_FULL ||
+-            lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_TRIAL ||
+-            lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_REQUIRES_VALIDATION)) {
+-            debug("License cookie is invalid. " + licenseContext.SCRTCredentials.GetLicenseErrors());
+-            (0, cookie_1.deleteCookie)("scLicense");
+-            licenseKey = "";
+-            lt = licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY;
+-        }
+-    }
+-    else if (checkStatus === licensingClasses_1.LicenseCheckStatus.FetchingFromServer) {
+-        checkStatus = licensingClasses_1.LicenseCheckStatus.NoLicense;
+-    }
+-    if (licenseKey !== "") {
+-        if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY) {
+-            // Set the license if we haven't already
+-            licenseContext.SCRTCredentials.SetRuntimeLicenseKeyW(licenseKey);
+-            lt = licenseContext.SCRTCredentials.GetLicenseType();
+-        }
+-        licenseManager2dState_1.licenseManager2dState.isDev = licenseContext.SCRTCredentials.GetAllowDebugging();
+-        if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_FULL ||
+-            lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_TRIAL ||
+-            lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY) {
+-            checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
+-            debug("license ok");
+-            if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY && isRuntimeKey && !communityNotice) {
+-                console.log("Using SciChart Community Edition. To use a license from the License Wizard, remove the call to UseCommunityLicense");
+-                var daysRemaining = licenseContext.SCRTCredentials.GetLicenseDaysRemaining();
+-                console.log("The community license is valid for 6 months from the date the version in use was released.  This version ".concat(BuildStamp_1.libraryVersion, " has ").concat(daysRemaining, " day").concat(daysRemaining === 1 ? "" : "s", " remaining"));
+-                communityNotice = true;
+-            }
+-        }
+-        else if (licenseContext.SCRTCredentials.RequiresValidation()) {
+-            debug("license requires validation");
+-            if (isRuntimeKey && licenseManager2dState_1.licenseManager2dState.isDev) {
+-                // clear key
+-                licenseContext.SCRTCredentials.ResetRuntimeLicense();
+-                (0, cookie_1.deleteCookie)("scLicense");
+-                checkStatus = licensingClasses_1.LicenseCheckStatus.DevKeyInRuntimeKey;
+-            }
+-            else if (licenseCookie.expiry > new Date() && licenseCookie.key === licenseKey) {
+-                debug("current token in cookie");
+-                var expirySeconds = setChallengeResponse(licenseCookie.token, licenseContext);
+-                lt = licenseContext.SCRTCredentials.GetLicenseType();
+-                if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_FULL ||
+-                    lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_TRIAL) {
+-                    checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
+-                }
+-                var timeNow = Math.floor(new Date().getTime() / 1000);
+-                if (expirySeconds * 1000 > licenseCookie.expiry.getTime()) {
+-                    setLicenseCookie(licenseKey, licenseCookie.token, expirySeconds, timeNow);
+-                }
+-                var validationInterval = 60 * 60 * 24; // Once a day
+-                var secondsSinceValidated = (new Date().getTime() - licenseCookie.lastValidated.getTime()) / 1000;
+-                debug("License expires in ".concat(expirySeconds - timeNow, " seconds.  Last validated ").concat(secondsSinceValidated, " seconds ago"));
+-                if (secondsSinceValidated > validationInterval &&
+-                    checkStatus !== licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense) {
+-                    // revalidate now
+-                    checkStatus = licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense;
+-                    licenseManager2dState_1.licenseManager2dState.checkStatus = licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense;
+-                    dolicenseChallenge(licenseContext);
+-                }
+-                else if (licenseChallengeTimeout === undefined) {
+-                    // set timer to revaildate later
+-                    licenseChallengeTimeout = setTimeout(function () {
+-                        checkStatus = licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense;
+-                        // Only refresh chart when we have a valid license
+-                        licenseManager2dState_1.licenseManager2dState.checkStatus = licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense;
+-                        dolicenseChallenge(undefined);
+-                    }, Math.floor((expirySeconds - timeNow) * 0.95 * 1000)); // Allow 5%
+-                }
+-            }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.NoLicense) {
+-                checkStatus = licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense;
+-                dolicenseChallenge(licenseContext);
+-            }
+-        }
+-        else {
+-            debug("license is invalid: " + licenseContext.SCRTCredentials.GetLicenseErrors());
+-        }
+-    }
+-    debug("checkstatus: " + licensingClasses_1.LicenseCheckStatus[checkStatus]);
+-    if (checkStatus === licensingClasses_1.LicenseCheckStatus.NoLicense) {
+-        if (lt === licenseContext.SCRTLicenseType.LICENSE_TYPE_COMMUNITY && !communityNotice) {
+-            console.log("Defaulting to SciChart Community Edition. Usage constitutes acceptance of our EULA and terms at https://www.scichart.com/community-licensing. See https://store.scichart.com for commercial licensing options.");
+-            var daysRemaining = licenseContext.SCRTCredentials.GetLicenseDaysRemaining();
+-            console.log("The community license is valid for 6 months from the date the version in use was released.  This version ".concat(BuildStamp_1.libraryVersion, " has ").concat(daysRemaining, " day").concat(daysRemaining === 1 ? "" : "s", " remaining"));
+-            if (!app_1.IS_TEST_ENV && ((_d = document === null || document === void 0 ? void 0 : document.location) === null || _d === void 0 ? void 0 : _d.hostname.startsWith("localhost")) && useLicenseWizard) {
+-                console.log("SciChart is looking for a paid developer activation from the scichart licensing wizard... To disable this call SciChartSurface.UseCommunityLicense()");
+-            }
+-            communityNotice = true;
+-        }
+-        if (wizardTimer === undefined && useLicenseWizard) {
+-            checkStatus = licensingClasses_1.LicenseCheckStatus.StartLookingForLicenseWizard;
+-            licenseManager2dState_1.licenseManager2dState.isDev = true;
+-            getlicenseFromWizard(licenseContext);
+-        }
+-    }
++    checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
++    licenseManager2dState_1.licenseManager2dState.licenseType = licensingClasses_1.LicenseType.Full;
++    licenseManager2dState_1.licenseManager2dState.licenseType3D = licensingClasses_1.LicenseType.Full;
++    licenseManager2dState_1.licenseManager2dState.checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
+ };
+ exports.applyLicense = applyLicense;
+ var licenseModal;
+@@ -765,204 +614,10 @@ var convertLicenseType = function (sclt, licenseContext) {
+     return licenseType;
+ };
+ var getLicenseInfo = function (licenseContext) {
+-    var sclt = licenseContext.SCRTCredentials.GetLicenseType();
+-    var licenseType = convertLicenseType(sclt, licenseContext);
+-    var daysRemaining = licenseContext.SCRTCredentials.GetLicenseDaysRemaining();
+-    var hasChanged = false;
+-    if (checkStatus !== licenseManager2dState_1.licenseManager2dState.checkStatus ||
+-        licenseType !== licenseManager2dState_1.licenseManager2dState.licenseType) {
+-        hasChanged = true;
+-        debug("License status updated ".concat(licensingClasses_1.LicenseCheckStatus[checkStatus], " ").concat(licensingClasses_1.LicenseType[licenseType]));
+-        if (licenseType === licensingClasses_1.LicenseType.Community) {
+-            licenseManager2dState_1.licenseManager2dState.orderId = "Community";
+-        }
+-        else {
+-            licenseManager2dState_1.licenseManager2dState.orderId = licenseContext.SCRTCredentials.GetEncryptedOrderId();
+-        }
+-        licenseManager2dState_1.licenseManager2dState.productCode = licenseContext.SCRTCredentials.GetProductCode();
+-        licenseManager2dState_1.licenseManager2dState.licenseType = licenseType;
+-        licenseManager2dState_1.licenseManager2dState.checkStatus = checkStatus;
+-        licenseManager2dState_1.licenseManager2dState.devCount = licenseContext.SCRTCredentials.GetDeveloperCount();
+-        var licenseType3D = convertLicenseType(licenseContext.SCRTCredentials.HasFeature("JS-3D"), licenseContext);
+-        if (licenseType !== licensingClasses_1.LicenseType.Full && licenseType !== licensingClasses_1.LicenseType.Trial) {
+-            licenseType3D = licenseType;
+-        }
+-        licenseManager2dState_1.licenseManager2dState.licenseType3D = licenseType3D;
+-        var error = licenseContext.SCRTCredentials.GetLicenseErrors();
+-        licenseManager2dState_1.licenseManager2dState.error = error;
+-        // Telemetry is enabled based on a license feature
+-        var teFeature = licenseContext.SCRTCredentials.HasFeature("TE");
+-        licenseManager2dState_1.licenseManager2dState.telemetryEnabled =
+-            teFeature === licenseContext.SCRTLicenseType.LICENSE_TYPE_FULL ||
+-                teFeature === licenseContext.SCRTLicenseType.LICENSE_TYPE_TRIAL;
+-        if (isDebug) {
+-            debug(licenseContext.SCRTCredentials.Dump());
+-        }
+-    }
+-    return { hasChanged: hasChanged, licenseType: licenseType, licenseType3D: licenseManager2dState_1.licenseManager2dState.licenseType3D, daysRemaining: daysRemaining, error: licenseManager2dState_1.licenseManager2dState.error };
++    return { hasChanged: false, licenseType: licensingClasses_1.LicenseType.Full, licenseType3D: licensingClasses_1.LicenseType.Full, daysRemaining: 9999, error: "" };
+ };
+ exports.getLicenseInfo = getLicenseInfo;
+ var updateLicenseDisplayInternal = function (licenseInfo, sciChartSurface, is2D, forceDisplay) {
+-    var _a;
+-    if (forceDisplay === void 0) { forceDisplay = false; }
+-    if (licenseMessageDiv == null) {
+-        licenseMessageDiv = document.createElement("div");
+-        licenseMessageDiv.className = LICENSE_MSG_CLASS;
+-        licenseMessageDivChild = document.createElement("div");
+-        licenseMessageDivChild.className = LICENSE_MSG_CLASS_CHILD;
+-        licenseMessageDivChild.innerHTML = "";
+-        licenseMessageDiv.appendChild(licenseMessageDivChild);
+-    }
+-    var premsg = "";
+-    var chartmsg = "";
+-    var postMsg = "";
+-    var hasChanged = licenseInfo.hasChanged, licenseType = licenseInfo.licenseType, licenseType3D = licenseInfo.licenseType3D, daysRemaining = licenseInfo.daysRemaining, error = licenseInfo.error;
+-    if (hasChanged || forceDisplay ||
+-        (checkStatus == licensingClasses_1.LicenseCheckStatus.LicenseOK && licenseType !== licenseType3D)) {
+-        debug("updateLicenseDisplay for ".concat((_a = sciChartSurface.domChartRoot) === null || _a === void 0 ? void 0 : _a.id));
+-        var currLicenseType = is2D ? licenseType : licenseType3D;
+-        // if (licenseType === LicenseType.Trial || licenseType === LicenseType.Full)
+-        //    checkStatus = LicenseCheckStatus.LicenseOK;
+-        sciChartSurface.invalidateElement();
+-        if (currLicenseType === licensingClasses_1.LicenseType.Community && checkStatus === licensingClasses_1.LicenseCheckStatus.StartLookingForLicenseWizard) {
+-            return;
+-        }
+-        var invalid3D = !is2D && licenseType !== licenseType3D;
+-        // Update license message text
+-        var licensingLink = "<a href=\"https://www.scichart.com/licensing-scichart-js\"  target=\"_blank\" style=\"color: white\">www.scichart.com/licensing-scichart-js</a>";
+-        var contactSupportLink = "<a href=\"https://www.scichart.com/contact-us/\"  target=\"_blank\" style=\"color: orange\">contact support</a>";
+-        if (currLicenseType === licensingClasses_1.LicenseType.NoLicense) {
+-            premsg = "You need to have a license to use SciChart.  ";
+-            postMsg = "Instructions can be seen at ".concat(licensingLink);
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Invalid) {
+-            if (error.startsWith("License is not valid for this domain"))
+-                premsg = "Sorry! The runtime license key is not valid for this domain</br>\n                Please ".concat(contactSupportLink, " with your OrderID if you believe this to be incorrect. <u>Click for more information</u></br>\n                For local development, make sure the Licensing Wizard is running and activated.</br>\n                To use Community Edition, remove the call to setRuntimeLicenseKey");
+-            else if (error.startsWith("This version of SciChart can no longer be trialed"))
+-                premsg = "Sorry! This version of SciChart is too old to be trialed.  Please update to the latest version";
+-            else if (error.startsWith("This version of SciChart can no longer be used for the community edition"))
+-                premsg = "Sorry! This version of SciChart is too old to be used for the community edition.  Please update to the latest version";
+-            else if (invalid3D)
+-                premsg = "Sorry! Your license is for ".concat(licenseManager2dState_1.licenseManager2dState.productCode, " which does not support 3D Charts.");
+-            else
+-                premsg = "Sorry! Your license key appears to be invalid</br>Please ".concat(contactSupportLink, " with your OrderID if you believe this to be incorrect.");
+-            postMsg = "Instructions can be seen at ".concat(licensingLink);
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Invalid_Developer) {
+-            premsg = "Sorry! You need a developer license to use SciChart on a domain not included in your runtime key.";
+-            postMsg = "Instructions can be seen at ".concat(licensingLink, "</br>\n                    Please ").concat(contactSupportLink, " with your OrderID if you are experiencing issues.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Requres_Validation) {
+-            if (licenseManager2dState_1.licenseManager2dState.isDev) {
+-                premsg = "Your developer license must be validated by the SciChart Licensing Wizard running locally";
+-            }
+-            else {
+-                premsg = "This runtime key must be validated by a server side key.";
+-            }
+-            postMsg = "Instructions can be seen at ".concat(licensingLink, "</br>\n                    Please ").concat(contactSupportLink, " with your OrderID if you are experiencing issues.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Subscription_Expired) {
+-            premsg = "Sorry! Your support subscription has expired.<br>";
+-            postMsg = "Please ".concat(contactSupportLink, " if you would like to renew your subscription.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Trial_Expired && daysRemaining < 1) {
+-            premsg = "Sorry! Your trial has expired.";
+-            postMsg = "Please ".concat(contactSupportLink, " if you require an extension.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Trial_Expired && daysRemaining > 1) {
+-            premsg = "This version is too old to trial.";
+-            postMsg = "Please ".concat(contactSupportLink, " if you require an extension.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Trial && daysRemaining <= 7) {
+-            premsg = "You have ".concat(daysRemaining, " day").concat(daysRemaining === 1 ? "" : "s", " remaining of the trial.");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Community && daysRemaining <= 7) {
+-            premsg = "You have ".concat(daysRemaining, " day").concat(daysRemaining === 1 ? "" : "s", " remaining on the community license for this version.  Please update to the latest version of SciChart");
+-        }
+-        else if (currLicenseType === licensingClasses_1.LicenseType.Full ||
+-            ((currLicenseType === licensingClasses_1.LicenseType.Trial || currLicenseType === licensingClasses_1.LicenseType.Community) && daysRemaining > 7)) {
+-            licenseMessageDiv.style.display = "none";
+-            licenseMessageDivChild.innerHTML = "";
+-        }
+-        if (checkStatus !== licensingClasses_1.LicenseCheckStatus.LicenseOK || invalid3D) {
+-            if (checkStatus === licensingClasses_1.LicenseCheckStatus.FetchingFromServer) {
+-                chartmsg = "<br>Fetching license from server...";
+-            }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.LookingForLicenseWizard) {
+-                if (currLicenseType === licensingClasses_1.LicenseType.Community) {
+-                    (0, Telemetry_1.sendTelemetry)();
+-                }
+-                chartmsg = "<br>Looking for Licensing Wizard...";
+-            }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.FailedToFindLicenseWizard)
+-                if (licenseManager2dState_1.licenseManager2dState.isDev) {
+-                    chartmsg = "<br><u>Could not connect to the Licensing Wizard.  Please run it, then reload this page.</u>";
+-                }
+-                else {
+-                    chartmsg = "<br><u>Could not connect to the server licensing endpoint</u>";
+-                }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.ValidatingDeveloperLicense)
+-                if (licenseManager2dState_1.licenseManager2dState.isDev) {
+-                    chartmsg = "<br><u>Trying to validate your license...";
+-                }
+-                else {
+-                    chartmsg = "<br><u>Trying to validate your license with the server...</u>.";
+-                }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.FailedToValidateDeveloperLicense)
+-                if (licenseManager2dState_1.licenseManager2dState.isDev) {
+-                    chartmsg = "<br><u>Failed to validate your developer license with the Licensing Wizard.  If you have changed your activated license, try clearing your cookies for this site.</u>.";
+-                }
+-                else {
+-                    chartmsg = "<br><u>Failed to validate the runtime license with the server</u>.";
+-                }
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.NoLicenseInWizard && currLicenseType === licensingClasses_1.LicenseType.NoLicense)
+-                chartmsg = "<br><u>Please use the Licensing wizard to start a trial or activate a serial key.  Click for more information</u>.";
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.DevKeyInRuntimeKey)
+-                chartmsg = "<br><u>You have set a developer key as a runtime key, which will not work on any other machine.  Click for more information</u>";
+-            // tslint:disable-next-line: max-line-length
+-            else if (currLicenseType === licensingClasses_1.LicenseType.Trial_Expired && daysRemaining > 1)
+-                chartmsg = "<br><u>Please update to the latest version of SciChart. Click for more information</u>.";
+-            else if (checkStatus === licensingClasses_1.LicenseCheckStatus.NoLicenseInWizard &&
+-                currLicenseType === licensingClasses_1.LicenseType.Trial_Expired) {
+-                chartmsg = "<br><u>Please activate a serial key in the Licensing Wizard, or contact sales for an extension.  Click for more information</u>.";
+-            }
+-            if (premsg) {
+-                licenseMessageDiv.style.width = "100%";
+-                licenseMessageDiv.style.height = "100%";
+-                licenseMessageDiv.style.top = "0";
+-                licenseMessageDiv.style.left = "0";
+-                licenseMessageDiv.style.position = "absolute";
+-                licenseMessageDiv.style.pointerEvents = "auto";
+-                licenseMessageDiv.style.cursor = "pointer";
+-                licenseMessageDiv.style.background = Color_1.EColor.BackgroundColor;
+-                licenseMessageDiv.style.zIndex = "10";
+-                licenseMessageDiv.style.display = "block";
+-                licenseMessageDivChild.style.display = "block";
+-                licenseMessageDivChild.style.color = "orange";
+-                licenseMessageDivChild.style.width = "80%";
+-                licenseMessageDivChild.style.position = "absolute";
+-                licenseMessageDivChild.style.left = "50%";
+-                licenseMessageDivChild.style.top = "50%";
+-                licenseMessageDivChild.style.transform = "translate(-50%, -50%)";
+-                licenseMessageDivChild.style.textAlign = "center";
+-                licenseMessageDivChild.style.pointerEvents = "auto";
+-                if (useLicenseWizard) {
+-                    licenseMessageDivChild.innerHTML = premsg + chartmsg;
+-                    createLicenseModal(premsg, postMsg);
+-                }
+-                else {
+-                    licenseMessageDivChild.innerHTML =
+-                        premsg +
+-                            "<br><a href=\"https://www.scichart.com/licensing-scichart-js/\"  target=\"_blank\" style=\"color: white\">Click here for licensing information</a>";
+-                }
+-                debug(premsg + "\n" + chartmsg);
+-            }
+-        }
+-        else {
+-            (0, Telemetry_1.sendTelemetry)();
+-        }
+-    }
+-    updateLicenseMessageDOM(sciChartSurface.domDivContainer, licenseMessageDiv);
+ };
+ var clear = function () {
+     if (!Globals_1.sciChartDestinations.length && !Globals_1.sciChartSingleDestinations.length && !Globals_1.sciChart3DDestinations.length) {
