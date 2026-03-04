@@ -16,13 +16,15 @@ done
 * add the option to group graph at the glossary
 * is picked value
 * right click streching
+* add home button that do the same as double click
 
 
  need to do:
-* add home button that do the same as double click
 * make a warapper that can be moved and made bigger and smaller
 * make the whole component be relative 
 * make the colors infinite
+* add a hide the hidden graphs shapes and icons
+* make a nice half a button with filters of icon and shapes
 
 cr and code cleam up:
 * make a cr for yourself make the code clean clear and readable and optiomize the graph 
