@@ -8,6 +8,11 @@
 - Export as `export const Name = ...` when exporting components.
 - See `.cursor/rules/arrow-function-components.mdc` for examples.
 
+**Colocate component-specific props with their components.**
+
+- Define `*Props` interfaces in the same file as the component that uses them.
+- Keep shared types (e.g. `ChartData`, `ChartOptions`) in central type files; only component props live beside the component.
+
 ## Styling & UI
 
 **Use MUI (Material-UI), MUI styled, and MUI icons for all UI work.**

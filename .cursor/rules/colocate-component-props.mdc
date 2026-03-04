@@ -1,0 +1,33 @@
+---
+description: Colocate component-specific props with their components
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Colocate Component Props
+
+Define component-specific props interfaces in the same file as the component.
+
+```tsx
+// ✅ GOOD – props beside component
+// Chart.tsx
+export interface ChartProps {
+  data: ChartData
+  options?: ChartOptions
+  style?: React.CSSProperties
+}
+
+const ChartComponent = ({ data, options, style }: ChartProps) => { ... }
+```
+
+```tsx
+// ❌ BAD – props in central types when only one component uses them
+// types.ts
+export interface ChartProps { ... }
+
+// Chart.tsx
+import type { ChartProps } from './types'
+```
+
+- Keep shared types (`ChartData`, `ChartOptions`, etc.) in central type files
+- Only component-specific `*Props` interfaces live beside the component

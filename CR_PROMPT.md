@@ -12,7 +12,7 @@ Perform a **code review** of the recent changes that add "clip zoom/pan to data 
 
 ## Project Conventions
 
-See **PROJECT.md** for styling and UI conventions: use MUI, MUI styled, and MUI icons; avoid standalone CSS files.
+See **PROJECT.md** for styling and UI conventions: use MUI, MUI styled, and MUI icons; avoid standalone CSS files. Colocate component-specific props (e.g. `ChartProps`, `ChartWrapperProps`) in the same file as the component; keep shared types in central type files.
 
 ---
 

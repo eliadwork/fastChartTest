@@ -124,11 +124,3 @@ export interface ChartOptions {
     removeLastPending?: () => void
   ) => void
 }
-
-export interface ChartProps {
-  data: ChartData
-  options?: ChartOptions
-  style?: React.CSSProperties
-  lines?: ChartLineStyle[]
-  chartId?: string
-}
