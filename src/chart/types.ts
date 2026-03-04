@@ -120,7 +120,8 @@ export interface ChartOptions {
   pointMarkRegisterForClear?: (
     chartId: string,
     removePending: () => void,
-    clearPendingState: () => void
+    clearPendingState: () => void,
+    removeLastPending?: () => void
   ) => void
 }
 

@@ -1,5 +1,9 @@
 import { useCallback, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 import { DEFAULT_POINT_MARK_ICON_SVG } from './chartTheme'
@@ -29,7 +33,7 @@ function App() {
   const theme = useTheme()
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const { enqueueSnackbar } = useSnackbar()
-  const { removePendingForChart, clearPendingStateForChart } = useContext(PointMarkClearContext)
+  const { removeLastPendingForChart, clearPendingStateForChart } = useContext(PointMarkClearContext)
   const seriesPickerOpen = usePointMarkStore((s) => s.seriesPickerOpen)
   const markedXValues = usePointMarkStore((s) => s.markedXValues)
   const markedPoints = usePointMarkStore((s) => s.markedPoints)
@@ -41,8 +45,28 @@ function App() {
   const iconsByChart = usePointMarkStore((s) => s.iconsByChart)
   const updateMarkedPointColor = usePointMarkStore((s) => s.updateMarkedPointColor)
   const closeSeriesPicker = usePointMarkStore((s) => s.closeSeriesPicker)
+  const cancelSeriesPickerWithoutChoice = usePointMarkStore((s) => s.cancelSeriesPickerWithoutChoice)
 
   const COLORS: PointMarkColor[] = ['red', 'green', 'yellow']
+  const [selectedSeriesIndex, setSelectedSeriesIndex] = useState<number>(-1)
+
+  const seriesOptions =
+    bindableIndices.length > 0
+      ? bindableIndices
+      : chartDataForModal?.seriesNames
+        ? Array.from({ length: chartDataForModal.seriesNames.length }, (_, i) => i)
+        : chartDataForModal?.ys
+          ? Array.from({ length: chartDataForModal.ys.length }, (_, i) => i)
+          : []
+  const seriesNames = chartDataForModal?.seriesNames ?? chartDataForModal?.ys?.map((_, i) => `Series ${i}`) ?? []
+
+  useEffect(() => {
+    if (seriesPickerOpen && seriesOptions.length > 0) {
+      setSelectedSeriesIndex((prev) =>
+        seriesOptions.includes(prev) ? prev : (seriesOptions[0] ?? -1)
+      )
+    }
+  }, [seriesPickerOpen, seriesOptions])
 
   useEffect(() => {
     const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
@@ -122,6 +146,34 @@ function App() {
       clearPendingStateForChart,
     ]
   )
+
+  const canConfirm = selectedSeriesIndex >= 0 && markedPoints?.[1]?.color != null
+
+  const handleDone = useCallback(() => {
+    if (canConfirm) {
+      handleSeriesPick(selectedSeriesIndex)
+    }
+  }, [canConfirm, selectedSeriesIndex, handleSeriesPick])
+
+  const handleCloseWithoutChoice = useCallback(() => {
+    if (chartIdForModal) {
+      removeLastPendingForChart(chartIdForModal)
+      cancelSeriesPickerWithoutChoice(chartIdForModal)
+      enqueueSnackbar('Please select a series and color before confirming.', { variant: 'error' })
+    }
+  }, [chartIdForModal, removeLastPendingForChart, cancelSeriesPickerWithoutChoice, enqueueSnackbar])
+
+  useEffect(() => {
+    if (!seriesPickerOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        handleDone()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [seriesPickerOpen, handleDone])
 
   const chartThemeOverride = {
     pointMarkIcon: DEFAULT_POINT_MARK_ICON_SVG,
@@ -219,10 +271,7 @@ function App() {
 
       <PointMarkModalOverlay
         open={seriesPickerOpen && !!chartDataForModal}
-        onClose={() => {
-          if (chartIdForModal) removePendingForChart(chartIdForModal)
-          closeSeriesPicker()
-        }}
+        onClose={handleCloseWithoutChoice}
       >
         <Box component="div" onClick={(e: React.MouseEvent) => e.stopPropagation()} sx={{ p: 2, maxWidth: '90vw' }}>
           <PointMarkModalTitle variant="h6">
@@ -251,37 +300,34 @@ function App() {
               ))}
             </Box>
           )}
+          <FormControl fullWidth sx={{ mb: 2, minWidth: 200 }}>
+            <InputLabel id="series-select-label">Series</InputLabel>
+            <Select
+              labelId="series-select-label"
+              label="Series"
+              value={selectedSeriesIndex >= 0 ? selectedSeriesIndex : ''}
+              onChange={(e) => setSelectedSeriesIndex(Number(e.target.value))}
+            >
+              {seriesOptions.map((seriesIndex) => (
+                <MenuItem key={seriesIndex} value={seriesIndex}>
+                  {seriesNames[seriesIndex] ?? `Series ${seriesIndex}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <PointMarkModalButtons>
-            {(bindableIndices.length > 0
-              ? bindableIndices
-              : chartDataForModal?.seriesNames
-                ? Array.from({ length: chartDataForModal.seriesNames.length }, (_, i) => i)
-                : chartDataForModal?.ys
-                  ? Array.from({ length: chartDataForModal.ys.length }, (_, i) => i)
-                  : []
-            ).map((seriesIndex) => {
-              const names = chartDataForModal?.seriesNames ?? chartDataForModal?.ys?.map((_, i) => `Series ${i}`) ?? []
-              const name = names[seriesIndex] ?? `Series ${seriesIndex}`
-              return (
-                <PointMarkModalButton
-                  key={seriesIndex}
-                  variant="contained"
-                  onClick={() => handleSeriesPick(seriesIndex)}
-                >
-                  {name}
-                </PointMarkModalButton>
-              )
-            })}
+            <PointMarkModalButton
+              variant="contained"
+              onClick={handleDone}
+              disabled={!canConfirm}
+              autoFocus
+            >
+              Done
+            </PointMarkModalButton>
+            <PointMarkModalCancel variant="outlined" onClick={handleCloseWithoutChoice}>
+              Cancel
+            </PointMarkModalCancel>
           </PointMarkModalButtons>
-          <PointMarkModalCancel
-            variant="outlined"
-            onClick={() => {
-              if (chartIdForModal) removePendingForChart(chartIdForModal)
-              closeSeriesPicker()
-            }}
-          >
-            Cancel
-          </PointMarkModalCancel>
         </Box>
       </PointMarkModalOverlay>
     </ChartComparison>

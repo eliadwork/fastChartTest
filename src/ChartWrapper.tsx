@@ -6,6 +6,7 @@ import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 import { useChartTheme } from './ChartThemeContext'
 import { withOpacity } from './chartTheme'
 import { PointMarkClearContext } from './PointMarkClearContext'
+import { usePointMarkStore } from './store/pointMarkStore'
 import { ChartPanelHeader, ChartPanelHeaderText, ChartPanelTitle, ChartPanelNote, ChartToolbarButton, ChartWrapperBox } from './styled'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
@@ -54,6 +55,8 @@ export function ChartWrapper({
 }: ChartWrapperProps) {
   const chartTheme = useChartTheme()
   const { registerForChart } = useContext(PointMarkClearContext)
+  const chartIdForModal = usePointMarkStore((s) => s.chartIdForModal)
+  const updateModalSeriesVisibility = usePointMarkStore((s) => s.updateModalSeriesVisibility)
   const zoomBack = useZoomBackStore((s) => s.zoomBack)
   const canZoomBack = useZoomBackStore((s) => s.canZoomBackFor(chartId ?? ''))
   const zoomReset = useZoomResetStore((s) => s.zoomReset)
@@ -69,6 +72,12 @@ export function ChartWrapper({
       return prev.slice(0, seriesCount)
     })
   }, [seriesCount])
+
+  useEffect(() => {
+    if (chartId && chartId === chartIdForModal) {
+      updateModalSeriesVisibility(seriesVisibility)
+    }
+  }, [chartId, chartIdForModal, seriesVisibility, updateModalSeriesVisibility])
 
   const handleDisableAll = useCallback(() => {
     setSeriesVisibility((prev) => (prev.every((v) => !v) ? prev.map(() => true) : prev.map(() => false)))
@@ -121,8 +130,12 @@ export function ChartWrapper({
       onSeriesVisibilityGroupChange: options.onSeriesVisibilityGroupChange ?? handleSeriesVisibilityGroupChange,
       ...(chartId && registerForChart
         ? {
-            pointMarkRegisterForClear: (cid: string, remove: () => void, clear: () => void) =>
-              registerForChart(cid, remove, clear),
+            pointMarkRegisterForClear: (
+              cid: string,
+              remove: () => void,
+              clear: () => void,
+              removeLast?: () => void
+            ) => registerForChart(cid, remove, clear, removeLast),
           }
         : {}),
     }),

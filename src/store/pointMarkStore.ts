@@ -67,12 +67,16 @@ export interface MarkedPointFinal {
 
 interface PointMarkState {
   clicksByChart: Record<string, { x: number; y: number }[]>
+  /** First two clicks, stored when modal opens, used to restore on cancel-without-choice */
+  clicksToRestoreOnCancel: Record<string, { x: number; y: number }[]>
   markedXValues: [number, number, number] | null
   markedPoints: MarkedPointPending[] | null
   markedYValue: number | null
   chartDataForModal: ChartDataForModal | null
   chartIdForModal: string | null
   bindableIndices: number[]
+  /** Base bindable indices (from seriesBindable only), used to recompute when visibility changes */
+  bindableIndicesBase: number[]
   seriesPickerOpen: boolean
   pointMarkersByChart: Record<string, PointMarker[]>
   iconsByChart: Record<string, ChartIcon[]>
@@ -90,17 +94,23 @@ interface PointMarkActions {
   addIcon: (chartId: string, icon: ChartIcon) => void
   updateMarkedPointColor: (index: number, color: PointMarkColor | undefined) => void
   closeSeriesPicker: () => void
+  /** Close modal without choice: restore first two clicks so next click is third again */
+  cancelSeriesPickerWithoutChoice: (chartId: string) => void
+  /** Update bindable indices when series visibility changes (e.g. user toggles in legend) */
+  updateModalSeriesVisibility: (visibility: boolean[]) => void
 }
 
 export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
   (set, get) => ({
     clicksByChart: {},
+    clicksToRestoreOnCancel: {},
     markedXValues: null,
     markedPoints: null,
     markedYValue: null,
     chartDataForModal: null,
     chartIdForModal: null,
     bindableIndices: [],
+    bindableIndicesBase: [],
     seriesPickerOpen: false,
     pointMarkersByChart: {},
     iconsByChart: {},
@@ -112,11 +122,15 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
       const seriesCount = chartData.ys?.length ?? 0
 
       const seriesBindable = options?.seriesBindable
+      const seriesVisibility = options?.seriesVisibility
 
-      const bindableIndices =
-        seriesBindable != null
-          ? Array.from({ length: seriesCount }, (_, i) => i).filter((i) => seriesBindable[i] !== false)
-          : Array.from({ length: seriesCount }, (_, i) => i)
+      let bindableIndices = Array.from({ length: seriesCount }, (_, i) => i)
+      if (seriesBindable != null) {
+        bindableIndices = bindableIndices.filter((i) => seriesBindable[i] !== false)
+      }
+      if (seriesVisibility != null && seriesVisibility.length > 0) {
+        bindableIndices = bindableIndices.filter((i) => seriesVisibility[i] !== false)
+      }
 
       if (clicks.length === 3) {
         const x1 = clicks[0].x
@@ -136,19 +150,25 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
 
         const points: MarkedPointPending[] = [
           { location: { x: clicks[0].x } },
-          { location: { x: clicks[1].x, y: clicks[1].y }, color: 'red' },
+          { location: { x: clicks[1].x, y: clicks[1].y } },
           { location: { x: clicks[2].x } },
         ]
+        const bindableIndicesBase =
+          seriesBindable != null
+            ? Array.from({ length: seriesCount }, (_, i) => i).filter((i) => seriesBindable![i] !== false)
+            : Array.from({ length: seriesCount }, (_, i) => i)
         const openModal = bindableIndices.length > 0
 
         set({
           clicksByChart: { ...clicksByChart, [chartId]: [] },
+          clicksToRestoreOnCancel: { ...get().clicksToRestoreOnCancel, [chartId]: [clicks[0], clicks[1]] },
           markedXValues: [clicks[0].x, clicks[1].x, clicks[2].x],
           markedPoints: points,
           markedYValue: clicks[1].y,
           chartDataForModal: openModal ? chartData : null,
           chartIdForModal: openModal ? chartId : null,
           bindableIndices: openModal ? bindableIndices : [],
+          bindableIndicesBase: openModal ? bindableIndicesBase : [],
           seriesPickerOpen: openModal,
         })
 
@@ -202,14 +222,45 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
       }),
 
     closeSeriesPicker: () =>
-      set({
+      set(() => ({
+        clicksToRestoreOnCancel: {},
         markedXValues: null,
         markedPoints: null,
         markedYValue: null,
         chartDataForModal: null,
         chartIdForModal: null,
         bindableIndices: [],
+        bindableIndicesBase: [],
         seriesPickerOpen: false,
+      })),
+
+    cancelSeriesPickerWithoutChoice: (chartId) =>
+      set((s) => {
+        const toRestore = s.clicksToRestoreOnCancel[chartId]
+        if (!toRestore) return s
+        return {
+          clicksByChart: { ...s.clicksByChart, [chartId]: toRestore },
+          clicksToRestoreOnCancel: (() => {
+            const next = { ...s.clicksToRestoreOnCancel }
+            delete next[chartId]
+            return next
+          })(),
+          markedXValues: null,
+          markedPoints: null,
+          markedYValue: null,
+          chartDataForModal: null,
+          chartIdForModal: null,
+          bindableIndices: [],
+          bindableIndicesBase: [],
+          seriesPickerOpen: false,
+        }
+      }),
+
+    updateModalSeriesVisibility: (visibility) =>
+      set((s) => {
+        if (!s.seriesPickerOpen || s.bindableIndicesBase.length === 0) return s
+        const bindableIndices = s.bindableIndicesBase.filter((i) => visibility[i] !== false)
+        return { bindableIndices }
       }),
   })
 )

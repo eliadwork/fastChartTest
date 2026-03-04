@@ -36,7 +36,8 @@ export interface IPointMarkModifierOptions {
   onRegisterForClear?: (
     chartId: string,
     removePending: () => void,
-    clearPendingState: () => void
+    clearPendingState: () => void,
+    removeLastPending?: () => void
   ) => void
 }
 
@@ -55,7 +56,8 @@ export class PointMarkModifier extends ChartModifierBase2D {
   private onRegisterForClear?: (
     chartId: string,
     removePending: () => void,
-    clearPendingState: () => void
+    clearPendingState: () => void,
+    removeLastPending?: () => void
   ) => void
   private pendingLineAnnotations: VerticalLineAnnotation[] = []
   private hasRegisteredClear = false
@@ -168,7 +170,8 @@ export class PointMarkModifier extends ChartModifierBase2D {
           this.onRegisterForClear(
             this.chartId,
             () => this.removePendingLines(),
-            () => this.clearPendingState()
+            () => this.clearPendingState(),
+            () => this.removeLastPendingLine()
           )
         }
       }
@@ -185,6 +188,17 @@ export class PointMarkModifier extends ChartModifierBase2D {
     this.pendingLineAnnotations = []
     this.hasRegisteredClear = false
     surf.invalidateElement()
+  }
+
+  private removeLastPendingLine(): void {
+    const last = this.pendingLineAnnotations.pop()
+    if (!last) return
+    const surf = this.parentSurface
+    if (surf) {
+      surf.annotations.remove(last)
+      last.delete()
+      surf.invalidateElement()
+    }
   }
 
   private clearPendingState(): void {
