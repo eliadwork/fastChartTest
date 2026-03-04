@@ -30,6 +30,14 @@ export interface IPointMarkModifierOptions {
   onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
   /** Icon size multiplier. 1 = default, 1.5 = 50% bigger. */
   iconSize?: number
+  /** Chart ID for registering clear callback. */
+  chartId?: string
+  /** Called to register remove (cancel) and clear-state (pick) callbacks. */
+  onRegisterForClear?: (
+    chartId: string,
+    removePending: () => void,
+    clearPendingState: () => void
+  ) => void
 }
 
 /**
@@ -43,11 +51,21 @@ export class PointMarkModifier extends ChartModifierBase2D {
   private onPointMark?: (xValue: number, yValue: number, context?: PointMarkContext) => PointMarkResult | null
   private mouseDownPoint: Point | undefined
   private iconSize: number
+  private chartId?: string
+  private onRegisterForClear?: (
+    chartId: string,
+    removePending: () => void,
+    clearPendingState: () => void
+  ) => void
+  private pendingLineAnnotations: VerticalLineAnnotation[] = []
+  private hasRegisteredClear = false
 
   constructor(options?: IPointMarkModifierOptions) {
     super()
     this.onPointMark = options?.onPointMark
     this.iconSize = options?.iconSize ?? DEFAULT_ICON_SIZE
+    this.chartId = options?.chartId
+    this.onRegisterForClear = options?.onRegisterForClear
   }
 
   modifierMouseDown(args: ModifierMouseArgs): void {
@@ -133,15 +151,44 @@ export class PointMarkModifier extends ChartModifierBase2D {
           )
         }
       } else if ('lineAxis' in item && item.lineAxis === 'x') {
-        this.parentSurface.annotations.add(
-          new VerticalLineAnnotation({
-            x1: item.lineValue,
-            stroke: item.color,
-            strokeThickness: 2,
-            strokeDashArray: item.strokeDashArray,
-          })
-        )
+        const ann = new VerticalLineAnnotation({
+          x1: item.lineValue,
+          stroke: item.color,
+          strokeThickness: 2,
+          strokeDashArray: item.strokeDashArray,
+        })
+        this.parentSurface.annotations.add(ann)
+        this.pendingLineAnnotations.push(ann)
+        if (
+          this.chartId &&
+          this.onRegisterForClear &&
+          !this.hasRegisteredClear
+        ) {
+          this.hasRegisteredClear = true
+          this.onRegisterForClear(
+            this.chartId,
+            () => this.removePendingLines(),
+            () => this.clearPendingState()
+          )
+        }
       }
     }
+  }
+
+  private removePendingLines(): void {
+    const surf = this.parentSurface
+    if (!surf) return
+    for (const ann of this.pendingLineAnnotations) {
+      surf.annotations.remove(ann)
+      ann.delete()
+    }
+    this.pendingLineAnnotations = []
+    this.hasRegisteredClear = false
+    surf.invalidateElement()
+  }
+
+  private clearPendingState(): void {
+    this.pendingLineAnnotations = []
+    this.hasRegisteredClear = false
   }
 }

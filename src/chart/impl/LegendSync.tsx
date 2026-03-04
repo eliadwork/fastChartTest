@@ -19,6 +19,8 @@ interface LegendSyncProps {
   seriesVisibility?: boolean[]
   /** Group key per series (parallel to series). Same key = grouped together, toggle on/off as one. */
   seriesGroupKeys?: (string | undefined)[]
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
 }
 
 function LegendLine({
@@ -45,7 +47,14 @@ function LegendLine({
   )
 }
 
-export function LegendSync({ backgroundColor, textColor, seriesVisibility, seriesGroupKeys }: LegendSyncProps) {
+export function LegendSync({
+  backgroundColor,
+  textColor,
+  seriesVisibility,
+  seriesGroupKeys,
+  onSeriesVisibilityChange,
+  onSeriesVisibilityGroupChange,
+}: LegendSyncProps) {
   const initResult = useContext(SciChartSurfaceContext)
   const [, forceUpdate] = useState(0)
 
@@ -86,11 +95,13 @@ export function LegendSync({ backgroundColor, textColor, seriesVisibility, serie
       if (!surface) return
       const series = surface.renderableSeries.asArray()[index] as { isVisible: boolean }
       if (!series) return
-      series.isVisible = !series.isVisible
+      const newVal = !series.isVisible
+      series.isVisible = newVal
       surface.invalidateElement()
+      onSeriesVisibilityChange?.(index, newVal)
       forceUpdate((n) => n + 1)
     },
-    [surface]
+    [surface, onSeriesVisibilityChange]
   )
 
   const handleGroupClick = useCallback(
@@ -104,9 +115,10 @@ export function LegendSync({ backgroundColor, textColor, seriesVisibility, serie
         if (s) s.isVisible = newVal
       }
       surface.invalidateElement()
+      onSeriesVisibilityGroupChange?.(indices, newVal)
       forceUpdate((n) => n + 1)
     },
-    [surface]
+    [surface, onSeriesVisibilityGroupChange]
   )
 
   if (seriesList.length === 0) return null

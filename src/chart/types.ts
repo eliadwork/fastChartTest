@@ -112,6 +112,16 @@ export interface ChartOptions {
    * in the legend and can be toggled on/off together. Undefined/empty = ungrouped.
    */
   seriesGroupKeys?: (string | undefined)[]
+  /** Called when user toggles series visibility via legend. Keeps state in sync. */
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
+  /** Called when user toggles a group via legend. */
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
+  /** Internal: register clear callbacks for 3-click point mark flow. */
+  pointMarkRegisterForClear?: (
+    chartId: string,
+    removePending: () => void,
+    clearPendingState: () => void
+  ) => void
 }
 
 export interface ChartProps {

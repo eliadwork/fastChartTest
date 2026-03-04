@@ -27,12 +27,18 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     this.chartId = options?.chartId
   }
 
+  private unregisterPushBeforeReset: (() => void) | undefined
+
   onAttach(): void {
     super.onAttach()
     if (this.chartId) {
       this.unregister = useZoomBackStore.getState().register(
         this.chartId,
         () => this.restorePrevious()
+      )
+      this.unregisterPushBeforeReset = useZoomBackStore.getState().registerPushBeforeReset(
+        this.chartId,
+        () => this.pushCurrentState()
       )
       this.updateStoreCanZoomBack()
     }
@@ -51,10 +57,12 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
   onDetach(): void {
     this.unregister?.()
     this.unregister = undefined
+    this.unregisterPushBeforeReset?.()
+    this.unregisterPushBeforeReset = undefined
     super.onDetach()
   }
 
-  private pushCurrentState(): void {
+  pushCurrentState(): void {
     if (this.isRestoring) return
     const current = this.captureRange()
     if (!current) return

@@ -37,6 +37,7 @@ import { LegendSync } from './LegendSync'
 import { PointMarkModifier } from './PointMarkModifier'
 import { ShiftLeftClickZoomPanModifier } from './ShiftLeftClickZoomPanModifier'
 import { ZoomHistoryModifier } from './ZoomHistoryModifier'
+import { ZoomResetSync } from './ZoomResetSync'
 
 const DEFAULT_SERIES_COLORS = [
   '#3ca832',
@@ -269,6 +270,8 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
           new PointMarkModifier({
             onPointMark,
             iconSize: options.pointMarkIconSize ?? 1.5,
+            chartId: chartId ?? undefined,
+            onRegisterForClear: options.pointMarkRegisterForClear,
           }),
           new ZoomHistoryModifier({ chartId }),
           new LeftClickRubberBandXyZoomModifier({
@@ -304,6 +307,7 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         return { sciChartSurface }
       }}
     >
+      <ZoomResetSync chartId={chartId} />
       <PointMarkersSync
         icons={options.icons ?? []}
         pointMarkers={options.pointMarkers ?? []}
@@ -317,6 +321,8 @@ export function SciChartChart({ data, options, style, chartId }: SciChartChartPr
         textColor={options.textColor ?? '#ffffff'}
         seriesVisibility={options.seriesVisibility}
         seriesGroupKeys={options.seriesGroupKeys}
+        onSeriesVisibilityChange={options.onSeriesVisibilityChange}
+        onSeriesVisibilityGroupChange={options.onSeriesVisibilityGroupChange}
       />
     </SciChartReact>
     </Box>

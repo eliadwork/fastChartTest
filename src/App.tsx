@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
@@ -6,7 +6,9 @@ import { DEFAULT_POINT_MARK_ICON_SVG } from './chartTheme'
 import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
 import type { ChartData } from './chart'
+import { PointMarkClearContext, PointMarkClearProvider } from './PointMarkClearContext'
 import { usePointMarkStore } from './store/pointMarkStore'
+import type { PointMarkColor } from './store/pointMarkStore'
 import { getInterpolatedPointAtX } from './utils/chartDataLookup'
 import {
   ChartComparison,
@@ -27,16 +29,20 @@ function App() {
   const theme = useTheme()
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const { enqueueSnackbar } = useSnackbar()
+  const { removePendingForChart, clearPendingStateForChart } = useContext(PointMarkClearContext)
   const seriesPickerOpen = usePointMarkStore((s) => s.seriesPickerOpen)
   const markedXValues = usePointMarkStore((s) => s.markedXValues)
-  const markedYValue = usePointMarkStore((s) => s.markedYValue)
+  const markedPoints = usePointMarkStore((s) => s.markedPoints)
   const chartDataForModal = usePointMarkStore((s) => s.chartDataForModal)
   const chartIdForModal = usePointMarkStore((s) => s.chartIdForModal)
   const bindableIndices = usePointMarkStore((s) => s.bindableIndices)
   const addPointMark = usePointMarkStore((s) => s.addPointMark)
   const addIcon = usePointMarkStore((s) => s.addIcon)
   const iconsByChart = usePointMarkStore((s) => s.iconsByChart)
+  const updateMarkedPointColor = usePointMarkStore((s) => s.updateMarkedPointColor)
   const closeSeriesPicker = usePointMarkStore((s) => s.closeSeriesPicker)
+
+  const COLORS: PointMarkColor[] = ['red', 'green', 'yellow']
 
   useEffect(() => {
     const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
@@ -70,30 +76,51 @@ function App() {
         return addPointMark(chartId, xValue, yValue, chartDataForStore, {
           seriesBindable: context?.seriesBindable,
           seriesVisibility: context?.getSeriesVisibility?.(),
+          onValidationError: (msg) => enqueueSnackbar(msg, { variant: 'error' }),
+          onComplete: (cid) => clearPendingStateForChart(cid),
         })
       },
-    [chartData, addPointMark]
+    [chartData, addPointMark, enqueueSnackbar, clearPendingStateForChart]
   )
 
   const handleSeriesPick = useCallback(
     (seriesIndex: number) => {
-      if (!markedXValues || markedYValue == null || !chartDataForModal || !chartIdForModal) return
-      const middleX = markedXValues[1]
-      const point = getInterpolatedPointAtX(chartDataForModal, middleX, seriesIndex)
-      if (!point) return
+      if (!markedPoints || !markedXValues || !chartDataForModal || !chartIdForModal) return
+      const [x1, x2, x3] = markedXValues
+      const leftPoint = getInterpolatedPointAtX(chartDataForModal, x1, seriesIndex)
+      const middlePoint = getInterpolatedPointAtX(chartDataForModal, x2, seriesIndex)
+      const rightPoint = getInterpolatedPointAtX(chartDataForModal, x3, seriesIndex)
+      if (!leftPoint || !middlePoint || !rightPoint) return
+      const finalPoints = [
+        { location: leftPoint },
+        { location: middlePoint, ...(markedPoints[1]?.color != null && { color: markedPoints[1].color }) },
+        { location: rightPoint },
+      ]
       addIcon(chartIdForModal, {
         iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-        location: { x: point.x, y: point.y },
-        color: 'pink',
+        location: middlePoint,
+        color: markedPoints[1]?.color
+          ? { red: '#ff0000', green: '#00ff00', yellow: '#ffff00' }[markedPoints[1].color]
+          : undefined,
       })
-      const seriesName =
-        chartDataForModal.seriesNames?.[seriesIndex] ?? `Series ${seriesIndex}`
-      enqueueSnackbar(`Y at ${point.x.toFixed(2)}: ${point.y} (${seriesName})`, {
-        autoHideDuration: 60000,
-      })
+      const output = finalPoints.map((p) =>
+        'color' in p && p.color != null ? { location: p.location, color: p.color } : { location: p.location }
+      )
+      console.log(JSON.stringify(output, null, 2))
+      enqueueSnackbar(`Saved 3 points`, { autoHideDuration: 3000 })
+      clearPendingStateForChart(chartIdForModal)
       closeSeriesPicker()
     },
-    [markedXValues, markedYValue, chartDataForModal, chartIdForModal, addIcon, enqueueSnackbar, closeSeriesPicker]
+    [
+      markedPoints,
+      markedXValues,
+      chartDataForModal,
+      chartIdForModal,
+      addIcon,
+      enqueueSnackbar,
+      closeSeriesPicker,
+      clearPendingStateForChart,
+    ]
   )
 
   const chartThemeOverride = {
@@ -142,6 +169,7 @@ function App() {
   }
 
   return (
+    <PointMarkClearProvider>
     <ChartThemeProvider theme={chartThemeOverride}>
     <ChartComparison>
       <ChartComparisonGrid>
@@ -191,12 +219,38 @@ function App() {
 
       <PointMarkModalOverlay
         open={seriesPickerOpen && !!chartDataForModal}
-        onClose={closeSeriesPicker}
+        onClose={() => {
+          if (chartIdForModal) removePendingForChart(chartIdForModal)
+          closeSeriesPicker()
+        }}
       >
         <Box component="div" onClick={(e: React.MouseEvent) => e.stopPropagation()} sx={{ p: 2, maxWidth: '90vw' }}>
           <PointMarkModalTitle variant="h6">
             Which series should the middle point be connected to?
           </PointMarkModalTitle>
+          {markedPoints && (
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component="span" sx={{ minWidth: 90, fontSize: '0.9rem' }}>
+                Middle point color:
+              </Box>
+              {COLORS.map((c) => (
+                <PointMarkModalButton
+                  key={c}
+                  variant={markedPoints[1]?.color === c ? 'contained' : 'outlined'}
+                  onClick={() => updateMarkedPointColor(1, c)}
+                  size="small"
+                  sx={{
+                    backgroundColor: markedPoints[1]?.color === c ? c : undefined,
+                    borderColor: c,
+                    color: markedPoints[1]?.color === c ? '#fff' : c,
+                    minWidth: 70,
+                  }}
+                >
+                  {c}
+                </PointMarkModalButton>
+              ))}
+            </Box>
+          )}
           <PointMarkModalButtons>
             {(bindableIndices.length > 0
               ? bindableIndices
@@ -219,13 +273,20 @@ function App() {
               )
             })}
           </PointMarkModalButtons>
-          <PointMarkModalCancel variant="outlined" onClick={closeSeriesPicker}>
+          <PointMarkModalCancel
+            variant="outlined"
+            onClick={() => {
+              if (chartIdForModal) removePendingForChart(chartIdForModal)
+              closeSeriesPicker()
+            }}
+          >
             Cancel
           </PointMarkModalCancel>
         </Box>
       </PointMarkModalOverlay>
     </ChartComparison>
     </ChartThemeProvider>
+    </PointMarkClearProvider>
   )
 }
 

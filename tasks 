@@ -15,13 +15,14 @@ done
 * add the axis outlines
 * add the option to group graph at the glossary
 * is picked value
+* right click streching
 
 
  need to do:
-* right click streching
 * add home button that do the same as double click
 * make a warapper that can be moved and made bigger and smaller
 * make the whole component be relative 
+* make the colors infinite
 
 cr and code cleam up:
 * make a cr for yourself make the code clean clear and readable and optiomize the graph 

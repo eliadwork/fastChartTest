@@ -1,6 +1,4 @@
 import { create } from 'zustand'
-import { DEFAULT_POINT_MARK_ICON_SVG } from '../chartTheme'
-import { getInterpolatedPointAtX } from '../utils/chartDataLookup'
 
 export interface ChartDataForModal {
   x: ArrayLike<number> | number[]
@@ -8,9 +6,13 @@ export interface ChartDataForModal {
   seriesNames?: string[]
 }
 
+export type PointMarkColor = 'red' | 'green' | 'yellow'
+
 export interface PointMarkOptions {
   seriesBindable?: boolean[]
   seriesVisibility?: boolean[]
+  onValidationError?: (message: string) => void
+  onComplete?: (chartId: string) => void
 }
 
 export interface ChartShapeForMark {
@@ -51,9 +53,22 @@ export interface PointMarker {
 import type { ChartIcon } from '../chart/types'
 export type { ChartIcon }
 
+/** Pending point: y is optional until series is chosen. */
+export interface MarkedPointPending {
+  location: { x: number; y?: number }
+  color?: PointMarkColor
+}
+
+/** Final saved point: x and y required, color optional. */
+export interface MarkedPointFinal {
+  location: { x: number; y: number }
+  color?: PointMarkColor
+}
+
 interface PointMarkState {
   clicksByChart: Record<string, { x: number; y: number }[]>
   markedXValues: [number, number, number] | null
+  markedPoints: MarkedPointPending[] | null
   markedYValue: number | null
   chartDataForModal: ChartDataForModal | null
   chartIdForModal: string | null
@@ -73,6 +88,7 @@ interface PointMarkActions {
   ) => PointMarkResult | null
   addPointMarker: (chartId: string, marker: PointMarker) => void
   addIcon: (chartId: string, icon: ChartIcon) => void
+  updateMarkedPointColor: (index: number, color: PointMarkColor | undefined) => void
   closeSeriesPicker: () => void
 }
 
@@ -80,6 +96,7 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
   (set, get) => ({
     clicksByChart: {},
     markedXValues: null,
+    markedPoints: null,
     markedYValue: null,
     chartDataForModal: null,
     chartIdForModal: null,
@@ -89,13 +106,12 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
     iconsByChart: {},
 
     addPointMark: (chartId, xValue, yValue, chartData, options) => {
-      const { clicksByChart, addIcon } = get()
+      const { clicksByChart } = get()
       const clicks = [...(clicksByChart[chartId] ?? []), { x: xValue, y: yValue }]
       const index = clicks.length - 1
       const seriesCount = chartData.ys?.length ?? 0
 
       const seriesBindable = options?.seriesBindable
-      const seriesVisibility = options?.seriesVisibility ?? Array.from({ length: seriesCount }, () => true)
 
       const bindableIndices =
         seriesBindable != null
@@ -103,37 +119,32 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
           : Array.from({ length: seriesCount }, (_, i) => i)
 
       if (clicks.length === 3) {
-        const middleX = clicks[1].x
-        let openModal = false
-        let autoBindIndex: number | null = null
+        const x1 = clicks[0].x
+        const x2 = clicks[1].x
+        const x3 = clicks[2].x
+        const minX = Math.min(x1, x3)
+        const maxX = Math.max(x1, x3)
+        const middleBetweenEnds = minX <= x2 && x2 <= maxX
 
-        if (bindableIndices.length === 0) {
-          openModal = false
-        } else if (bindableIndices.length === 1) {
-          autoBindIndex = bindableIndices[0]!
-        } else {
-          const visibleBindable = bindableIndices.filter((i) => seriesVisibility[i])
-          if (visibleBindable.length === 1) {
-            autoBindIndex = visibleBindable[0]!
-          } else {
-            openModal = true
-          }
+        if (!middleBetweenEnds) {
+          options?.onValidationError?.('Pick must be between the two shoulders.')
+          set({
+            clicksByChart: { ...clicksByChart, [chartId]: [clicks[0], clicks[1]] },
+          })
+          return null
         }
 
-        if (autoBindIndex != null) {
-          const point = getInterpolatedPointAtX(chartData, middleX, autoBindIndex)
-          if (point) {
-            addIcon(chartId, {
-              iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-              location: { x: point.x, y: point.y },
-              color: '#888888',
-            })
-          }
-        }
+        const points: MarkedPointPending[] = [
+          { location: { x: clicks[0].x } },
+          { location: { x: clicks[1].x, y: clicks[1].y }, color: 'red' },
+          { location: { x: clicks[2].x } },
+        ]
+        const openModal = bindableIndices.length > 0
 
         set({
           clicksByChart: { ...clicksByChart, [chartId]: [] },
           markedXValues: [clicks[0].x, clicks[1].x, clicks[2].x],
+          markedPoints: points,
           markedYValue: clicks[1].y,
           chartDataForModal: openModal ? chartData : null,
           chartIdForModal: openModal ? chartId : null,
@@ -176,9 +187,24 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
         },
       })),
 
+    updateMarkedPointColor: (index, color) =>
+      set((s) => {
+        if (!s.markedPoints || index < 0 || index >= s.markedPoints.length) return s
+        const next = [...s.markedPoints]
+        const prev = next[index]!
+        if (color === undefined) {
+          const { color: _c, ...rest } = prev
+          next[index] = rest as MarkedPointPending
+        } else {
+          next[index] = { ...prev, color }
+        }
+        return { markedPoints: next }
+      }),
+
     closeSeriesPicker: () =>
       set({
         markedXValues: null,
+        markedPoints: null,
         markedYValue: null,
         chartDataForModal: null,
         chartIdForModal: null,
