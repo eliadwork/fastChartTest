@@ -3,9 +3,8 @@
  * Customize via createChartTheme() or pass overrides to ChartThemeProvider.
  */
 
-/** Default point mark icon: SVG circle. Use {{color}} placeholder for fill (replaced at render). */
-export const DEFAULT_POINT_MARK_ICON_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="{{color}}"/></svg>'
+import α from "color-alpha"
+import { DEFAULT_POINT_MARK_ICON_SVG } from "./assets/pointMarkIcon"
 
 export interface ChartTheme {
   /** Default colors for series when not specified per-series */
@@ -32,22 +31,9 @@ export interface ChartTheme {
   zeroLineColor?: string
 }
 
-/** Add opacity to a hex or rgb/rgba color string. */
-export function withOpacity(color: string, opacity: number): string {
-  if (!color) return color
-  if (color.startsWith('#')) {
-    const hex = color.slice(1).padEnd(6, '0')
-    const r = parseInt(hex.slice(0, 2), 16)
-    const g = parseInt(hex.slice(2, 4), 16)
-    const b = parseInt(hex.slice(4, 6), 16)
-    return `rgba(${r},${g},${b},${opacity})`
-  }
-  const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
-  if (rgbMatch) {
-    return `rgba(${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]},${opacity})`
-  }
-  return color
-}
+/** Add opacity to a color string (hex, rgb, rgba, hsl, named colors). */
+export const withOpacity = (color: string, opacity: number) =>
+  color ? α(color, opacity) : color
 
 export const defaultChartTheme: ChartTheme = {
   chartBackgroundOpacity: 0.2,

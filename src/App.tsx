@@ -6,7 +6,6 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
-import { DEFAULT_POINT_MARK_ICON_SVG } from './chartTheme'
 import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
 import type { ChartData } from './chart'
@@ -25,6 +24,7 @@ import {
   PointMarkModalButton,
   PointMarkModalCancel,
 } from './styled'
+import { DEFAULT_POINT_MARK_ICON_SVG } from './assets/pointMarkIcon'
 
 const POINTS_PER_SERIES = 500_000
 const SERIES_COUNT = 10

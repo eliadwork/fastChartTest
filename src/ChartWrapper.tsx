@@ -4,6 +4,7 @@ import Tooltip from '@mui/material/Tooltip'
 import { Chart } from './chart'
 import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
 import { useChartTheme } from './ChartThemeContext'
+import { LogoIcon } from './assets/pointMarkIcon'
 import { withOpacity } from './chartTheme'
 import { PointMarkClearContext } from './PointMarkClearContext'
 import { usePointMarkStore } from './store/pointMarkStore'
@@ -11,7 +12,6 @@ import { ChartPanelHeader, ChartPanelHeaderText, ChartPanelTitle, ChartPanelNote
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import UndoIcon from '@mui/icons-material/Undo'
-import FitScreenIcon from '@mui/icons-material/FitScreen'
 import { useZoomBackStore } from './store/zoomBackStore'
 import { useZoomResetStore } from './store/zoomResetStore'
 
@@ -200,7 +200,7 @@ export function ChartWrapper({
                     onClick={() => zoomReset(chartId)}
                     aria-label="Reset to basic zoom"
                   >
-                    <FitScreenIcon sx={{ fontSize: '1.1rem' }} />
+                    <LogoIcon sx={{ fontSize: '1.1rem' }} />
                   </ChartToolbarButton>
                 </Tooltip>
               </>

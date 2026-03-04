@@ -10,8 +10,8 @@ import {
 import { SciChartSurfaceContext } from 'scichart-react'
 
 import type { ChartIcon } from '../types'
-import { DEFAULT_POINT_MARK_ICON_SVG } from '../../chartTheme'
 import { toSvgString } from './iconUtils'
+import { DEFAULT_POINT_MARK_ICON_SVG } from '../../assets/pointMarkIcon'
 
 interface PointMarker {
   x: number
