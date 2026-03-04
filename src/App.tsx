@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
-import { SciChartSurface } from 'scichart'
 import { DEFAULT_POINT_MARK_ICON_SVG } from './chartTheme'
 import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
@@ -23,9 +22,6 @@ import {
 
 const POINTS_PER_SERIES = 500_000
 const SERIES_COUNT = 10
-
-// Load WASM from CDN (no build config required)
-SciChartSurface.loadWasmFromCDN()
 
 function App() {
   const theme = useTheme()

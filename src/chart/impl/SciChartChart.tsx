@@ -18,6 +18,12 @@ import {
   ZoomPanModifier,
 } from 'scichart'
 import Box from '@mui/material/Box'
+
+// Load WASM from public/ (copied from node_modules by postinstall). Portable across build tools.
+SciChartSurface.configure({
+  wasmUrl: '/scichart2d.wasm',
+  wasmNoSimdUrl: '/scichart2d-nosimd.wasm',
+})
 import { SciChartReact } from 'scichart-react'
 import type { ChartOptions, ModifierKey } from '../types'
 import type { ConvertedData } from '../convert'

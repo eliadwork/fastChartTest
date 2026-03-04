@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postinstall": "patch-package"
+    "copy:wasm": "mkdir -p public && cp node_modules/scichart/_wasm/scichart2d.wasm node_modules/scichart/_wasm/scichart2d-nosimd.wasm public/ 2>/dev/null || true",
+    "postinstall": "patch-package && npm run copy:wasm"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
