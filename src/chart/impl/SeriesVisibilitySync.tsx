@@ -6,7 +6,7 @@ interface SeriesVisibilitySyncProps {
   seriesVisibility?: boolean[]
 }
 
-export function SeriesVisibilitySync({ seriesVisibility }: SeriesVisibilitySyncProps) {
+export const SeriesVisibilitySync = ({ seriesVisibility }: SeriesVisibilitySyncProps) => {
   const initResult = useContext(SciChartSurfaceContext)
 
   useEffect(() => {

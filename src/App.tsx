@@ -29,7 +29,7 @@ import { DEFAULT_POINT_MARK_ICON_SVG } from './assets/pointMarkIcon'
 const POINTS_PER_SERIES = 500_000
 const SERIES_COUNT = 10
 
-function App() {
+const App = () => {
   const theme = useTheme()
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const { enqueueSnackbar } = useSnackbar()

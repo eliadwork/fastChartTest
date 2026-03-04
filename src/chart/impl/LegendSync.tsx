@@ -23,7 +23,7 @@ interface LegendSyncProps {
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
 }
 
-function LegendLine({
+const LegendLine = ({
   stroke,
   strokeThickness,
   strokeDashArray,
@@ -31,8 +31,7 @@ function LegendLine({
   stroke: string
   strokeThickness: number
   strokeDashArray?: number[]
-}) {
-  return (
+}) => (
     <svg width="1.25em" height="0.5em" viewBox="0 0 20 8" style={{ flexShrink: 0 }}>
       <line
         x1="0"
@@ -44,17 +43,16 @@ function LegendLine({
         strokeDasharray={strokeDashArray?.join(' ') ?? 'none'}
       />
     </svg>
-  )
-}
+)
 
-export function LegendSync({
+export const LegendSync = ({
   backgroundColor,
   textColor,
   seriesVisibility,
   seriesGroupKeys,
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
-}: LegendSyncProps) {
+}: LegendSyncProps) => {
   const initResult = useContext(SciChartSurfaceContext)
   const [, forceUpdate] = useState(0)
 

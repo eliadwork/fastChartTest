@@ -46,7 +46,7 @@ export const PointMarkClearContext = createContext<{
   clearPendingStateForChart,
 })
 
-export function PointMarkClearProvider({ children }: { children: ReactNode }) {
+export const PointMarkClearProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PointMarkClearContext.Provider
       value={{

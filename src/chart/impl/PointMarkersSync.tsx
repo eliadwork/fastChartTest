@@ -31,13 +31,13 @@ interface PointMarkersSyncProps {
 
 const DEFAULT_ICON_SIZE = 1
 
-export function PointMarkersSync({
+export const PointMarkersSync = ({
   icons = [],
   pointMarkers = [],
   defaultIcon = DEFAULT_POINT_MARK_ICON_SVG,
   defaultColor = '#3388ff',
   iconSize = DEFAULT_ICON_SIZE,
-}: PointMarkersSyncProps) {
+}: PointMarkersSyncProps) => {
   const initResult = useContext(SciChartSurfaceContext)
   const annotationRefs = useRef<(CustomAnnotation | NativeTextAnnotation)[]>([])
 

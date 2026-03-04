@@ -1,5 +1,13 @@
 # Project Conventions
 
+## React Components
+
+**Use arrow function syntax for all React components.**
+
+- Use `const Name = () =>` or `const Name = (props) =>` instead of `function Name()`.
+- Export as `export const Name = ...` when exporting components.
+- See `.cursor/rules/arrow-function-components.mdc` for examples.
+
 ## Styling & UI
 
 **Use MUI (Material-UI), MUI styled, and MUI icons for all UI work.**

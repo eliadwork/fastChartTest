@@ -41,7 +41,7 @@ export interface ChartWrapperProps {
   showDisableAllButton?: boolean
 }
 
-export function ChartWrapper({
+export const ChartWrapper = ({
   chartId,
   data,
   options = {},
@@ -52,7 +52,7 @@ export function ChartWrapper({
   pointMarkers,
   title,
   showDisableAllButton = true,
-}: ChartWrapperProps) {
+}: ChartWrapperProps) => {
   const chartTheme = useChartTheme()
   const { registerForChart } = useContext(PointMarkClearContext)
   const chartIdForModal = usePointMarkStore((s) => s.chartIdForModal)

@@ -1,0 +1,34 @@
+---
+description: Use arrow function syntax for React components
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# React Component Style
+
+Use arrow function syntax for all React components.
+
+```tsx
+// ✅ GOOD
+const MyComponent = ({ prop1, prop2 }: Props) => (
+  <div>...</div>
+)
+
+export const ChartWrapper = (props: ChartWrapperProps) => {
+  // ...
+  return <div>...</div>
+}
+
+// ❌ BAD
+function MyComponent({ prop1, prop2 }: Props) {
+  return <div>...</div>
+}
+
+export function ChartWrapper(props: ChartWrapperProps) {
+  return <div>...</div>
+}
+```
+
+- Use `const Name = () =>` instead of `function Name()`
+- Use `const Name = (props) =>` for components with props
+- Export as `export const Name = ...` when exporting components

@@ -9,7 +9,7 @@ export interface ChartThemeProviderProps {
   children: ReactNode
 }
 
-export function ChartThemeProvider({ theme: overrides, children }: ChartThemeProviderProps) {
+export const ChartThemeProvider = ({ theme: overrides, children }: ChartThemeProviderProps) => {
   const theme = useMemo(
     () => ({ ...defaultChartTheme, ...overrides }),
     [overrides]

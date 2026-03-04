@@ -8,7 +8,7 @@ interface ZoomResetSyncProps {
   chartId?: string
 }
 
-export function ZoomResetSync({ chartId }: ZoomResetSyncProps) {
+export const ZoomResetSync = ({ chartId }: ZoomResetSyncProps) => {
   const initResult = useContext(SciChartSurfaceContext)
 
   useEffect(() => {

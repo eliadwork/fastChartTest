@@ -65,7 +65,7 @@ export interface SciChartChartProps {
   chartId?: string
 }
 
-export function SciChartChart({ data, options, style, chartId }: SciChartChartProps) {
+export const SciChartChart = ({ data, options, style, chartId }: SciChartChartProps) => {
   const { lines: lineShapes, boxes } = convertShapes(options.shapes)
   const stretchTrigger = options.stretchTrigger ?? 'rightClick'
   const stretchOnRightClick = stretchTrigger === 'rightClick'
