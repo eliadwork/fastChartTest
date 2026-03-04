@@ -19,7 +19,7 @@ export interface ChartShapeForMark {
   color: string
   axis: 'x'
   value: number
-  strokeDashArray?: number[]
+  dash?: { isDash: boolean; steps: number[] }
 }
 
 export interface ChartMarkerForMark {
@@ -34,12 +34,12 @@ export type PointMarkResult = ChartShapeForMark | ChartMarkerForMark | (ChartSha
 const DEFAULT_LINE_COLOR = '#ff0000'
 
 function createShapeForIndex(index: number, xValue: number): ChartShapeForMark {
-  const strokeDashArray = index === 1 ? [8, 4] : undefined
+  const dash = index === 1 ? { isDash: true, steps: [8, 4] } : undefined
   return {
     color: DEFAULT_LINE_COLOR,
     axis: 'x',
     value: xValue,
-    strokeDashArray,
+    dash,
   }
 }
 

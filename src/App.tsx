@@ -189,7 +189,7 @@ const App = () => {
       { bindable: true },
       { bindable: true },
       { thickness: 4, bindable: true },
-      { thickness: 1, striped: true, bindable: true },
+      { thickness: 1, dash: { isDash: true, steps: [6, 4] }, bindable: true },
       { bindable: false },
       { bindable: false },
       { bindable: false },

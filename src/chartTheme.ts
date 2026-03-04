@@ -15,8 +15,8 @@ export interface ChartTheme {
   chartBackgroundOpacity?: number
   /** Rollover/hover line stroke color */
   rolloverStroke?: string
-  /** Rollover line dash array */
-  rolloverDash?: number[]
+  /** Rollover line dash. Default: { isDash: true, steps: [8, 4] } */
+  rolloverDash?: { isDash: boolean; steps: number[] }
   /** Default stroke thickness for series */
   defaultStrokeThickness?: number
   /** Point mark icon (3-click pick) */
@@ -50,7 +50,7 @@ export const defaultChartTheme: ChartTheme = {
     '#7f7f7f',
   ],
   rolloverStroke: '#FF0000',
-  rolloverDash: [8, 4],
+  rolloverDash: { isDash: true, steps: [8, 4] },
   defaultStrokeThickness: 2,
   pointMarkIcon: DEFAULT_POINT_MARK_ICON_SVG,
   pointMarkIconColor: '#3388ff',

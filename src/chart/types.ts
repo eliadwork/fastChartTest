@@ -19,7 +19,7 @@ export interface ChartLineShape {
   color: string
   axis: 'x' | 'y'
   value: number
-  strokeDashArray?: number[]
+  dash?: DashConfig
 }
 
 export interface ChartBoxShape {
@@ -33,10 +33,16 @@ export interface ChartBoxShape {
     y1?: number
     y2?: number
   }
-  strokeDashArray?: number[]
+  dash?: DashConfig
 }
 
 export type ChartShape = ChartLineShape | ChartBoxShape
+
+/** Unified dash config: isDash enables dashed line, steps is the pattern (e.g. [8, 4]). */
+export interface DashConfig {
+  isDash: boolean
+  steps: number[]
+}
 
 export interface ChartMarkerShape {
   type: 'marker'
@@ -48,9 +54,8 @@ export interface ChartMarkerShape {
 export interface ChartLineStyle {
   color?: string
   thickness?: number
-  dash?: number[]
-  /** When true, applies a dashed pattern [6, 4] for a striped look */
-  striped?: boolean
+  /** Dash config: isDash enables dashed line, steps is the pattern (e.g. [6, 4] for striped). */
+  dash?: DashConfig
   /** When false, series cannot be bound in the 3-click point mark flow. Default: true. */
   bindable?: boolean
 }
@@ -76,7 +81,8 @@ export interface ChartOptions {
   /** @deprecated Use panTrigger instead */
   panKey?: ModifierKey
   rolloverStroke?: string
-  rolloverDash?: number[]
+  /** Rollover/hover line dash. Default: { isDash: true, steps: [8, 4] } */
+  rolloverDash?: DashConfig
   backgroundColor?: string
   /** Legend (glossary) background color. Defaults to same as chart (backgroundColor with chartBackgroundOpacity). */
   legendBackgroundColor?: string

@@ -27,7 +27,7 @@ SciChartSurface.configure({
 import { SciChartReact } from 'scichart-react'
 import type { ChartOptions, ModifierKey } from '../types'
 import type { ConvertedData } from '../convert'
-import { convertShapes, normalizeShape } from '../convert'
+import { convertShapes, dashToStrokeArray, normalizeShape } from '../convert'
 import { AxisStretchModifier } from './AxisStretchModifier'
 import { LeftClickRubberBandXyZoomModifier } from './LeftClickRubberBandXyZoomModifier'
 import { PointMarkersSync } from './PointMarkersSync'
@@ -77,7 +77,7 @@ export const SciChartChart = ({ data, options, style, chartId }: SciChartChartPr
   const seriesColors = options.defaultSeriesColors ?? DEFAULT_SERIES_COLORS
   const strokeThickness = options.defaultStrokeThickness ?? 2
   const rolloverStroke = options.rolloverStroke ?? '#FF0000'
-  const rolloverDash = options.rolloverDash ?? [8, 4]
+  const rolloverDash = dashToStrokeArray(options.rolloverDash) ?? [8, 4]
   const resamplingMode = options.resampling !== false ? EResamplingMode.Auto : EResamplingMode.None
   const resamplingPrecision = options.resamplingPrecision ?? (options.resampling ? 1 : 0)
 
@@ -173,8 +173,7 @@ export const SciChartChart = ({ data, options, style, chartId }: SciChartChartPr
           const isVisible = data.seriesVisibility?.[i] ?? true
           const strokeColor =
             lineStyle?.color ?? data.seriesColors?.[i] ?? seriesColors[i % seriesColors.length]
-          const strokeDashArray =
-            lineStyle?.dash ?? (lineStyle?.striped ? [6, 4] : undefined)
+          const strokeDashArray = dashToStrokeArray(lineStyle?.dash)
           const series = new FastLineRenderableSeries(wasmContext, {
             dataSeries,
             stroke: strokeColor,

@@ -8,6 +8,7 @@ export type {
   ChartProps,
   ChartShape,
   ChartLineStyle,
+  DashConfig,
   ModifierKey,
 } from './chart'
 export { toFloat64Array } from './chart'

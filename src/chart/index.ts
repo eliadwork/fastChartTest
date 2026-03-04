@@ -1,5 +1,5 @@
 export { Chart } from './Chart'
 export type { ChartProps } from './Chart'
-export type { ChartBoxShape, ChartData, ChartIcon, ChartLineShape, ChartOptions, ChartShape, ChartLineStyle, ModifierKey, StretchTrigger } from './types'
-export { convertData, convertShapes, toFloat64Array } from './convert'
+export type { ChartBoxShape, ChartData, ChartIcon, ChartLineShape, ChartOptions, ChartShape, ChartLineStyle, DashConfig, ModifierKey, StretchTrigger } from './types'
+export { convertData, convertShapes, toFloat64Array, dashToStrokeArray } from './convert'
 export type { ConvertedBox, ConvertedData, ConvertedShape } from './convert'

@@ -3,7 +3,11 @@
  * Converts generic types to implementation-ready formats.
  */
 
-import type { ChartData, ChartLineStyle, ChartLineShape, ChartOptions, ChartShape } from './types'
+import type { ChartData, ChartLineStyle, ChartLineShape, ChartOptions, ChartShape, DashConfig } from './types'
+
+/** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
+export const dashToStrokeArray = (dash?: DashConfig): number[] | undefined =>
+  dash?.isDash && dash.steps?.length ? dash.steps : undefined
 
 export interface ConvertedData {
   x: Float64Array
@@ -85,7 +89,7 @@ export function convertShapes(shapes: ChartShape[] = []): {
         x2: s.coordinates.x2,
         y1: s.coordinates.y1,
         y2: s.coordinates.y2,
-        strokeDashArray: s.strokeDashArray,
+        strokeDashArray: dashToStrokeArray(s.dash),
       })
     } else if (s.shape === 'line' || ('axis' in s && 'value' in s)) {
       const line = s as ChartLineShape
@@ -93,7 +97,7 @@ export function convertShapes(shapes: ChartShape[] = []): {
         color: line.color,
         lineAxis: line.axis,
         lineValue: line.value,
-        strokeDashArray: line.strokeDashArray,
+        strokeDashArray: dashToStrokeArray(line.dash),
       })
     }
   }
@@ -101,14 +105,17 @@ export function convertShapes(shapes: ChartShape[] = []): {
 }
 
 export function normalizeShape(
-  s: ChartLineShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; strokeDashArray?: number[] }
+  s: ChartLineShape | { color: string; lineAxis: 'x' | 'y'; lineValue: number; dash?: DashConfig; strokeDashArray?: number[] }
 ): ConvertedShape {
+  const toStroke = (d?: DashConfig, arr?: number[]) =>
+    dashToStrokeArray(d) ?? arr
   if ('lineAxis' in s && 'lineValue' in s) {
+    const x = s as { color: string; lineAxis: 'x' | 'y'; lineValue: number; dash?: DashConfig; strokeDashArray?: number[] }
     return {
-      color: s.color,
-      lineAxis: s.lineAxis,
-      lineValue: s.lineValue,
-      strokeDashArray: s.strokeDashArray,
+      color: x.color,
+      lineAxis: x.lineAxis,
+      lineValue: x.lineValue,
+      strokeDashArray: toStroke(x.dash, x.strokeDashArray),
     }
   }
   const g = s as ChartLineShape
@@ -116,6 +123,6 @@ export function normalizeShape(
     color: g.color,
     lineAxis: g.axis,
     lineValue: g.value,
-    strokeDashArray: g.strokeDashArray,
+    strokeDashArray: dashToStrokeArray(g.dash),
   }
 }
