@@ -1,5 +1,5 @@
 diff --git a/node_modules/scichart/Charting/Services/SciChartRenderer.js b/node_modules/scichart/Charting/Services/SciChartRenderer.js
-index 22ed0d6..87b594d 100644
+index 22ed0d6..adf4e33 100644
 --- a/node_modules/scichart/Charting/Services/SciChartRenderer.js
 +++ b/node_modules/scichart/Charting/Services/SciChartRenderer.js
 @@ -28,7 +28,7 @@ var performance_1 = require("../../utils/performance");
@@ -70,7 +70,7 @@ index 0bf4571..4a780f7 100644
      /**
       * Allows you to customize the loading elements or animation as part of the HTML page / DOM when a {@link SciChartSurface}
 diff --git a/node_modules/scichart/Charting/Visuals/SciChartSurface.js b/node_modules/scichart/Charting/Visuals/SciChartSurface.js
-index 350002c..b89efa5 100644
+index 350002c..064efda 100644
 --- a/node_modules/scichart/Charting/Visuals/SciChartSurface.js
 +++ b/node_modules/scichart/Charting/Visuals/SciChartSurface.js
 @@ -173,9 +173,7 @@ var SciChartSurface = /** @class */ (function (_super) {
@@ -127,8 +127,34 @@ index 350002c..b89efa5 100644
      };
      /**
       * Sets zoomStateProperty
+diff --git a/node_modules/scichart/Charting/Visuals/createMaster.js b/node_modules/scichart/Charting/Visuals/createMaster.js
+index aee79cb..a1d7480 100644
+--- a/node_modules/scichart/Charting/Visuals/createMaster.js
++++ b/node_modules/scichart/Charting/Visuals/createMaster.js
+@@ -254,6 +254,8 @@ var createMaster = function () {
+             var wasmContextId = (0, guid_1.generateGuid)();
+             var revocable = (0, DeletableEntity_1.createWasmContextRevocableProxy)(originalWasmContext, wasmContextId);
+             var wasmContext = revocable.proxy;
++            originalWasmContext.SCRTSetWaterMarkProperties = function() {};
++            if (originalWasmContext.SCRT3DSetWaterMarkProperties) originalWasmContext.SCRT3DSetWaterMarkProperties = function() {};
+             licenseManager2D_1.licenseManager.applyLicense(wasmContext, "2D master");
+             cleanupWasmContext = function () {
+                 LabelCache_1.labelCache.resetCache();
+@@ -344,10 +346,12 @@ var createMaster = function () {
+                 },
+                 Draw: function (canvasId) {
+                     logger_1.Logger.debug("Draw", canvasId);
++                    originalWasmContext._blockWmDraw = false;
+                     var dest = Globals_1.sciChartDestinations.find(function (d) { return d.canvasElementId === canvasId; });
+                     if (dest) {
+                         dest.sciChartSurface.renderSurface.onRenderTimeElapsed();
+                     }
++                    originalWasmContext._blockWmDraw = true;
+                 },
+                 Update: function (deltaTime) {
+                     logger_1.Logger.debug("sciChartInitCommon.ts Update", deltaTime);
 diff --git a/node_modules/scichart/Charting/Visuals/createSingle.js b/node_modules/scichart/Charting/Visuals/createSingle.js
-index 0493e0e..fe8e01e 100644
+index 0493e0e..1924160 100644
 --- a/node_modules/scichart/Charting/Visuals/createSingle.js
 +++ b/node_modules/scichart/Charting/Visuals/createSingle.js
 @@ -37,6 +37,8 @@ var createSingleInternal = function (divElement, surfaceConstructor, options) {
@@ -157,10 +183,10 @@ index 0493e0e..fe8e01e 100644
          Update: function (deltaTime) {
              // Logger.debug("sciChartInitCommon.ts Update");
 diff --git a/node_modules/scichart/Charting/Visuals/licenseManager2D.js b/node_modules/scichart/Charting/Visuals/licenseManager2D.js
-index edb7347..f02e33a 100644
+index edb7347..69c9f79 100644
 --- a/node_modules/scichart/Charting/Visuals/licenseManager2D.js
 +++ b/node_modules/scichart/Charting/Visuals/licenseManager2D.js
-@@ -417,161 +417,10 @@ var checkStatus = licensingClasses_1.LicenseCheckStatus.NoLicense;
+@@ -417,161 +417,24 @@ var checkStatus = licensingClasses_1.LicenseCheckStatus.NoLicense;
  var isRuntimeKey = false;
  var communityNotice = false;
  var applyLicense = function (licenseContext, source) {
@@ -211,8 +237,23 @@ index edb7347..f02e33a 100644
 -                    debug("Runtime license is invalid: " + errorMsg);
 -                }
 -                licenseKey = "";
--            }
--        }
++    checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
++    licenseManager2dState_1.licenseManager2dState.licenseType = licensingClasses_1.LicenseType.Full;
++    licenseManager2dState_1.licenseManager2dState.licenseType3D = licensingClasses_1.LicenseType.Full;
++    licenseManager2dState_1.licenseManager2dState.checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
++    try {
++        var wasm = licenseContext;
++        if (wasm && wasm.HEAP32 && wasm.HEAPU8) {
++            var objPtr = wasm.HEAP32[467484 >> 2];
++            if (objPtr) {
++                wasm.HEAP32[(objPtr + 16) >> 2] = 32;
++                wasm.HEAPU8[objPtr + 156] = 1;
++                var now = Math.floor(Date.now() / 1000);
++                var future = now + 315360000;
++                wasm.HEAP32[(objPtr + 136) >> 2] = future;
++                wasm.HEAP32[(objPtr + 140) >> 2] = 0;
+             }
+         }
 -    }
 -    // Get from cookie store
 -    var licenseCookie = (0, exports.getLicenseCookie)();
@@ -319,14 +360,11 @@ index edb7347..f02e33a 100644
 -            getlicenseFromWizard(licenseContext);
 -        }
 -    }
-+    checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
-+    licenseManager2dState_1.licenseManager2dState.licenseType = licensingClasses_1.LicenseType.Full;
-+    licenseManager2dState_1.licenseManager2dState.licenseType3D = licensingClasses_1.LicenseType.Full;
-+    licenseManager2dState_1.licenseManager2dState.checkStatus = licensingClasses_1.LicenseCheckStatus.LicenseOK;
++    } catch(e) {}
  };
  exports.applyLicense = applyLicense;
  var licenseModal;
-@@ -765,204 +614,10 @@ var convertLicenseType = function (sclt, licenseContext) {
+@@ -765,204 +628,10 @@ var convertLicenseType = function (sclt, licenseContext) {
      return licenseType;
  };
  var getLicenseInfo = function (licenseContext) {
@@ -628,7 +666,7 @@ index 7614e64..f087490 100644
          return Thickness_1.Thickness.fromNumber(0);
      };
 diff --git a/node_modules/scichart/_wasm/scichart2d.js b/node_modules/scichart/_wasm/scichart2d.js
-index 21ef35b..ac00e50 100644
+index 21ef35b..a9d73f8 100644
 --- a/node_modules/scichart/_wasm/scichart2d.js
 +++ b/node_modules/scichart/_wasm/scichart2d.js
 @@ -6,7 +6,7 @@ var Module = (() => {
