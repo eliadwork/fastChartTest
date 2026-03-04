@@ -148,22 +148,22 @@ function App() {
     shapes: [
       {
         shape: 'line' as const,
-        color: '#ff0000',
+        color: '#00ff00',
         axis: 'x' as const,
-        value: 100,
+        value: 350000,
       },
       {
         shape: 'box' as const,
         name: 'Target Region',
         color: '#00BFFF',
-        coordinates: { x1: 200, x2: 400, y1: -0.5, y2: 0.5 },
+        coordinates: { x1: 100000, x2: 150000, y1: 0, y2: 1000 },
       },
       {
         shape: 'box' as const,
         name: 'Full-height band',
         color: '#FFA500',
         fill: '#FFA50022',
-        coordinates: { x1: 600, x2: 800 },
+        coordinates: { x1: 250000, x2: 300000 },
       },
     ],
   }

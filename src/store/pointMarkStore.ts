@@ -31,7 +31,7 @@ export interface ChartMarkerForMark {
 
 export type PointMarkResult = ChartShapeForMark | ChartMarkerForMark | (ChartShapeForMark | ChartMarkerForMark)[]
 
-const DEFAULT_LINE_COLOR = '#3388ff'
+const DEFAULT_LINE_COLOR = '#ff0000'
 
 function createShapeForIndex(index: number, xValue: number): ChartShapeForMark {
   const strokeDashArray = index === 1 ? [8, 4] : undefined
