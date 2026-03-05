@@ -116,8 +116,8 @@ export interface ChartOptions {
   /** Color for the zero axis lines (x=0, y=0). Default: white. */
   zeroLineColor?: string
   /**
-   * Group key per series (parallel to series array). Series with the same key are grouped
-   * in the legend and can be toggled on/off together. Undefined/empty = ungrouped.
+   * @deprecated Grouping is now derived from seriesKey on each ChartDataSeries.
+   * Series with the same seriesKey are grouped in the legend and can be toggled on/off together.
    */
   seriesGroupKeys?: (string | undefined)[]
   /** Called when user toggles series visibility via legend. Keeps state in sync. */

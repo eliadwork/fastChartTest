@@ -83,6 +83,7 @@ self.onmessage = () => {
       x: xCopy.buffer,
       y: y.buffer,
       name: `Group2-S${s}`,
+      seriesKey: 'Group two',
       style: { bindable: false },
     }
   })
