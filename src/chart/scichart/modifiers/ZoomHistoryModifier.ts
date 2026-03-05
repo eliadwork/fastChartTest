@@ -4,7 +4,7 @@ import {
   ModifierMouseArgs,
   NumberRange,
 } from 'scichart'
-import { useZoomBackStore } from '../../store/zoomBackStore'
+import { useZoomBackStore } from '../../../store/zoomBackStore'
 
 interface StoredRange {
   x: NumberRange

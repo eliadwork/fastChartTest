@@ -1,0 +1,30 @@
+---
+description: Use full parameter and variable names, not abbreviations
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: true
+---
+
+# Full Parameter and Variable Names
+
+Use full, descriptive names for parameters and variables. Avoid single-letter or overly abbreviated names.
+
+```ts
+// ✅ GOOD
+modifiers.forEach((modifier) => { ... })
+items.map((item, index) => ...)
+const { store } = useStore()
+for (const series of data.series) { ... }
+
+// ❌ BAD
+modifiers.forEach((m) => { ... })
+items.map((x, i) => ...)
+const { s } = useStore()
+for (const s of data.series) { ... }
+```
+
+**Examples:**
+- `modifiers` not `m`
+- `index` not `i`
+- `store` not `s`
+- `series` not `s` (when iterating series)
+- `item` or full noun (e.g. `shape`, `series`) not `s` or `x`

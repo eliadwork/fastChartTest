@@ -14,6 +14,8 @@ Perform a **code review** of the recent changes that add "clip zoom/pan to data 
 
 See **PROJECT.md** for styling and UI conventions: use MUI, MUI styled, and MUI icons; avoid standalone CSS files. Colocate component-specific props (e.g. `ChartProps`, `ChartWrapperProps`) in the same file as the component; keep shared types in central type files.
 
+**Variable and parameter naming:** Use full names, not abbreviations: `modifiers` not `m`, `index` not `i`, `store` not `s`, `series` not `s`.
+
 ---
 
 ## Project Architecture (CRITICAL – Do Not Violate)

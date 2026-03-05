@@ -62,9 +62,9 @@ export interface ChartMarkerShape {
   color?: string
 }
 
-export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'
+export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt' |'rightClick' | 'leftClick'
 
-export type StretchTrigger = ModifierKey | 'rightClick'
+export type StretchTrigger = ModifierKey | 'rightClick' | 'leftClick'
 
 export interface ChartIcon {
   /** SVG string (preferred, use {{color}} for fill), image URL, or legacy character. */
@@ -74,51 +74,42 @@ export interface ChartIcon {
 }
 
 export interface ChartOptions {
-  shapes?: ChartShape[]
   note?: string
-  /** Modifier key for stretch zoom, or 'rightClick' for right-click drag. Default: 'rightClick' */
-  stretchTrigger?: StretchTrigger
-  /** Pan trigger: 'leftClick' for drag-to-pan, or modifier key (e.g. 'Alt'). Default: 'leftClick' */
-  panTrigger?: 'leftClick' | ModifierKey
-  /** @deprecated Use panTrigger instead */
+  shapes?: ChartShape[]
+  stretchTrigger?: string
+  stretchEnable?: boolean
+  panTrigger?: string
+  panEnable?: boolean
   panKey?: ModifierKey
-  rolloverStroke?: string
-  /** Rollover/hover line dash. Default: { isDash: true, steps: [8, 4] } */
-  rolloverDash?: DashConfig
-  backgroundColor?: string
-  /** Legend (glossary) background color. Defaults to same as chart (backgroundColor with chartBackgroundOpacity). */
-  legendBackgroundColor?: string
-  /** Text color for header, axis labels, and legend. Default: white. */
-  textColor?: string
-  seriesVisibility?: boolean[]
-  seriesLines?: ChartLineStyle[]
-  defaultSeriesColors?: string[]
-  defaultStrokeThickness?: number
+  clipZoomToData?: boolean
   resampling?: boolean
   resamplingPrecision?: number
+  backgroundColor?: string
+  textColor?: string
+  zeroLineColor?: string
+  legendBackgroundColor?: string
+  defaultSeriesColors?: string[]
+  defaultStrokeThickness?: number
+  rolloverStroke?: string
+  rolloverDash?: DashConfig
+  rolloverShow?: boolean
+  pointMarkIcon?: string
+  pointMarkIconColor?: string
+  pointMarkIconSize?: number
+  icons?: ChartIcon[]
+  seriesVisibility?: boolean[]
+  seriesGroupKeys?: (string | undefined)[]
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
+  onDisableAll?: () => void
+  /** When true, hide legend and show only the chart surface. */
+  chartOnly?: boolean
   onPointMark?: (
     xValue: number,
     yValue: number,
     context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }
   ) => ChartLineShape | ChartMarkerShape | (ChartLineShape | ChartMarkerShape)[] | null
-  /** Icon for the middle-click marker (3-click pick). E.g. '●' for circle. Default: '📍' */
-  pointMarkIcon?: string
-  /** Color for the point mark icon. Default: '#3388ff' */
-  pointMarkIconColor?: string
-  /** Icon size multiplier. 1 = default, 1.5 = 50% bigger. Default: 1.5. */
-  pointMarkIconSize?: number
-  /** Icons rendered at chart locations. iconImage: SVG string, image URL, or character. color for character fallback. */
-  icons?: ChartIcon[]
-  /** @deprecated Use icons instead. Markers from 3-click flow. */
-  pointMarkers?: Array<{ x: number; y: number; icon?: string; color?: string }>
-  /** When true, zoom/pan cannot go outside the data bounds. Default: true */
-  clipZoomToData?: boolean
-  /** Color for the zero axis lines (x=0, y=0). Default: white. */
-  zeroLineColor?: string
-  /** Called when user toggles series visibility via legend. Keeps state in sync. */
-  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
-  /** Called when user toggles a group via legend. */
-  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
+
   /** Internal: register clear callbacks for 3-click point mark flow. */
   pointMarkRegisterForClear?: (
     chartId: string,

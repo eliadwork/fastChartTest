@@ -8,7 +8,6 @@ export {
   ChartPanelNote,
   ChartToolbarButton,
   ChartWrapperBox,
-  ChartPlaceholder,
   PointMarkModalOverlay,
   PointMarkModalTitle,
   PointMarkModalButtons,

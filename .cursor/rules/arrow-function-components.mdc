@@ -1,7 +1,7 @@
 ---
 description: Use arrow function syntax for React components
 globs: **/*.tsx
-alwaysApply: false
+alwaysApply: true
 ---
 
 # React Component Style

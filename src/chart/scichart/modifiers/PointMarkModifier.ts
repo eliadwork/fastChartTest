@@ -11,8 +11,8 @@ import {
   translateFromCanvasToSeriesViewRect,
   VerticalLineAnnotation,
 } from 'scichart'
-import type { ConvertedShape } from '../convert'
-import { toSvgString } from './iconUtils'
+import type { ConvertedShape } from '../../convert'
+import { toSvgString } from '../utils/iconUtils'
 
 const CLICK_THRESHOLD_PX = 5
 const MIDDLE_MOUSE_BUTTON = 1

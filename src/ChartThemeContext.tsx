@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
-import type { ChartTheme } from './chartTheme'
+import type { ChartTheme, ChartThemeOverrides } from './chartTheme'
 import { defaultChartTheme } from './chartTheme'
 
 const ChartThemeContext = createContext<ChartTheme>(defaultChartTheme)
 
 export interface ChartThemeProviderProps {
-  theme?: Partial<ChartTheme>
+  theme?: ChartThemeOverrides
   children: ReactNode
 }
 

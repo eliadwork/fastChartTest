@@ -1,14 +1,10 @@
 import { useContext, useEffect } from 'react'
 import { SciChartSurface } from 'scichart'
 import { SciChartSurfaceContext } from 'scichart-react'
-import { useZoomBackStore } from '../../store/zoomBackStore'
-import { useZoomResetStore } from '../../store/zoomResetStore'
+import { useZoomBackStore } from '../../../store/zoomBackStore'
+import { useZoomResetStore } from '../../../store/zoomResetStore'
 
-interface ZoomResetSyncProps {
-  chartId?: string
-}
-
-export const ZoomResetSync = ({ chartId }: ZoomResetSyncProps) => {
+export function useZoomResetSync(chartId?: string) {
   const initResult = useContext(SciChartSurfaceContext)
 
   useEffect(() => {
@@ -22,6 +18,13 @@ export const ZoomResetSync = ({ chartId }: ZoomResetSyncProps) => {
     })
     return unregister
   }, [chartId, initResult?.sciChartSurface])
+}
 
+interface ZoomResetSyncProps {
+  chartId?: string
+}
+
+export const ZoomResetSync = ({ chartId }: ZoomResetSyncProps) => {
+  useZoomResetSync(chartId)
   return null
 }

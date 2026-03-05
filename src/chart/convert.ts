@@ -44,7 +44,7 @@ export function toFloat64Array(arr: ArrayLike<number> | number[]): Float64Array 
 
 export function convertData(
   data: ChartData,
-  options?: ChartOptions
+  options?: Pick<ChartOptions, 'seriesVisibility'>
 ): ConvertedData {
   const series: ConvertedSeries[] = data.map((line) => ({
     x: toFloat64Array(line.x),
@@ -93,7 +93,7 @@ export function convertShapes(shapes: ChartShape[] = []): {
     } else if (s.shape === 'line' || ('axis' in s && 'value' in s)) {
       const line = s as ChartLineShape
       lines.push({
-        color: line.color,
+        color: line.color ?? '#ff0000',
         lineAxis: line.axis,
         lineValue: line.value,
         strokeDashArray: dashToStrokeArray(line.dash),
@@ -119,7 +119,7 @@ export function normalizeShape(
   }
   const g = s as ChartLineShape
   return {
-    color: g.color,
+    color: g.color ?? '#ff0000',
     lineAxis: g.axis,
     lineValue: g.value,
     strokeDashArray: dashToStrokeArray(g.dash),

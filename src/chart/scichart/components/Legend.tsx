@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useCallback, useContext, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import { SciChartSurface } from 'scichart'
@@ -12,7 +13,7 @@ interface SeriesInfo {
   index: number
 }
 
-interface LegendSyncProps {
+interface LegendProps {
   backgroundColor?: string
   textColor?: string
   /** When provided, triggers re-render after SeriesVisibilitySync (e.g. "disable all") updates the chart. */
@@ -21,6 +22,8 @@ interface LegendSyncProps {
   seriesGroupKeys?: (string | undefined)[]
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
+  /** Optional content to render at the top of the legend (e.g. Disable all button). */
+  prepend?: ReactNode
 }
 
 const LegendLine = ({
@@ -32,33 +35,33 @@ const LegendLine = ({
   strokeThickness: number
   strokeDashArray?: number[]
 }) => (
-    <svg width="1.25em" height="0.5em" viewBox="0 0 20 8" style={{ flexShrink: 0 }}>
-      <line
-        x1="0"
-        y1="4"
-        x2="20"
-        y2="4"
-        stroke={stroke}
-        strokeWidth={strokeThickness}
-        strokeDasharray={strokeDashArray?.join(' ') ?? 'none'}
-      />
-    </svg>
+  <svg width="1.25em" height="0.5em" viewBox="0 0 20 8" style={{ flexShrink: 0 }}>
+    <line
+      x1="0"
+      y1="4"
+      x2="20"
+      y2="4"
+      stroke={stroke}
+      strokeWidth={strokeThickness}
+      strokeDasharray={strokeDashArray?.join(' ') ?? 'none'}
+    />
+  </svg>
 )
 
-export const LegendSync = ({
+export const Legend = ({
   backgroundColor,
   textColor,
   seriesVisibility,
   seriesGroupKeys,
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
-}: LegendSyncProps) => {
+  prepend,
+}: LegendProps) => {
   const initResult = useContext(SciChartSurfaceContext)
   const [, forceUpdate] = useState(0)
 
   const surface = initResult?.sciChartSurface as SciChartSurface | undefined
 
-  // Re-render after SeriesVisibilitySync runs (e.g. when "disable all" changes)
   useEffect(() => {
     const id = requestAnimationFrame(() => forceUpdate((n) => n + 1))
     return () => cancelAnimationFrame(id)
@@ -121,9 +124,8 @@ export const LegendSync = ({
 
   if (seriesList.length === 0) return null
 
-  // Build groups from seriesGroupKeys: same key → same group
   const groups: { name: string; seriesIndices: number[] }[] = []
-  const seenKeys = new Map<string, number>() // key → index in groups
+  const seenKeys = new Map<string, number>()
   const groupedIndices = new Set<number>()
   for (let i = 0; i < seriesList.length; i++) {
     const key = seriesGroupKeys?.[i]
@@ -175,6 +177,7 @@ export const LegendSync = ({
         pointerEvents: 'auto',
       }}
     >
+      {prepend}
       {groups.map((group) => {
         const items = group.seriesIndices
           .map((i) => seriesList[i])

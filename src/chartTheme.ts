@@ -31,6 +31,21 @@ export interface ChartTheme {
   zeroLineColor?: string
 }
 
+/** Theme overrides – any subset of ChartTheme. */
+export interface ChartThemeOverrides {
+  defaultSeriesColors?: string[]
+  backgroundColor?: string
+  chartBackgroundOpacity?: number
+  rolloverStroke?: string
+  rolloverDash?: { isDash: boolean; steps: number[] }
+  defaultStrokeThickness?: number
+  pointMarkIcon?: string
+  pointMarkIconColor?: string
+  pointMarkIconSize?: number
+  textColor?: string
+  zeroLineColor?: string
+}
+
 /** Add opacity to a color string (hex, rgb, rgba, hsl, named colors). */
 export const withOpacity = (color: string, opacity: number) =>
   color ? α(color, opacity) : color
@@ -59,6 +74,6 @@ export const defaultChartTheme: ChartTheme = {
   zeroLineColor: '#ffffff',
 }
 
-export function createChartTheme(overrides: Partial<ChartTheme> = {}): ChartTheme {
+export function createChartTheme(overrides: ChartThemeOverrides = {}): ChartTheme {
   return { ...defaultChartTheme, ...overrides }
 }

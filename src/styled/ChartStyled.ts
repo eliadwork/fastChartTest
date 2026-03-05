@@ -76,15 +76,6 @@ export const ChartWrapperBox = styled(Box)({
   flexDirection: 'column',
 })
 
-export const ChartPlaceholder = styled(Box)({
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: '#888',
-  minHeight: 0,
-})
-
 export const PointMarkModalOverlay = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
     backgroundColor: theme.palette.background.paper,

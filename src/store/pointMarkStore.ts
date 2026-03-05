@@ -43,13 +43,6 @@ function createShapeForIndex(index: number, xValue: number): ChartShapeForMark {
   }
 }
 
-export interface PointMarker {
-  x: number
-  y: number
-  icon?: string
-  color?: string
-}
-
 import type { ChartIcon } from '../chart/types'
 export type { ChartIcon }
 
@@ -78,7 +71,6 @@ interface PointMarkState {
   /** Base bindable indices (from seriesBindable only), used to recompute when visibility changes */
   bindableIndicesBase: number[]
   seriesPickerOpen: boolean
-  pointMarkersByChart: Record<string, PointMarker[]>
   iconsByChart: Record<string, ChartIcon[]>
 }
 
@@ -90,7 +82,6 @@ interface PointMarkActions {
     chartData: ChartDataForModal,
     options?: PointMarkOptions
   ) => PointMarkResult | null
-  addPointMarker: (chartId: string, marker: PointMarker) => void
   addIcon: (chartId: string, icon: ChartIcon) => void
   updateMarkedPointColor: (index: number, color: PointMarkColor | undefined) => void
   closeSeriesPicker: () => void
@@ -112,7 +103,6 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
     bindableIndices: [],
     bindableIndicesBase: [],
     seriesPickerOpen: false,
-    pointMarkersByChart: {},
     iconsByChart: {},
 
     addPointMark: (chartId, xValue, yValue, chartData, options) => {
@@ -190,14 +180,6 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
       }
       return lineShape
     },
-
-    addPointMarker: (chartId, marker) =>
-      set((s) => ({
-        pointMarkersByChart: {
-          ...s.pointMarkersByChart,
-          [chartId]: [...(s.pointMarkersByChart[chartId] ?? []), marker],
-        },
-      })),
 
     addIcon: (chartId, icon) =>
       set((s) => ({
