@@ -3,15 +3,26 @@
  * No implementation-specific references.
  */
 
-export interface ChartData {
-  /** Shared x values for all series */
-  x: ArrayLike<number> | number[]
-  /** Y values per series. Alias: series */
-  ys?: ArrayLike<number>[] | number[][]
-  series?: ArrayLike<number>[] | number[][]
-  seriesNames?: string[]
-  seriesColors?: string[]
+export interface ChartLineStyle {
+  color?: string
+  thickness?: number
+  /** Dash config: isDash enables dashed line, steps is the pattern (e.g. [6, 4] for striped). */
+  dash?: DashConfig
+  /** When false, series cannot be bound in the 3-click point mark flow. Default: true. */
+  bindable?: boolean
 }
+
+/** One line/series in the chart. Each line has its own x, y, name, optional group key, and style. */
+export interface ChartDataSeries {
+  x: number[] | ArrayLike<number>
+  y: number[] | ArrayLike<number>
+  name: string
+  seriesKey?: string
+  style: ChartLineStyle
+}
+
+/** Chart data: array of lines, each with its own x, y, name, seriesKey, and style. */
+export type ChartData = ChartDataSeries[]
 
 export interface ChartLineShape {
   /** Explicit shape type; omit for shorthand. */
@@ -49,15 +60,6 @@ export interface ChartMarkerShape {
   x: number
   icon?: string
   color?: string
-}
-
-export interface ChartLineStyle {
-  color?: string
-  thickness?: number
-  /** Dash config: isDash enables dashed line, steps is the pattern (e.g. [6, 4] for striped). */
-  dash?: DashConfig
-  /** When false, series cannot be bound in the 3-click point mark flow. Default: true. */
-  bindable?: boolean
 }
 
 export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt'

@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 
+import type { ChartDataSeries } from '../chart'
+
 export interface ChartDataForModal {
-  x: ArrayLike<number> | number[]
-  ys: (ArrayLike<number> | number[])[]
-  seriesNames?: string[]
+  lines: ChartDataSeries[]
 }
 
 export type PointMarkColor = 'red' | 'green' | 'yellow'
@@ -119,7 +119,7 @@ export const usePointMarkStore = create<PointMarkState & PointMarkActions>(
       const { clicksByChart } = get()
       const clicks = [...(clicksByChart[chartId] ?? []), { x: xValue, y: yValue }]
       const index = clicks.length - 1
-      const seriesCount = chartData.ys?.length ?? 0
+      const seriesCount = chartData.lines?.length ?? 0
 
       const seriesBindable = options?.seriesBindable
       const seriesVisibility = options?.seriesVisibility

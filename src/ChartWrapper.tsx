@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import { Chart } from './chart'
-import type { ChartData, ChartOptions, ChartLineStyle } from './chart'
+import type { ChartData, ChartOptions } from './chart'
 import { useChartTheme } from './ChartThemeContext'
 import { LogoIcon } from './assets/pointMarkIcon'
 import { withOpacity } from './chartTheme'
@@ -28,9 +28,6 @@ export interface ChartWrapperProps {
   data: ChartData
   options?: ChartOptions
   style?: React.CSSProperties
-  lines?: ChartLineStyle[]
-  /** Default line thickness for all series. Override per-series via lines[].thickness */
-  defaultLineThickness?: number
   /** Icons at chart locations. iconImage: SVG string, image URL, or character. */
   icons?: Array<{ iconImage: string; location: { x: number; y: number } }>
   /** @deprecated Use icons instead. */
@@ -46,8 +43,6 @@ export const ChartWrapper = ({
   data,
   options = {},
   style,
-  lines,
-  defaultLineThickness,
   icons,
   pointMarkers,
   title,
@@ -60,7 +55,7 @@ export const ChartWrapper = ({
   const zoomBack = useZoomBackStore((s) => s.zoomBack)
   const canZoomBack = useZoomBackStore((s) => s.canZoomBackFor(chartId ?? ''))
   const zoomReset = useZoomResetStore((s) => s.zoomReset)
-  const seriesCount = (data.ys ?? data.series ?? []).length
+  const seriesCount = data.length
   const [seriesVisibility, setSeriesVisibility] = useState<boolean[]>(
     () => Array.from({ length: seriesCount }, () => true)
   )
@@ -121,8 +116,7 @@ export const ChartWrapper = ({
           : undefined,
       textColor: chartTheme.textColor ?? options.textColor,
       ...options,
-      defaultStrokeThickness: defaultLineThickness ?? options.defaultStrokeThickness ?? chartTheme.defaultStrokeThickness ?? 2,
-      seriesLines: lines ?? options.seriesLines,
+      defaultStrokeThickness: options.defaultStrokeThickness ?? chartTheme.defaultStrokeThickness ?? 2,
       icons: icons ?? options.icons,
       pointMarkers: pointMarkers ?? options.pointMarkers,
       seriesVisibility: options.seriesVisibility ?? seriesVisibility,
@@ -139,7 +133,7 @@ export const ChartWrapper = ({
           }
         : {}),
     }),
-    [chartTheme, options, lines, defaultLineThickness, icons, pointMarkers, seriesVisibility, seriesCount, chartId, registerForChart, handleSeriesVisibilityChange, handleSeriesVisibilityGroupChange]
+    [chartTheme, options, icons, pointMarkers, seriesVisibility, seriesCount, chartId, registerForChart, handleSeriesVisibilityChange, handleSeriesVisibilityGroupChange]
   )
 
   const showHeader = title != null || showDisableAllButton || options.note != null
@@ -229,7 +223,6 @@ export const ChartWrapper = ({
         data={data}
         options={mergedOptions}
         style={style ?? { width: '100%', height: '100%', flex: 1, minHeight: 0 }}
-        lines={lines}
         chartId={chartId}
       />
     </ChartWrapperBox>

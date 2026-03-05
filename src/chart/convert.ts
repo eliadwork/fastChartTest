@@ -9,14 +9,18 @@ import type { ChartData, ChartLineStyle, ChartLineShape, ChartOptions, ChartShap
 export const dashToStrokeArray = (dash?: DashConfig): number[] | undefined =>
   dash?.isDash && dash.steps?.length ? dash.steps : undefined
 
-export interface ConvertedData {
+export interface ConvertedSeries {
   x: Float64Array
-  ys: Float64Array[]
-  seriesNames?: string[]
-  seriesColors?: string[]
+  y: Float64Array
+  name: string
+  seriesKey?: string
+  style: ChartLineStyle
+}
+
+export interface ConvertedData {
+  series: ConvertedSeries[]
   seriesVisibility?: boolean[]
-  seriesLines?: ChartLineStyle[]
-  /** Per-series bindable (from seriesLines[].bindable). Default: true. */
+  /** Per-series bindable (from line.style.bindable). Default: true. */
   seriesBindable?: boolean[]
 }
 
@@ -40,24 +44,19 @@ export function toFloat64Array(arr: ArrayLike<number> | number[]): Float64Array 
 
 export function convertData(
   data: ChartData,
-  options?: ChartOptions,
-  linesProp?: ChartLineStyle[]
+  options?: ChartOptions
 ): ConvertedData {
-  const x = toFloat64Array(data.x)
-  const series = data.ys ?? data.series ?? []
-  const ys = series.map((s) => toFloat64Array(s))
-  const seriesLines = linesProp ?? options?.seriesLines
-  const seriesBindable = Array.from(
-    { length: ys.length },
-    (_, i) => (seriesLines?.[i]?.bindable !== false)
-  )
+  const series: ConvertedSeries[] = data.map((line) => ({
+    x: toFloat64Array(line.x),
+    y: toFloat64Array(line.y),
+    name: line.name,
+    seriesKey: line.seriesKey,
+    style: line.style,
+  }))
+  const seriesBindable = series.map((s) => s.style.bindable !== false)
   return {
-    x,
-    ys,
-    seriesNames: data.seriesNames,
-    seriesColors: data.seriesColors,
+    series,
     seriesVisibility: options?.seriesVisibility,
-    seriesLines,
     seriesBindable,
   }
 }

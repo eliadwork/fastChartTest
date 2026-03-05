@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles'
 import { useSnackbar } from 'notistack'
 import { ChartThemeProvider } from './ChartThemeContext'
 import { ChartWrapper } from './ChartWrapper'
-import type { ChartData } from './chart'
+import type { ChartData, ChartDataSeries } from './chart'
 import { PointMarkClearContext, PointMarkClearProvider } from './PointMarkClearContext'
 import { usePointMarkStore } from './store/pointMarkStore'
 import type { PointMarkColor } from './store/pointMarkStore'
@@ -25,9 +25,6 @@ import {
   PointMarkModalCancel,
 } from './styled'
 import { DEFAULT_POINT_MARK_ICON_SVG } from './assets/pointMarkIcon'
-
-const POINTS_PER_SERIES = 500_000
-const SERIES_COUNT = 10
 
 const App = () => {
   const theme = useTheme()
@@ -50,15 +47,12 @@ const App = () => {
   const COLORS: PointMarkColor[] = ['red', 'green', 'yellow']
   const [selectedSeriesIndex, setSelectedSeriesIndex] = useState<number>(-1)
 
+  const modalLines = chartDataForModal?.lines ?? []
   const seriesOptions =
     bindableIndices.length > 0
       ? bindableIndices
-      : chartDataForModal?.seriesNames
-        ? Array.from({ length: chartDataForModal.seriesNames.length }, (_, i) => i)
-        : chartDataForModal?.ys
-          ? Array.from({ length: chartDataForModal.ys.length }, (_, i) => i)
-          : []
-  const seriesNames = chartDataForModal?.seriesNames ?? chartDataForModal?.ys?.map((_, i) => `Series ${i}`) ?? []
+      : Array.from({ length: modalLines.length }, (_, i) => i)
+  const seriesNames = modalLines.map((l) => l.name)
 
   useEffect(() => {
     if (seriesPickerOpen && seriesOptions.length > 0) {
@@ -72,15 +66,23 @@ const App = () => {
     const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
       type: 'module',
     })
-    worker.onmessage = ({ data: { x, ys } }) => {
-      setChartData({
-        x: new Float64Array(x),
-        ys: ys.map((b: ArrayBuffer) => new Float64Array(b)),
-        seriesNames: Array.from({ length: SERIES_COUNT }, (_, i) => `Series ${i}`),
-      })
+    worker.onmessage = ({
+      data: { lines },
+    }: {
+      data: { lines: Array<{ x: ArrayBuffer; y: ArrayBuffer; name: string; seriesKey?: string; style: ChartDataSeries['style'] }> }
+    }) => {
+      setChartData(
+        lines.map((l) => ({
+          x: new Float64Array(l.x),
+          y: new Float64Array(l.y),
+          name: l.name,
+          seriesKey: l.seriesKey,
+          style: l.style,
+        }))
+      )
       worker.terminate()
     }
-    worker.postMessage({ count: POINTS_PER_SERIES, seriesCount: SERIES_COUNT })
+    worker.postMessage({})
     return () => worker.terminate()
   }, [])
 
@@ -92,11 +94,7 @@ const App = () => {
         context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }
       ) => {
         if (!chartData) return null
-        const chartDataForStore = {
-          x: chartData.x,
-          ys: chartData.ys ?? (chartData.series ?? []),
-          seriesNames: chartData.seriesNames,
-        }
+        const chartDataForStore = { lines: chartData }
         return addPointMark(chartId, xValue, yValue, chartDataForStore, {
           seriesBindable: context?.seriesBindable,
           seriesVisibility: context?.getSeriesVisibility?.(),
@@ -184,38 +182,25 @@ const App = () => {
 
   const sharedOptions = {
     note: 'this is the chart example',
-    seriesGroupKeys: [...Array(4).fill('Group one'), ...Array(6).fill(undefined)],
-    seriesLines: [
-      { bindable: true },
-      { bindable: true },
-      { thickness: 4, bindable: true },
-      { thickness: 1, dash: { isDash: true, steps: [6, 4] }, bindable: true },
-      { bindable: false },
-      { bindable: false },
-      { bindable: false },
-      { bindable: false },
-      { bindable: false },
-      { bindable: false },
-    ],
     shapes: [
       {
         shape: 'line' as const,
         color: '#00ff00',
         axis: 'x' as const,
-        value: 350000,
+        value: 250000,
       },
       {
         shape: 'box' as const,
         name: 'Target Region',
         color: '#00BFFF',
-        coordinates: { x1: 100000, x2: 150000, y1: 0, y2: 1000 },
+        coordinates: { x1: 100000, x2: 200000, y1: -5000, y2: 5000 },
       },
       {
         shape: 'box' as const,
         name: 'Full-height band',
         color: '#FFA500',
         fill: '#FFA50022',
-        coordinates: { x1: 250000, x2: 300000 },
+        coordinates: { x1: 350000, x2: 450000 },
       },
     ],
   }
@@ -240,7 +225,7 @@ const App = () => {
               icons={[
                 {
                   iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-                  location: { x: 150000, y: 1000 },
+                  location: { x: 250000, y: 0 },
                   color: '#888888',
                 },
                 ...(iconsByChart['resampled'] ?? []),

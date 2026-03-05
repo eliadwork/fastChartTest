@@ -5,8 +5,12 @@
  */
 
 export interface ChartDataLike {
-  x: ArrayLike<number> | number[]
-  ys: (ArrayLike<number> | number[])[]
+  /** Array of lines, each with x and y. Used for per-line data format. */
+  lines?: Array<{ x: ArrayLike<number> | number[]; y: ArrayLike<number> | number[] }>
+  /** Legacy: shared x for all series */
+  x?: ArrayLike<number> | number[]
+  /** Legacy: y arrays when using shared x */
+  ys?: (ArrayLike<number> | number[])[]
 }
 
 /**
@@ -38,18 +42,32 @@ export function findNearestPoint(
   return { x: Number(x[idx]), y: Number(y[idx]) }
 }
 
+function getSeriesXy(chartData: ChartDataLike, seriesIndex: number): { x: ArrayLike<number>; y: ArrayLike<number> } | null {
+  if (chartData.lines) {
+    const line = chartData.lines[seriesIndex]
+    if (!line) return null
+    return { x: line.x, y: line.y }
+  }
+  if (chartData.x && chartData.ys) {
+    const yValues = chartData.ys[seriesIndex]
+    if (!yValues) return null
+    return { x: chartData.x, y: yValues }
+  }
+  return null
+}
+
 /**
  * Gets the nearest (x, y) point for a given xValue and series index.
- * Reusable across multiple charts - pass any chart data that has x and ys.
+ * Reusable across multiple charts - pass any chart data that has lines or x/ys.
  */
 export function getNearestPointAtX(
   chartData: ChartDataLike,
   xValue: number,
   seriesIndex: number
 ): { x: number; y: number } | null {
-  const yValues = chartData.ys[seriesIndex]
-  if (!yValues) return null
-  return findNearestPoint(chartData.x, yValues, xValue)
+  const xy = getSeriesXy(chartData, seriesIndex)
+  if (!xy) return null
+  return findNearestPoint(xy.x, xy.y, xValue)
 }
 
 /**
@@ -61,9 +79,10 @@ export function getInterpolatedPointAtX(
   xValue: number,
   seriesIndex: number
 ): { x: number; y: number } | null {
-  const x = chartData.x
-  const yValues = chartData.ys[seriesIndex]
-  if (!yValues) return null
+  const xy = getSeriesXy(chartData, seriesIndex)
+  if (!xy) return null
+  const x = xy.x
+  const yValues = xy.y
   const n = x.length
   if (n === 0) return null
   if (xValue <= x[0]) return { x: Number(x[0]), y: Number(yValues[0]) }
