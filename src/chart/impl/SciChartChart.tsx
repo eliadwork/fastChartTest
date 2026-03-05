@@ -352,7 +352,7 @@ export const SciChartChart = ({ data, options, style, chartId }: SciChartChartPr
         backgroundColor={options.legendBackgroundColor ?? options.backgroundColor}
         textColor={options.textColor ?? '#ffffff'}
         seriesVisibility={options.seriesVisibility}
-        seriesGroupKeys={data.series.map((s) => s.seriesKey)}
+        seriesGroupKeys={data.series.map((s) => s.lineGroupKey)}
         onSeriesVisibilityChange={options.onSeriesVisibilityChange}
         onSeriesVisibilityGroupChange={options.onSeriesVisibilityGroupChange}
       />

@@ -1,4 +1,4 @@
-// Generates chart data in per-line format: [{ x, y, name, seriesKey?, style }, ...]
+// Generates chart data in per-line format: [{ x, y, name, lineGroupKey?, style }, ...]
 // 500,000 points per line. X range 0-500000. Y range -5000 to 5000.
 // Group 1: step 0.5. Group 2: alternating steps 0.3 and 0.7.
 const POINTS_PER_LINE = 500_000
@@ -58,7 +58,7 @@ self.onmessage = () => {
       x: xCopy.buffer,
       y: y.buffer,
       name: `Group1-S${s}`,
-      seriesKey: 'Group one',
+      lineGroupKey: 'Group one',
       style: {
         bindable: true,
         ...(s === 2 && { thickness: 4 }),
@@ -83,7 +83,7 @@ self.onmessage = () => {
       x: xCopy.buffer,
       y: y.buffer,
       name: `Group2-S${s}`,
-      seriesKey: 'Group two',
+      lineGroupKey: 'Group two',
       style: { bindable: false },
     }
   })

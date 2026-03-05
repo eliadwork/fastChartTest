@@ -69,14 +69,14 @@ const App = () => {
     worker.onmessage = ({
       data: { lines },
     }: {
-      data: { lines: Array<{ x: ArrayBuffer; y: ArrayBuffer; name: string; seriesKey?: string; style: ChartDataSeries['style'] }> }
+      data: { lines: Array<{ x: ArrayBuffer; y: ArrayBuffer; name: string; lineGroupKey?: string; style: ChartDataSeries['style'] }> }
     }) => {
       setChartData(
         lines.map((l) => ({
           x: new Float64Array(l.x),
           y: new Float64Array(l.y),
           name: l.name,
-          seriesKey: l.seriesKey,
+          lineGroupKey: l.lineGroupKey,
           style: l.style,
         }))
       )

@@ -17,11 +17,11 @@ export interface ChartDataSeries {
   x: number[] | ArrayLike<number>
   y: number[] | ArrayLike<number>
   name: string
-  seriesKey?: string
+  lineGroupKey?: string
   style: ChartLineStyle
 }
 
-/** Chart data: array of lines, each with its own x, y, name, seriesKey, and style. */
+/** Chart data: array of lines, each with its own x, y, name, lineGroupKey, and style. */
 export type ChartData = ChartDataSeries[]
 
 export interface ChartLineShape {

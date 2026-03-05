@@ -13,7 +13,7 @@ export interface ConvertedSeries {
   x: Float64Array
   y: Float64Array
   name: string
-  seriesKey?: string
+  lineGroupKey?: string
   style: ChartLineStyle
 }
 
@@ -50,7 +50,7 @@ export function convertData(
     x: toFloat64Array(line.x),
     y: toFloat64Array(line.y),
     name: line.name,
-    seriesKey: line.seriesKey,
+    lineGroupKey: line.lineGroupKey,
     style: line.style,
   }))
   const seriesBindable = series.map((s) => s.style.bindable !== false)
