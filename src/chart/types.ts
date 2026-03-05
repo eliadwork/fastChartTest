@@ -27,7 +27,7 @@ export type ChartData = ChartDataSeries[]
 export interface ChartLineShape {
   /** Explicit shape type; omit for shorthand. */
   shape?: 'line'
-  color: string
+  color?: string
   axis: 'x' | 'y'
   value: number
   dash?: DashConfig
