@@ -61,7 +61,7 @@ LEGEND (GLOSSARY)
 -----------------
 • Series list – each series with line preview (color, dash, thickness)
 • Per-series toggle – click to show/hide series
-• Group toggle – when seriesGroupKeys are set, grouped series toggle together
+• Group toggle – series with the same seriesKey are grouped and toggle together
 • Visual state – dimmed + strikethrough when hidden
 
 

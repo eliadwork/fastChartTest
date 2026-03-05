@@ -115,11 +115,6 @@ export interface ChartOptions {
   clipZoomToData?: boolean
   /** Color for the zero axis lines (x=0, y=0). Default: white. */
   zeroLineColor?: string
-  /**
-   * @deprecated Grouping is now derived from seriesKey on each ChartDataSeries.
-   * Series with the same seriesKey are grouped in the legend and can be toggled on/off together.
-   */
-  seriesGroupKeys?: (string | undefined)[]
   /** Called when user toggles series visibility via legend. Keeps state in sync. */
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void
   /** Called when user toggles a group via legend. */
