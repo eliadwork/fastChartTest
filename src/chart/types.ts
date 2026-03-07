@@ -12,6 +12,24 @@ export interface ChartLineStyle {
   bindable?: boolean
 }
 
+export interface ChartRolloverStyle {
+  show: boolean
+  color: string
+  dash: DashConfig
+}
+
+/** Chart style passed to Chart and implementations. */
+export interface ChartStyle {
+  backgroundColor: string
+  rollover: ChartRolloverStyle
+  textColor: string
+  defaultChartLineStyles?: ChartLineStyle
+  legendBackgroundColor?: string
+  zeroLineColor?: string
+  /** When true, only the chart is visible – no header, legend, or buttons. */
+  chartOnly: boolean
+}
+
 /** One line/series in the chart. Each line has its own x, y, name, optional group key, and style. */
 export interface ChartDataSeries {
   x: number[] | ArrayLike<number>

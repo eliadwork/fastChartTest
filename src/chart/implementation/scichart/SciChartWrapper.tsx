@@ -24,7 +24,7 @@ SciChartSurface.configure({
 
 export const SciChartWrapper = ({
   chartId,
-  data,
+  lines,
   style,
   options: opts = {},
   containerStyle,
@@ -42,9 +42,9 @@ export const SciChartWrapper = ({
   const chartTheme = useChartTheme()
   const { registerForChart } = useContext(PointMarkClearContext)
 
-  const seriesVisibility = opts.seriesVisibility ?? Array.from({ length: data.length }, () => true)
+  const seriesVisibility = opts.seriesVisibility ?? Array.from({ length: lines.length }, () => true)
   const { data: convertedData, options: convertedOptions } = toInternalOptions(
-    { chartId, data, style, options: opts },
+    { chartId, lines, style, options: opts },
     seriesVisibility
   )
 

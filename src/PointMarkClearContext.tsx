@@ -4,6 +4,16 @@ type RemovePendingFn = () => void
 type RemoveLastPendingFn = () => void
 type ClearStateFn = () => void
 
+type RegisterForChartFn = (
+  chartId: string,
+  removePending: RemovePendingFn,
+  clearPendingState: ClearStateFn,
+  removeLastPending?: RemoveLastPendingFn
+) => void
+type RemovePendingForChartFn = (chartId: string) => void
+type RemoveLastPendingForChartFn = (chartId: string) => void
+type ClearPendingStateForChartFn = (chartId: string) => void
+
 const registry = new Map<
   string,
   { removePending: RemovePendingFn; removeLastPending: RemoveLastPendingFn; clearPendingState: ClearStateFn }
@@ -35,10 +45,10 @@ export function clearPendingStateForChart(chartId: string): void {
 }
 
 export const PointMarkClearContext = createContext<{
-  registerForChart: typeof registerForChart
-  removePendingForChart: typeof removePendingForChart
-  removeLastPendingForChart: typeof removeLastPendingForChart
-  clearPendingStateForChart: typeof clearPendingStateForChart
+  registerForChart: RegisterForChartFn
+  removePendingForChart: RemovePendingForChartFn
+  removeLastPendingForChart: RemoveLastPendingForChartFn
+  clearPendingStateForChart: ClearPendingStateForChartFn
 }>({
   registerForChart,
   removePendingForChart,

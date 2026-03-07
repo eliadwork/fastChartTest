@@ -24,7 +24,7 @@ import {
   PointMarkModalCancel,
 } from './styled'
 import { DEFAULT_POINT_MARK_ICON_SVG } from './assets/pointMarkIcon'
-import type { ChartImplementationStyle, ChartOptionsInput } from './chart'
+import type { ChartOptionsInput, ChartStyle } from './chart'
 
 const COLORS: PointMarkColor[] = ['red', 'green', 'yellow']
 
@@ -32,7 +32,7 @@ export interface DetectProps {
   chartId: string
   data: ChartData | null
   title?: string
-  style: ChartImplementationStyle
+  style: ChartStyle
   options?: ChartOptionsInput
   icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
 }

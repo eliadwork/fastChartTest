@@ -29,10 +29,11 @@ export const useChartWrapperOptions = ({
 }: UseChartWrapperOptionsParams): ChartImplementationOptionsOverrides => {
   return useMemo(() => {
     const opts = options
-    const resamplingObj =
-      opts.resampling && typeof opts.resampling === 'object'
-        ? opts.resampling
-        : {
+    const isResamplingObject =
+      opts.resampling != null && opts.resampling !== true && opts.resampling !== false
+    const resamplingObj: ChartImplementationOptions['resampling'] = isResamplingObject
+      ? (opts.resampling as ChartImplementationOptions['resampling'])
+      : {
             enable: opts.resampling !== false,
             precision:
               (opts as ChartOptions).resamplingPrecision ??

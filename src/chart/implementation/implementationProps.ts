@@ -3,36 +3,18 @@
  * Every chart implementation receives these same props and converts them internally.
  */
 
-import type { ChartData, ChartIcon, ChartLineStyle, ChartShape, DashConfig } from '../types'
+import type { ChartData, ChartIcon, ChartRolloverStyle, ChartShape, ChartStyle } from '../types'
 
-export type ChartImplementationTriggerKey = 'rightClick' | 'leftClick' | 'shift' | 'ctrl' | 'alt'
+export type TriggerKey = 'rightClick' | 'leftClick' | 'shift' | 'ctrl' | 'alt'
 
-export interface ChartImplementationRolloverStyle {
-  show: boolean
-  color: string
-  dash: DashConfig
-}
-
-export interface ChartImplementationStyle {
-  backgroundColor: string
-  rollover: ChartImplementationRolloverStyle
-  textColor: string
-  defaultChartLineStyles?: ChartLineStyle
-  legendBackgroundColor?: string
-  zeroLineColor?: string
-  /** When true, only the chart is visible – no header, legend, or buttons. */
-  chartOnly: boolean
-}
-
-export interface ChartImplementationStretch {
+export type KeyTriggeredOption = {
   enable: boolean
-  trigger: ChartImplementationTriggerKey
+  trigger: TriggerKey
 }
 
-export interface ChartImplementationPan {
-  enable: boolean
-  trigger: ChartImplementationTriggerKey
-}
+export type ChartImplementationTriggerKey = TriggerKey
+export type ChartImplementationRolloverStyle = ChartRolloverStyle
+export type ChartImplementationStyle = ChartStyle
 
 export interface ChartImplementationResampling {
   enable: boolean
@@ -61,8 +43,8 @@ export interface ChartImplementationOptionsOverrides {
   shapes?: ChartShape[]
   icons?: ChartIcon[]
   note?: string
-  stretch?: ChartImplementationStretch
-  pan?: ChartImplementationPan
+  stretch?: KeyTriggeredOption
+  pan?: KeyTriggeredOption
   resampling?: ChartImplementationResampling
   clipZoomToData?: boolean
   seriesVisibility?: boolean[]
@@ -74,16 +56,25 @@ export interface ChartImplementationOptionsOverrides {
 }
 
 /** Full options after defaults are applied. Used internally by implementations. */
-export interface ChartImplementationOptions extends ChartImplementationOptionsOverrides {
-  stretch: ChartImplementationStretch
-  pan: ChartImplementationPan
+export interface ChartImplementationOptions {
+  shapes?: ChartShape[]
+  icons?: ChartIcon[]
+  note?: string
+  stretch: KeyTriggeredOption
+  pan: KeyTriggeredOption
   resampling: ChartImplementationResampling
   clipZoomToData: boolean
+  seriesVisibility: boolean[]
+  seriesGroupKeys?: (string | undefined)[]
+  events?: ChartImplementationEvents
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
+  onDisableAll?: () => void
 }
 
 export interface ChartImplementationProps {
   chartId?: string
-  data: ChartData
+  lines: ChartData
   style: ChartImplementationStyle
   options?: ChartImplementationOptionsOverrides
   /** CSS style for the wrapper container */

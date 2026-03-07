@@ -127,6 +127,49 @@ return (
 )
 ```
 
+## 6. Avoid `typeof` Where Possible
+
+- Prefer structure checks or explicit types over runtime `typeof`.
+- Use explicit type aliases instead of `typeof fn` in type positions when the function signature is known.
+- For discriminating unions (e.g. `boolean | object`), use `value !== true && value !== false` instead of `typeof value === 'object'`.
+
+```tsx
+// ✅ GOOD
+const isObject = value != null && value !== true && value !== false
+type RegisterFn = (id: string) => void  // explicit type
+
+// ❌ BAD – unnecessary typeof
+const isObject = typeof value === 'object'
+registerForChart: typeof registerForChart  // when explicit type is trivial
+```
+
+## 7. Avoid `instanceof` Where Possible
+
+- Prefer structure checks or `Object.prototype.toString.call()` over `instanceof`.
+- For strings: use `value === String(value)` (string coerces to itself).
+- For typed arrays: use `Object.prototype.toString.call(arr) === '[object Float64Array]'` (works cross-realm).
+- Use `instanceof` only when no simpler alternative exists (e.g. DOM nodes in some cases).
+
+```tsx
+// ✅ GOOD
+const element = rootElement === String(rootElement) ? document.querySelector(rootElement) : rootElement
+if (Object.prototype.toString.call(arr) === '[object Float64Array]') return arr
+
+// ❌ BAD – unnecessary instanceof
+const element = rootElement instanceof HTMLDivElement ? rootElement : document.querySelector(rootElement)
+if (arr instanceof Float64Array) return arr
+```
+
+## 8. Why Runtime Validation Is Needed (Types Are Not Enough)
+
+TypeScript types are **erased at compile time**. At runtime, JavaScript has no notion of `string | HTMLDivElement`—only raw values. Runtime checks are required when:
+
+1. **External boundaries** – Values from libraries (e.g. `scichart-react` passing `rootElement`), `fetch` responses, or user input have no compile-time guarantee. The caller may pass the wrong type.
+2. **Branching behavior** – We must choose different code paths (e.g. treat string as selector vs. use element directly). Types cannot execute branches.
+3. **Defense in depth** – Guards prevent crashes when types are wrong, when dependencies change, or when data crosses trust boundaries.
+
+In `useSciChartSurfaceRenderer`, `initChart(rootElement: HTMLDivElement | string)` receives a value from `scichart-react`. We must validate at runtime to decide whether to call `document.querySelector(rootElement)` (string) or use `rootElement` as the element. Types alone cannot do this—they disappear before the code runs.
+
 ## Summary
 
 | Rule | Action |
@@ -136,5 +179,8 @@ return (
 | Constants | Put magic strings/numbers in `*Constants.ts` |
 | Hooks | Extract logic into `use*` hooks |
 | Styled | Put styles in `*Styled.ts` with MUI `styled()` |
+| typeof | Prefer structure checks, explicit types |
+| instanceof | Prefer `Object.prototype.toString`, `value === String(value)` |
+| Runtime validation | Required at boundaries—types are erased at runtime |
 
 Apply these when creating new components or refactoring existing ones (Legend, SciChartWrapper, Chart, etc.).

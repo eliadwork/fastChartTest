@@ -3,10 +3,7 @@
  * Delegates to SciChartWrapper. No SciChart imports.
  */
 
-import type { ChartData } from './types'
-import type {
-  ChartImplementationStyle,
-} from './implementation/implementationProps'
+import type { ChartData, ChartStyle } from './types'
 import { memo } from 'react'
 import Tooltip from '@mui/material/Tooltip'
 import { useChartTheme } from '../ChartThemeContext'
@@ -54,7 +51,7 @@ export interface ChartProps {
   style?: React.CSSProperties
   icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
   /** Optional style override. When absent, built from chartTheme. */
-  chartStyle?: ChartImplementationStyle
+  chartStyle?: ChartStyle
   /** Called when series visibility changes (e.g. for Detect modal sync). */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void
 }
@@ -192,7 +189,7 @@ const ChartComponent = ({
       )}
       <SciChartWrapper
         chartId={chartId}
-        data={chartData}
+        lines={chartData}
         style={wrapperStyle}
         options={wrapperOptions}
         containerStyle={style}

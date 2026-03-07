@@ -14,7 +14,7 @@ import {
 import type {
   ChartImplementationOptions,
   ChartImplementationProps,
-  ChartImplementationTriggerKey,
+  KeyTriggeredOption,
 } from '../implementationProps'
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
@@ -50,7 +50,7 @@ export interface ConvertedMarker {
 }
 
 export function toFloat64Array(arr: ArrayLike<number> | number[]): Float64Array {
-  if (arr instanceof Float64Array) return arr
+  if (Object.prototype.toString.call(arr) === '[object Float64Array]') return arr as Float64Array
   return new Float64Array(arr)
 }
 
@@ -138,8 +138,8 @@ export function normalizeShape(
   }
 }
 
-const DEFAULT_STRETCH = { enable: true, trigger: 'rightClick' as ChartImplementationTriggerKey }
-const DEFAULT_PAN = { enable: true, trigger: 'shift' as ChartImplementationTriggerKey }
+const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' }
+const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'shift' }
 const DEFAULT_RESAMPLING = { enable: true, precision: 1 }
 
 function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
@@ -158,13 +158,14 @@ export const toInternalOptions = (
   props: ChartImplementationProps,
   seriesVisibility: boolean[]
 ): { data: ConvertedData; options: ChartOptions } => {
-  const { data: chartData, style, options: opts = {} } = props
+  const { lines: chartData, style, options: opts = {} } = props
   const opt: ChartImplementationOptions = {
     stretch: DEFAULT_STRETCH,
     pan: DEFAULT_PAN,
     resampling: DEFAULT_RESAMPLING,
     clipZoomToData: true,
     ...opts,
+    seriesVisibility,
   }
 
   const shapesWithDefaults = applyShapeDefaults(opt.shapes)

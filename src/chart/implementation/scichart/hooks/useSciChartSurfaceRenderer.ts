@@ -130,7 +130,7 @@ export const useSciChartSurfaceRenderer = ({
     () =>
       async (rootElement: HTMLDivElement | string) => {
         const element =
-          typeof rootElement === 'string'
+          rootElement === String(rootElement)
             ? document.querySelector<HTMLDivElement>(rootElement)
             : rootElement
         if (!element) throw new Error('SciChart root element not found')
