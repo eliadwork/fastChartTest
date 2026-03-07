@@ -1,8 +1,10 @@
 /**
- * Types for SciChartWrapper – generic interface for chart configuration.
+ * Types for SciChartWrapper – SciChart-specific style and options.
+ * Props extend ChartImplementationProps from the implementation folder.
  */
 
-import type { ChartData, ChartIcon, ChartLineStyle, ChartShape, DashConfig } from '../../types'
+import type { ChartImplementationProps } from '../implementationProps'
+import type { ChartIcon, ChartLineStyle, ChartShape, DashConfig } from '../../types'
 
 export type TriggerKey = 'rightClick' | 'leftClick' | 'shift' | 'ctrl' | 'alt'
 
@@ -90,20 +92,8 @@ export interface SciChartWrapperOptionsOverrides {
   onDisableAll?: () => void
 }
 
-export interface SciChartWrapperProps {
-  chartId?: string
-  data: ChartData
-  style: SciChartWrapperStyle
-  options?: SciChartWrapperOptionsOverrides
-  /** CSS style for the wrapper container */
-  containerStyle?: React.CSSProperties
-  /**
-   * Optional overlay slot (e.g. legend) – rendered inside the chart surface.
-   * Parent provides this. Example:
-   * @example
-   * overlaySlot={<Legend seriesVisibility={...} onSeriesVisibilityChange={...} />}
-   */
-  overlaySlot?: React.ReactNode
-  /** When true, show loader instead of chart. */
-  loading?: boolean
-}
+/** SciChart implementation props – extends the common implementation props. */
+export type SciChartWrapperProps = ChartImplementationProps<
+  SciChartWrapperStyle,
+  SciChartWrapperOptionsOverrides
+>
