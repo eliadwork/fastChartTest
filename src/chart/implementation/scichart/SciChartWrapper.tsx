@@ -27,6 +27,7 @@ export const SciChartWrapper = ({
   lines,
   style,
   options: opts = {},
+  zoomCallbacks,
   containerStyle,
   overlaySlot,
   loading = false,
@@ -65,6 +66,7 @@ export const SciChartWrapper = ({
         data={convertedData}
         options={mergedOptions}
         chartId={chartId}
+        zoomCallbacks={zoomCallbacks}
         overlaySlot={overlaySlot}
       />
     </ChartWrapperBox>

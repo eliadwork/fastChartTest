@@ -1,47 +1,33 @@
 /**
- * Chart – Generic facade. Owns header, legend, series visibility, ChartData conversion.
- * Delegates to SciChartWrapper. No SciChart imports.
+ * Chart – Generic facade. Owns header, legend, series visibility.
+ * Delegates to implementation. No implementation-specific imports.
  */
 
-import type { ChartData, ChartStyle } from './types'
+import type { ChartData, ChartIcon, ChartStyle } from './types'
+import type { ChartOptionsInput } from './chartTypes'
 import { memo } from 'react'
-import Tooltip from '@mui/material/Tooltip'
-import { useChartTheme } from '../ChartThemeContext'
-import { withOpacity } from '../chartTheme'
-import { SciChartWrapper } from './implementation/scichart'
-import { Legend } from './Legend'
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from './defaults'
+import UndoIcon from '@mui/icons-material/Undo'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
-  ChartPanelTitle,
   ChartPanelNote,
-  ChartToolbarButton,
+  ChartPanelTitle,
   ChartWrapperBox,
 } from '../styled'
+import { ChartToolbarButton } from './ChartToolbarButton'
 import { LogoIcon } from '../assets/pointMarkIcon'
-import UndoIcon from '@mui/icons-material/Undo'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import { useZoomBackStore } from '../store/zoomBackStore'
-import { useZoomResetStore } from '../store/zoomResetStore'
-import { useChartSeriesVisibility } from './hooks/useChartSeriesVisibility'
-import { useChartWrapperStyle } from './hooks/useChartWrapperStyle'
-import { useChartWrapperOptions } from './hooks/useChartWrapperOptions'
-import { ChartToolbar } from './ChartStyled'
+import { Legend } from './Legend'
+import { SciChartWrapper } from './implementation/scichart'
 import {
-  CHART_LEGEND_BACKGROUND_OPACITY,
-  CHART_TOOLTIP_ZOOM_BACK,
-  CHART_TOOLTIP_ZOOM_RESET,
   CHART_TOOLTIP_DISABLE_ALL,
   CHART_TOOLTIP_ENABLE_ALL,
-  CHART_ARIA_ZOOM_BACK,
-  CHART_ARIA_ZOOM_RESET,
-  CHART_ARIA_DISABLE_ALL,
-  CHART_ARIA_ENABLE_ALL,
-  CHART_TOOLBAR_ICON_SIZE,
+  CHART_TOOLTIP_ZOOM_BACK,
+  CHART_TOOLTIP_ZOOM_RESET,
 } from './chartConstants'
-import type { ChartOptionsInput } from './chartTypes'
+import { ChartToolbar } from './ChartStyled'
+import { useChart } from './hooks/useChart'
 
 export interface ChartProps {
   data: ChartData | null
@@ -49,14 +35,12 @@ export interface ChartProps {
   title?: string
   options?: ChartOptionsInput
   style?: React.CSSProperties
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
+  icons?: ChartIcon[]
   /** Optional style override. When absent, built from chartTheme. */
   chartStyle?: ChartStyle
   /** Called when series visibility changes (e.g. for Detect modal sync). */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void
 }
-
-
 
 const ChartComponent = ({
   data,
@@ -68,121 +52,64 @@ const ChartComponent = ({
   chartStyle,
   onSeriesVisibilityChange,
 }: ChartProps) => {
-  const chartTheme = useChartTheme()
-  const zoomBack = useZoomBackStore((store) => store.zoomBack)
-  const canZoomBack = useZoomBackStore((store) => store.canZoomBackFor(chartId ?? ''))
-  const zoomReset = useZoomResetStore((store) => store.zoomReset)
-
-  const chartData = data ?? []
-  const seriesCount = chartData.length
-
   const {
-    seriesVisibility,
+    chartData,
+    wrapperStyle,
+    wrapperOptions,
+    zoomCallbacks,
+    showHeader,
+    headerSx,
+    legendOverlay,
+    toolbarButtonSx,
+    zoomBackRef,
+    zoomResetRef,
+    canZoomBack,
     handleDisableAll,
-    handleSeriesVisibilityChange,
-    handleSeriesVisibilityGroupChange,
     allSeriesHidden,
-  } = useChartSeriesVisibility({
-    initialSeriesCount: seriesCount,
-    initialVisibility: options.seriesVisibility,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityChangePerIndex: options.onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange: options.onSeriesVisibilityGroupChange,
-  })
-
-  const wrapperStyle = useChartWrapperStyle({
-    chartTheme,
-    chartStyle,
-    optionsTextColor: options.textColor,
-    optionsZeroLineColor: options.zeroLineColor,
-  })
-
-  const wrapperOptions = useChartWrapperOptions({
+    loading,
+  } = useChart({
+    data,
+    chartId,
+    title,
     options,
     icons,
-    seriesVisibility,
-    handleSeriesVisibilityChange,
-    handleSeriesVisibilityGroupChange,
-    handleDisableAll,
+    chartStyle,
+    onSeriesVisibilityChange,
   })
 
-  const textColor = wrapperStyle.textColor
-  const showHeader = !wrapperStyle.chartOnly && (title != null || options.note != null || chartId != null)
-
-  const legendBackgroundColor = chartTheme.backgroundColor
-    ? withOpacity(chartTheme.backgroundColor, chartTheme.legendBackgroundOpacity ?? CHART_LEGEND_BACKGROUND_OPACITY)
-    : DEFAULT_LEGEND_BACKGROUND_COLOR
-
-  const legendOverlay =
-    !wrapperStyle.chartOnly &&
-    (data != null ? (
-      <Legend
-        backgroundColor={legendBackgroundColor}
-        textColor={textColor}
-        seriesVisibility={seriesVisibility}
-        seriesGroupKeys={options.seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey)}
-        onSeriesVisibilityChange={handleSeriesVisibilityChange}
-        onSeriesVisibilityGroupChange={handleSeriesVisibilityGroupChange}
-      />
-    ) : null)
-
-  const toolbarButtonSx = textColor ? { color: textColor, borderColor: textColor } : {}
 
   return (
     <ChartWrapperBox>
       {showHeader && (
-        <ChartPanelHeader
-          sx={{
-            ...(chartTheme.backgroundColor ? { backgroundColor: chartTheme.backgroundColor } : {}),
-            ...(textColor ? { color: textColor } : {}),
-          }}
-        >
+        <ChartPanelHeader sx={headerSx}>
           <ChartPanelHeaderText>
             {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
             {options.note != null && <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>}
           </ChartPanelHeaderText>
-          {chartId && (
+          {!loading && (
             <ChartToolbar>
-              <Tooltip title={CHART_TOOLTIP_ZOOM_BACK}>
-                <span>
-                  <ChartToolbarButton
-                    variant="outlined"
-                    size="small"
-                    sx={{ ...toolbarButtonSx, minWidth: 'auto', px: 1 }}
-                    onClick={() => zoomBack(chartId)}
-                    disabled={!canZoomBack}
-                    aria-label={CHART_ARIA_ZOOM_BACK}
-                  >
-                    <UndoIcon sx={{ fontSize: CHART_TOOLBAR_ICON_SIZE }} />
-                  </ChartToolbarButton>
-                </span>
-              </Tooltip>
-              <Tooltip title={CHART_TOOLTIP_ZOOM_RESET}>
-                <ChartToolbarButton
-                  variant="outlined"
-                  size="small"
-                  sx={{ ...toolbarButtonSx, minWidth: 'auto', px: 1 }}
-                  onClick={() => zoomReset(chartId)}
-                  aria-label={CHART_ARIA_ZOOM_RESET}
-                >
-                  <LogoIcon sx={{ fontSize: CHART_TOOLBAR_ICON_SIZE }} />
-                </ChartToolbarButton>
-              </Tooltip>
-              <Tooltip title={allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL}>
-                <ChartToolbarButton
-                  variant="outlined"
-                  size="small"
-                  sx={{ ...toolbarButtonSx, minWidth: 'auto', px: 1 }}
-                  onClick={handleDisableAll}
-                  aria-label={allSeriesHidden ? CHART_ARIA_ENABLE_ALL : CHART_ARIA_DISABLE_ALL}
-                >
-                  {allSeriesHidden ? (
-                    <VisibilityIcon sx={{ fontSize: CHART_TOOLBAR_ICON_SIZE }} />
-                  ) : (
-                    <VisibilityOffIcon sx={{ fontSize: CHART_TOOLBAR_ICON_SIZE }} />
-                  )}
-                </ChartToolbarButton>
-              </Tooltip>
+              <ChartToolbarButton
+                tooltip={CHART_TOOLTIP_ZOOM_BACK}
+                sx={toolbarButtonSx}
+                onClick={() => zoomBackRef.current?.()}
+                disabled={!canZoomBack}
+              >
+                <UndoIcon />
+              </ChartToolbarButton>
+              <ChartToolbarButton
+                tooltip={CHART_TOOLTIP_ZOOM_RESET}
+                sx={toolbarButtonSx}
+                onClick={() => zoomResetRef.current?.()}
+              >
+                <LogoIcon />
+              </ChartToolbarButton>
+              <ChartToolbarButton
+                tooltip={allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL}
+                sx={toolbarButtonSx}
+                onClick={handleDisableAll}
+              >
+                {allSeriesHidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+              </ChartToolbarButton>
             </ChartToolbar>
           )}
         </ChartPanelHeader>
@@ -192,9 +119,10 @@ const ChartComponent = ({
         lines={chartData}
         style={wrapperStyle}
         options={wrapperOptions}
+        zoomCallbacks={zoomCallbacks}
         containerStyle={style}
-        overlaySlot={legendOverlay ?? undefined}
-        loading={data == null}
+        overlaySlot={legendOverlay ? <Legend {...legendOverlay} /> : undefined}
+        loading={loading}
       />
     </ChartWrapperBox>
   )

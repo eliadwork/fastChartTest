@@ -6,7 +6,6 @@ export {
   ChartPanelHeaderText,
   ChartPanelTitle,
   ChartPanelNote,
-  ChartToolbarButton,
   ChartWrapperBox,
   PointMarkModalOverlay,
   PointMarkModalTitle,

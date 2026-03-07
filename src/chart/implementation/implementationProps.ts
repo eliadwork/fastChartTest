@@ -72,11 +72,21 @@ export interface ChartImplementationOptions {
   onDisableAll?: () => void
 }
 
+export interface ChartZoomCallbacks {
+  setZoomBack: (fn: () => void) => void
+  setZoomReset: (fn: () => void) => void
+  setCanZoomBack: (can: boolean) => void
+  setPushBeforeReset: (fn: () => void) => void
+  pushBeforeResetRef: React.MutableRefObject<(() => void) | null>
+}
+
 export interface ChartImplementationProps {
   chartId?: string
   lines: ChartData
   style: ChartImplementationStyle
   options?: ChartImplementationOptionsOverrides
+  /** Callbacks for zoom back/reset. When provided, toolbar uses local state instead of global stores. */
+  zoomCallbacks?: ChartZoomCallbacks
   /** CSS style for the wrapper container */
   containerStyle?: React.CSSProperties
   /**

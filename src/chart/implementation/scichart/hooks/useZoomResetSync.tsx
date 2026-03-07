@@ -1,21 +1,22 @@
 import { useContext, useEffect } from 'react'
 import { SciChartSurface } from 'scichart'
 import { SciChartSurfaceContext } from 'scichart-react'
-import { useZoomBackStore } from '../../../../store/zoomBackStore'
-import { useZoomResetStore } from '../../../../store/zoomResetStore'
+import type { ChartZoomCallbacks } from '../../implementationProps'
 
-export function useZoomResetSync(chartId?: string) {
+export const useZoomResetSync = (zoomCallbacks: ChartZoomCallbacks | undefined) => {
   const initResult = useContext(SciChartSurfaceContext)
 
   useEffect(() => {
-    if (!chartId) return
+    if (!zoomCallbacks) return
     const surface = initResult?.sciChartSurface as SciChartSurface | undefined
     if (!surface) return
 
-    const unregister = useZoomResetStore.getState().register(chartId, () => {
-      useZoomBackStore.getState().pushBeforeReset(chartId)
+    zoomCallbacks.setZoomReset(() => {
+      zoomCallbacks.pushBeforeResetRef.current?.()
       surface.zoomExtents()
     })
-    return unregister
-  }, [chartId, initResult?.sciChartSurface])
+    return () => {
+      zoomCallbacks.setZoomReset(() => {})
+    }
+  }, [zoomCallbacks, initResult?.sciChartSurface])
 }

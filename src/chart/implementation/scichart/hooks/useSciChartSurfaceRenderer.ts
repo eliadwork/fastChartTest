@@ -56,16 +56,20 @@ const ROLLOVER_TOOLTIP_SERIES_LABEL = (seriesName: string) => `${seriesName}:`
 const ROLLOVER_TOOLTIP_X_LABEL = (formattedX: string) => `X: ${formattedX}`
 const ROLLOVER_TOOLTIP_Y_LABEL = (formattedY: string) => `Y: ${formattedY}`
 
+import type { ChartZoomCallbacks } from '../../implementationProps'
+
 export interface UseSciChartSurfaceRendererParams {
   data: ConvertedData
   options: ChartOptions
   chartId?: string
+  zoomCallbacks?: ChartZoomCallbacks
 }
 
 export const useSciChartSurfaceRenderer = ({
   data,
   options,
   chartId,
+  zoomCallbacks,
 }: UseSciChartSurfaceRendererParams) => {
   const { lines: lineShapes, boxes } = useMemo(
     () => convertShapes(options.shapes),
@@ -285,7 +289,15 @@ export const useSciChartSurfaceRenderer = ({
             chartId: chartId ?? undefined,
             onRegisterForClear: options.pointMarkRegisterForClear,
           }),
-          new ZoomHistoryModifier({ chartId }),
+          new ZoomHistoryModifier({
+            callbacks: zoomCallbacks
+              ? {
+                  setZoomBack: zoomCallbacks.setZoomBack,
+                  setPushBeforeReset: zoomCallbacks.setPushBeforeReset,
+                  setCanZoomBack: zoomCallbacks.setCanZoomBack,
+                }
+              : undefined,
+          }),
           new LeftClickRubberBandXyZoomModifier({ executeCondition: { key: EModifierMouseArgKey.None } }),
         ]
         if (stretchEnable) {
@@ -349,6 +361,7 @@ export const useSciChartSurfaceRenderer = ({
       rolloverDash,
       onPointMark,
       chartId,
+      zoomCallbacks,
     ]
   )
 

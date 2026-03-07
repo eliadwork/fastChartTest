@@ -4,43 +4,39 @@ import {
   ModifierMouseArgs,
   NumberRange,
 } from 'scichart'
-import { useZoomBackStore } from '../../../../store/zoomBackStore'
 
 interface StoredRange {
   x: NumberRange
   y: NumberRange
 }
 
+export interface ZoomHistoryModifierCallbacks {
+  setZoomBack: (fn: () => void) => void
+  setPushBeforeReset: (fn: () => void) => void
+  setCanZoomBack: (can: boolean) => void
+}
+
 export interface ZoomHistoryModifierOptions {
-  chartId?: string
+  callbacks?: ZoomHistoryModifierCallbacks
 }
 
 export class ZoomHistoryModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom
   private history: StoredRange[] = []
   private isRestoring = false
-  private chartId: string | undefined
-  private unregister: (() => void) | undefined
+  private callbacks: ZoomHistoryModifierCallbacks | undefined
 
   constructor(options?: ZoomHistoryModifierOptions) {
     super()
-    this.chartId = options?.chartId
+    this.callbacks = options?.callbacks
   }
-
-  private unregisterPushBeforeReset: (() => void) | undefined
 
   onAttach(): void {
     super.onAttach()
-    if (this.chartId) {
-      this.unregister = useZoomBackStore.getState().register(
-        this.chartId,
-        () => this.restorePrevious()
-      )
-      this.unregisterPushBeforeReset = useZoomBackStore.getState().registerPushBeforeReset(
-        this.chartId,
-        () => this.pushCurrentState()
-      )
-      this.updateStoreCanZoomBack()
+    if (this.callbacks) {
+      this.callbacks.setZoomBack(() => this.restorePrevious())
+      this.callbacks.setPushBeforeReset(() => this.pushCurrentState())
+      this.updateCanZoomBack()
     }
   }
 
@@ -55,10 +51,6 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
   }
 
   onDetach(): void {
-    this.unregister?.()
-    this.unregister = undefined
-    this.unregisterPushBeforeReset?.()
-    this.unregisterPushBeforeReset = undefined
     super.onDetach()
   }
 
@@ -68,7 +60,7 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     if (!current) return
     if (this.history.length > 0 && !this.rangesDiffer(current, this.history[this.history.length - 1])) return
     this.history.push(this.cloneRange(current))
-    this.updateStoreCanZoomBack()
+    this.updateCanZoomBack()
   }
 
   private cloneRange(r: StoredRange): StoredRange {
@@ -98,10 +90,8 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     )
   }
 
-  private updateStoreCanZoomBack(): void {
-    if (this.chartId) {
-      useZoomBackStore.getState().setCanZoomBack(this.chartId, this.history.length > 0)
-    }
+  private updateCanZoomBack(): void {
+    this.callbacks?.setCanZoomBack(this.history.length > 0)
   }
 
   private restorePrevious(): void {
@@ -114,6 +104,6 @@ export class ZoomHistoryModifier extends ChartModifierBase2D {
     xAxis.visibleRange = new NumberRange(prev.x.min, prev.x.max)
     yAxis.visibleRange = new NumberRange(prev.y.min, prev.y.max)
     this.isRestoring = false
-    this.updateStoreCanZoomBack()
+    this.updateCanZoomBack()
   }
 }

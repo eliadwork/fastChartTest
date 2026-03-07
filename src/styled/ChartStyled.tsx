@@ -63,10 +63,13 @@ export const ChartPanelNote = styled(Typography)({
   opacity: 0.9,
 })
 
-export const ChartToolbarButton = styled(Button)({
+export const ChartToolbarButtonBase = styled(Button)({
   padding: '0.4rem 0.8rem',
   fontSize: '0.85rem',
   textTransform: 'none',
+  '& .MuiSvgIcon-root': {
+    fontSize: '1.1rem',
+  },
 })
 
 export const ChartWrapperBox = styled(Box)({

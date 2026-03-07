@@ -1,4 +1,5 @@
 import type { ChartIcon, ChartOptions } from '../../types'
+import type { ChartZoomCallbacks } from '../implementationProps'
 import type { ConvertedData, ConvertedSeries } from './convert'
 import { SciChartReact } from 'scichart-react'
 import { SkeletonLoading } from '../../../shared'
@@ -16,21 +17,21 @@ import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled
 
 /** Renders inside SciChartReact to provide context for sync hooks. */
 const SciChartSyncHooks = ({
-  chartId,
+  zoomCallbacks,
   icons,
   defaultIcon,
   defaultColor,
   iconSize,
   seriesVisibility,
 }: {
-  chartId?: string
+  zoomCallbacks?: ChartZoomCallbacks
   icons: ChartIcon[]
   defaultIcon: string
   defaultColor: string
   iconSize: number
   seriesVisibility?: boolean[]
 }) => {
-  useZoomResetSync(chartId)
+  useZoomResetSync(zoomCallbacks)
   usePointMarkersSync({ icons, defaultIcon, defaultColor, iconSize })
   useSeriesVisibilitySync(seriesVisibility)
   return null
@@ -40,6 +41,7 @@ export interface SciChartSurfaceRendererProps {
   data: ConvertedData
   options: ChartOptions
   chartId?: string
+  zoomCallbacks?: ChartZoomCallbacks
   overlaySlot?: React.ReactNode
 }
 
@@ -47,12 +49,14 @@ export const SciChartSurfaceRenderer = ({
   data,
   options,
   chartId,
+  zoomCallbacks,
   overlaySlot,
 }: SciChartSurfaceRendererProps) => {
   const { initChart, pointMarkIcon, pointMarkIconColor } = useSciChartSurfaceRenderer({
     data,
     options,
     chartId,
+    zoomCallbacks,
   })
 
   return (
@@ -63,7 +67,7 @@ export const SciChartSurfaceRenderer = ({
         initChart={initChart}
       >
         <SciChartSyncHooks
-          chartId={chartId}
+          zoomCallbacks={zoomCallbacks}
           icons={options.icons ?? []}
           defaultIcon={pointMarkIcon}
           defaultColor={pointMarkIconColor}

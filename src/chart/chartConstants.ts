@@ -37,3 +37,7 @@ export const CHART_TOOLBAR_ICON_SIZE = '1.1rem'
 
 /** Toolbar gap (rem). */
 export const CHART_TOOLBAR_GAP = '0.5rem'
+
+/** Toolbar button min-width and horizontal padding. */
+export const CHART_TOOLBAR_BUTTON_MIN_WIDTH = 'auto'
+export const CHART_TOOLBAR_BUTTON_PADDING_X = 1
