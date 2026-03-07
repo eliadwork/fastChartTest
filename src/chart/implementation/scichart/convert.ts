@@ -4,7 +4,7 @@
  */
 
 import type { ChartData, ChartLineShape, ChartLineStyle, ChartOptions, ChartShape, DashConfig } from '../../types'
-import { withOpacity } from '../../../chartTheme'
+import { withOpacity } from '../../../utils/colorUtils'
 import {
   DEFAULT_LEGEND_BACKGROUND_COLOR,
   DEFAULT_SHAPE_STYLE,

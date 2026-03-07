@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { withOpacity } from '../../chartTheme'
+import { useTheme } from '@mui/material/styles'
+import { withOpacity } from '../../utils/colorUtils'
 import type { ChartStyle } from '../types'
-import type { ChartTheme } from '../../chartTheme'
 import {
   CHART_BACKGROUND_OPACITY_DEFAULT,
   CHART_FALLBACK_BACKGROUND,
@@ -11,34 +11,37 @@ import {
 } from '../chartConstants'
 
 export interface UseChartWrapperStyleOptions {
-  chartTheme: ChartTheme
   chartStyle?: ChartStyle
   optionsTextColor?: string
   optionsZeroLineColor?: string
 }
 
 export const useChartWrapperStyle = ({
-  chartTheme,
   chartStyle,
   optionsTextColor,
   optionsZeroLineColor,
 }: UseChartWrapperStyleOptions): ChartStyle => {
+  const theme = useTheme()
   return useMemo(
     () =>
       chartStyle ?? {
         backgroundColor:
-          chartTheme.backgroundColor != null
-            ? withOpacity(chartTheme.backgroundColor, chartTheme.chartBackgroundOpacity ?? CHART_BACKGROUND_OPACITY_DEFAULT)
-            : (chartTheme.backgroundColor ?? CHART_FALLBACK_BACKGROUND),
+          theme.palette.background.paper != null
+            ? withOpacity(
+                theme.palette.background.paper,
+                CHART_BACKGROUND_OPACITY_DEFAULT
+              )
+            : CHART_FALLBACK_BACKGROUND,
         rollover: {
           show: true,
-          color: chartTheme.rolloverStroke ?? CHART_FALLBACK_ROLLOVER_STROKE,
-          dash: chartTheme.rolloverDash ?? { isDash: true, steps: [...CHART_ROLLOVER_DASH_STEPS] },
+          color: CHART_FALLBACK_ROLLOVER_STROKE,
+          dash: { isDash: true, steps: [...CHART_ROLLOVER_DASH_STEPS] },
         },
-        textColor: chartTheme.textColor ?? optionsTextColor ?? CHART_FALLBACK_TEXT_COLOR,
-        zeroLineColor: chartTheme.zeroLineColor ?? optionsZeroLineColor,
+        textColor:
+          optionsTextColor ?? theme.palette.text.primary ?? CHART_FALLBACK_TEXT_COLOR,
+        zeroLineColor: optionsZeroLineColor,
         chartOnly: false,
       },
-    [chartStyle, chartTheme, optionsTextColor, optionsZeroLineColor]
+    [chartStyle, theme, optionsTextColor, optionsZeroLineColor]
   )
 }

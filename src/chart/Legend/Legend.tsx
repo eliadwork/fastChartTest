@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { useTheme } from '@mui/material/styles'
 import type { SeriesInfo } from './useLegend'
 import { useLegend } from './useLegend'
 import {
@@ -10,19 +9,21 @@ import {
   LegendLineSvg,
 } from './LegendStyled'
 import {
-  LEGEND_LINE_WIDTH,
+  LEGEND_DEFAULT_BACKGROUND,
+  LEGEND_DEFAULT_TEXT_COLOR,
   LEGEND_LINE_HEIGHT,
   LEGEND_LINE_VIEWBOX,
+  LEGEND_LINE_WIDTH,
   LEGEND_LINE_X1,
-  LEGEND_LINE_Y1,
   LEGEND_LINE_X2,
+  LEGEND_LINE_Y1,
   LEGEND_LINE_Y2,
-  STROKE_DASHARRAY_NONE,
-  LEGEND_OPACITY_VISIBLE,
   LEGEND_OPACITY_HIDDEN,
-  LEGEND_TEXT_DECORATION_VISIBLE,
+  LEGEND_OPACITY_VISIBLE,
   LEGEND_TEXT_DECORATION_HIDDEN,
+  LEGEND_TEXT_DECORATION_VISIBLE,
   LEGEND_ITEM_INDENT,
+  STROKE_DASHARRAY_NONE,
 } from './legendConstants'
 
 export interface LegendProps {
@@ -96,7 +97,6 @@ export const Legend = ({
   onSeriesVisibilityGroupChange,
   prepend,
 }: LegendProps) => {
-  const theme = useTheme()
   const { seriesList, groups, ungrouped, handleClick, handleGroupClick } = useLegend({
     seriesVisibility,
     seriesGroupKeys,
@@ -106,12 +106,11 @@ export const Legend = ({
 
   if (seriesList.length === 0) return null
 
-  const legend = theme.chartLegend
   return (
     <LegendRoot
       sx={{
-        backgroundColor: backgroundColor ?? legend.defaultBackground,
-        color: textColor ?? legend.defaultTextColor,
+        backgroundColor: backgroundColor ?? LEGEND_DEFAULT_BACKGROUND,
+        color: textColor ?? LEGEND_DEFAULT_TEXT_COLOR,
       }}
     >
       {prepend}

@@ -1,15 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { useChartTheme } from '../../ChartThemeContext'
-import { withOpacity } from '../../chartTheme'
+import { useTheme } from '@mui/material/styles'
+import { withOpacity } from '../../utils/colorUtils'
 import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults'
 import { useChartSeriesVisibility } from './useChartSeriesVisibility'
 import { useChartWrapperOptions } from './useChartWrapperOptions'
 import { useChartWrapperStyle } from './useChartWrapperStyle'
-import {
-  CHART_LEGEND_BACKGROUND_OPACITY,
-  CHART_TOOLBAR_BUTTON_MIN_WIDTH,
-  CHART_TOOLBAR_BUTTON_PADDING_X,
-} from '../chartConstants'
+import { CHART_LEGEND_BACKGROUND_OPACITY } from '../chartConstants'
 import type { ChartData, ChartIcon, ChartStyle } from '../types'
 import type { ChartOptionsInput } from '../chartTypes'
 
@@ -32,7 +28,7 @@ export const useChart = ({
   chartStyle,
   onSeriesVisibilityChange,
 }: UseChartParams) => {
-  const chartTheme = useChartTheme()
+  const theme = useTheme()
   const chartData = data ?? []
   const seriesCount = chartData.length
   const loading = data == null
@@ -78,7 +74,6 @@ export const useChart = ({
   })
 
   const wrapperStyle = useChartWrapperStyle({
-    chartTheme,
     chartStyle,
     optionsTextColor: options.textColor,
     optionsZeroLineColor: options.zeroLineColor,
@@ -99,12 +94,10 @@ export const useChart = ({
     (title != null || options.note != null || !loading)
 
   const legendBackgroundColor = useMemo(() => {
-    if (chartTheme.backgroundColor == null) return DEFAULT_LEGEND_BACKGROUND_COLOR
-    return withOpacity(
-      chartTheme.backgroundColor,
-      chartTheme.legendBackgroundOpacity ?? CHART_LEGEND_BACKGROUND_OPACITY
-    )
-  }, [chartTheme.backgroundColor, chartTheme.legendBackgroundOpacity])
+    const bg = theme.palette.background.paper
+    if (bg == null) return DEFAULT_LEGEND_BACKGROUND_COLOR
+    return withOpacity(bg, CHART_LEGEND_BACKGROUND_OPACITY)
+  }, [theme.palette.background.paper])
 
   const legendOverlay = useMemo(() => {
     if (wrapperStyle.chartOnly || data == null) return null
@@ -128,28 +121,14 @@ export const useChart = ({
     handleSeriesVisibilityGroupChange,
   ])
 
-  const toolbarButtonSx = useMemo(
-    () =>
-      textColor
-        ? {
-            color: textColor,
-            borderColor: textColor,
-            minWidth: CHART_TOOLBAR_BUTTON_MIN_WIDTH,
-            px: CHART_TOOLBAR_BUTTON_PADDING_X,
-          }
-        : {
-            minWidth: CHART_TOOLBAR_BUTTON_MIN_WIDTH,
-            px: CHART_TOOLBAR_BUTTON_PADDING_X,
-          },
-    [textColor]
-  )
-
   const headerSx = useMemo(
     () => ({
-      ...(chartTheme.backgroundColor ? { backgroundColor: chartTheme.backgroundColor } : {}),
+      ...(theme.palette.background.paper
+        ? { backgroundColor: theme.palette.background.paper }
+        : {}),
       ...(textColor ? { color: textColor } : {}),
     }),
-    [chartTheme.backgroundColor, textColor]
+    [theme.palette.background.paper, textColor]
   )
 
   return {
@@ -163,7 +142,6 @@ export const useChart = ({
     headerSx,
     options,
     legendOverlay,
-    toolbarButtonSx,
     zoomBackRef,
     zoomResetRef,
     canZoomBack,

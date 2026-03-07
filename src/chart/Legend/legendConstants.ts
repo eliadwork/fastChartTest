@@ -32,17 +32,15 @@ export const LEGEND_DEFAULT_STROKE = '#888'
 /** Default stroke thickness when series has none. */
 export const LEGEND_DEFAULT_STROKE_THICKNESS = 2
 
-/** Default values for theme.chartLegend. */
-export const CHART_LEGEND_THEME_DEFAULTS = {
-  zIndex: 10,
-  inset: 0.5,
-  gap: 0.35,
-  padding: 0.6,
-  paddingBlock: 0.4,
-  borderRadius: 0.25,
-  groupGap: 0.1,
-  itemPaddingBlock: 0.15,
-  fontSize: 0.8,
-  defaultBackground: 'rgba(0,0,0,0.6)',
-  defaultTextColor: '#ffffff',
-} as const
+/** Legend layout and styling defaults. */
+export const LEGEND_Z_INDEX = 10
+export const LEGEND_INSET = 0.5
+export const LEGEND_GAP = 0.35
+export const LEGEND_PADDING = 0.6
+export const LEGEND_PADDING_BLOCK = 0.4
+export const LEGEND_BORDER_RADIUS = 0.25
+export const LEGEND_GROUP_GAP = 0.1
+export const LEGEND_ITEM_PADDING_BLOCK = 0.15
+export const LEGEND_FONT_SIZE = 0.8
+export const LEGEND_DEFAULT_BACKGROUND = 'rgba(0,0,0,0.6)'
+export const LEGEND_DEFAULT_TEXT_COLOR = '#ffffff'

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useTheme } from '@mui/material/styles'
-import { ChartThemeProvider } from './ChartThemeContext'
 import { Detect } from './detect'
 import type { ChartData, ChartDataSeries } from './chart'
 import { PointMarkClearProvider } from './PointMarkClearContext'
@@ -80,13 +79,6 @@ const App = () => {
     return () => worker.terminate()
   }, [])
 
-  const chartThemeOverride = {
-    pointMarkIcon: DEFAULT_POINT_MARK_ICON_SVG,
-    pointMarkIconColor: '#888888',
-    backgroundColor: theme.palette.background.paper,
-    textColor: theme.palette.text.primary,
-  }
-
   const baseStyle = {
     backgroundColor: theme.palette.background.paper,
     rollover: {
@@ -100,8 +92,7 @@ const App = () => {
 
   return (
     <PointMarkClearProvider>
-      <ChartThemeProvider theme={chartThemeOverride}>
-        <ChartComparison>
+      <ChartComparison>
           <ChartComparisonGrid>
             <ChartPanel>
               <Detect
@@ -144,7 +135,6 @@ const App = () => {
             </ChartPanel>
           </ChartComparisonGrid>
         </ChartComparison>
-      </ChartThemeProvider>
     </PointMarkClearProvider>
   )
 }

@@ -36,7 +36,7 @@ export interface ChartProps {
   options?: ChartOptionsInput
   style?: React.CSSProperties
   icons?: ChartIcon[]
-  /** Optional style override. When absent, built from chartTheme. */
+  /** Optional style override. When absent, built from theme. */
   chartStyle?: ChartStyle
   /** Called when series visibility changes (e.g. for Detect modal sync). */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void
@@ -60,7 +60,7 @@ const ChartComponent = ({
     showHeader,
     headerSx,
     legendOverlay,
-    toolbarButtonSx,
+    textColor,
     zoomBackRef,
     zoomResetRef,
     canZoomBack,
@@ -90,7 +90,7 @@ const ChartComponent = ({
             <ChartToolbar>
               <ChartToolbarButton
                 tooltip={CHART_TOOLTIP_ZOOM_BACK}
-                sx={toolbarButtonSx}
+                textColor={textColor}
                 onClick={() => zoomBackRef.current?.()}
                 disabled={!canZoomBack}
               >
@@ -98,14 +98,14 @@ const ChartComponent = ({
               </ChartToolbarButton>
               <ChartToolbarButton
                 tooltip={CHART_TOOLTIP_ZOOM_RESET}
-                sx={toolbarButtonSx}
+                textColor={textColor}
                 onClick={() => zoomResetRef.current?.()}
               >
                 <LogoIcon />
               </ChartToolbarButton>
               <ChartToolbarButton
                 tooltip={allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL}
-                sx={toolbarButtonSx}
+                textColor={textColor}
                 onClick={handleDisableAll}
               >
                 {allSeriesHidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
