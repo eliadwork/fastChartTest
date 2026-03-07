@@ -100,7 +100,33 @@ const Legend = (props) => {
 }
 ```
 
-## 5. Use MUI Styled for Components
+## 5. Hooks Are Not Components
+
+- **Implement logic as hooks, not as components.** A component that only runs hooks and returns `null` should be a hook instead.
+- When a hook must run inside a specific context (e.g. `SciChartSurfaceContext`), a minimal component that calls the hook is acceptable—name it to indicate it runs effects (e.g. `SciChartSyncEffects`), not UI.
+
+```tsx
+// ✅ GOOD – hook holds the logic; minimal component only when context is required
+const useSciChartSyncHooks = (params) => {
+  useZoomResetSync(params.zoomCallbacks)
+  usePointMarkersSync(params)
+  useSeriesVisibilitySync(params.seriesVisibility)
+}
+const SciChartSyncEffects = (params) => {
+  useSciChartSyncHooks(params)
+  return null  // must render inside SciChartReact for context
+}
+
+// ❌ BAD – component with hook logic; should be a hook
+const SciChartSyncHooks = (props) => {
+  useZoomResetSync(props.zoomCallbacks)
+  usePointMarkersSync(props)
+  useSeriesVisibilitySync(props.seriesVisibility)
+  return null
+}
+```
+
+## 6. Use MUI Styled for Components
 
 - Create a `*Styled.ts` file with MUI `styled()` components for layout and visual styling.
 - Use `styled('div')`, `styled('button')`, `styled('span')` etc. for semantic elements.
@@ -127,7 +153,7 @@ return (
 )
 ```
 
-## 6. Avoid `typeof` Where Possible
+## 7. Avoid `typeof` Where Possible
 
 - Prefer structure checks or explicit types over runtime `typeof`.
 - Use explicit type aliases instead of `typeof fn` in type positions when the function signature is known.
@@ -143,7 +169,7 @@ const isObject = typeof value === 'object'
 registerForChart: typeof registerForChart  // when explicit type is trivial
 ```
 
-## 7. Avoid `instanceof` Where Possible
+## 8. Avoid `instanceof` Where Possible
 
 - Prefer structure checks or `Object.prototype.toString.call()` over `instanceof`.
 - For strings: use `value === String(value)` (string coerces to itself).
@@ -160,7 +186,7 @@ const element = rootElement instanceof HTMLDivElement ? rootElement : document.q
 if (arr instanceof Float64Array) return arr
 ```
 
-## 8. Why Runtime Validation Is Needed (Types Are Not Enough)
+## 9. Why Runtime Validation Is Needed (Types Are Not Enough)
 
 TypeScript types are **erased at compile time**. At runtime, JavaScript has no notion of `string | HTMLDivElement`—only raw values. Runtime checks are required when:
 
@@ -178,6 +204,7 @@ In `useSciChartSurfaceRenderer`, `initChart(rootElement: HTMLDivElement | string
 | Theme | Use `theme.*`; extend theme for missing values |
 | Constants | Put magic strings/numbers in `*Constants.ts` |
 | Hooks | Extract logic into `use*` hooks |
+| Hooks as components | Implement as hooks; minimal effect component only when context required |
 | Styled | Put styles in `*Styled.ts` with MUI `styled()` |
 | typeof | Prefer structure checks, explicit types |
 | instanceof | Prefer `Object.prototype.toString`, `value === String(value)` |

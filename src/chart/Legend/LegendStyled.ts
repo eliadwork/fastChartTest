@@ -1,4 +1,4 @@
-import { styled } from '@mui/material/styles'
+import { styled } from '@mui/material/styles';
 
 import {
   LEGEND_BORDER_RADIUS,
@@ -13,7 +13,7 @@ import {
   LEGEND_PADDING_BLOCK,
   LEGEND_TEXT_DECORATION_VISIBLE,
   LEGEND_Z_INDEX,
-} from './legendConstants'
+} from './legendConstants';
 
 export const LegendRoot = styled('div')(({ theme }) => ({
   position: 'absolute',
@@ -29,7 +29,7 @@ export const LegendRoot = styled('div')(({ theme }) => ({
   overflowY: 'auto',
   fontSize: `${LEGEND_FONT_SIZE}rem`,
   pointerEvents: 'auto',
-}))
+}));
 
 export const LegendItemButton = styled('button')(({ theme }) => ({
   display: 'flex',
@@ -43,20 +43,20 @@ export const LegendItemButton = styled('button')(({ theme }) => ({
   cursor: 'pointer',
   textAlign: 'left',
   '&:hover': { opacity: LEGEND_OPACITY_VISIBLE, textDecoration: LEGEND_TEXT_DECORATION_VISIBLE },
-}))
+}));
 
 export const LegendItemLabel = styled('span')({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-})
+});
 
 export const LegendGroup = styled('div')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(LEGEND_GROUP_GAP),
-}))
+}));
 
 export const LegendLineSvg = styled('svg')({
   flexShrink: 0,
-})
+});

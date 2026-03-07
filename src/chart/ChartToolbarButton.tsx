@@ -1,11 +1,12 @@
-import Tooltip from '@mui/material/Tooltip'
-import { ChartToolbarButtonBase } from '../styled/ChartStyled'
+import Tooltip from '@mui/material/Tooltip';
+import { ChartToolbarButtonBase } from '../styled/ChartStyled';
 
-export interface ChartToolbarButtonProps
-  extends React.ComponentProps<typeof ChartToolbarButtonBase> {
-  tooltip: string
+export interface ChartToolbarButtonProps extends React.ComponentProps<
+  typeof ChartToolbarButtonBase
+> {
+  tooltip: string;
   /** Resolved text color (e.g. from theme). When provided, applied as default; passed sx overrides. */
-  textColor?: string
+  textColor?: string;
 }
 
 export const ChartToolbarButton = ({
@@ -16,10 +17,8 @@ export const ChartToolbarButton = ({
   children,
   ...buttonProps
 }: ChartToolbarButtonProps) => {
-  const defaultSx = textColor
-    ? { color: textColor, borderColor: textColor }
-    : undefined
-  const mergedSx = defaultSx && sx ? { ...defaultSx, ...sx } : sx ?? defaultSx
+  const defaultSx = textColor ? { color: textColor, borderColor: textColor } : undefined;
+  const mergedSx = defaultSx && sx ? { ...defaultSx, ...sx } : (sx ?? defaultSx);
 
   const button = (
     <ChartToolbarButtonBase
@@ -31,7 +30,7 @@ export const ChartToolbarButton = ({
     >
       {children}
     </ChartToolbarButtonBase>
-  )
-  const wrapped = disabled ? <span>{button}</span> : button
-  return <Tooltip title={tooltip}>{wrapped}</Tooltip>
-}
+  );
+  const wrapped = disabled ? <span>{button}</span> : button;
+  return <Tooltip title={tooltip}>{wrapped}</Tooltip>;
+};

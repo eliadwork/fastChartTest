@@ -1,13 +1,12 @@
-import type { ReactNode } from 'react'
-import type { SeriesInfo } from './useLegend'
-import { useLegend } from './useLegend'
+import type { SeriesInfo } from './useLegend';
+import { useLegend } from './useLegend';
 import {
   LegendRoot,
   LegendItemButton,
   LegendItemLabel,
   LegendGroup,
   LegendLineSvg,
-} from './LegendStyled'
+} from './LegendStyled';
 import {
   LEGEND_DEFAULT_BACKGROUND,
   LEGEND_DEFAULT_TEXT_COLOR,
@@ -24,31 +23,31 @@ import {
   LEGEND_TEXT_DECORATION_VISIBLE,
   LEGEND_ITEM_INDENT,
   STROKE_DASHARRAY_NONE,
-} from './legendConstants'
+} from './legendConstants';
 
 export interface LegendProps {
-  backgroundColor?: string
-  textColor?: string
+  backgroundColor?: string;
+  textColor?: string;
   /** When provided, triggers re-render after SeriesVisibilitySync (e.g. "disable all") updates the chart. */
-  seriesVisibility?: boolean[]
+  seriesVisibility?: boolean[];
   /** Group key per series (parallel to series). Same key = grouped together, toggle on/off as one. */
-  seriesGroupKeys?: (string | undefined)[]
-  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
-  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
-  /** Optional content to render at the top of the legend (e.g. Disable all button). */
-  prepend?: ReactNode
+  seriesGroupKeys?: (string | undefined)[];
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void;
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void;
 }
 
-const LegendLine = ({
-  stroke,
-  strokeThickness,
-  strokeDashArray,
-}: {
-  stroke: string
-  strokeThickness: number
-  strokeDashArray?: number[]
-}) => (
-  <LegendLineSvg width={LEGEND_LINE_WIDTH} height={LEGEND_LINE_HEIGHT} viewBox={LEGEND_LINE_VIEWBOX}>
+export interface LegendLineProps {
+  stroke: string;
+  strokeThickness: number;
+  strokeDashArray?: number[];
+}
+
+const LegendLine = ({ stroke, strokeThickness, strokeDashArray }: LegendLineProps) => (
+  <LegendLineSvg
+    width={LEGEND_LINE_WIDTH}
+    height={LEGEND_LINE_HEIGHT}
+    viewBox={LEGEND_LINE_VIEWBOX}
+  >
     <line
       x1={LEGEND_LINE_X1}
       y1={LEGEND_LINE_Y1}
@@ -59,24 +58,24 @@ const LegendLine = ({
       strokeDasharray={strokeDashArray?.join(' ') ?? STROKE_DASHARRAY_NONE}
     />
   </LegendLineSvg>
-)
+);
 
-const LegendSeriesItem = ({
-  series,
-  onClick,
-  indent,
-}: {
-  series: SeriesInfo
-  onClick: () => void
-  indent?: boolean
-}) => (
+export interface LegendSeriesItemProps {
+  series: SeriesInfo;
+  onClick: () => void;
+  indent?: boolean;
+}
+
+const LegendSeriesItem = ({ series, onClick, indent }: LegendSeriesItemProps) => (
   <LegendItemButton
     type="button"
     onClick={onClick}
     sx={{
       pl: indent ? LEGEND_ITEM_INDENT : 0,
       opacity: series.isVisible ? LEGEND_OPACITY_VISIBLE : LEGEND_OPACITY_HIDDEN,
-      textDecoration: series.isVisible ? LEGEND_TEXT_DECORATION_VISIBLE : LEGEND_TEXT_DECORATION_HIDDEN,
+      textDecoration: series.isVisible
+        ? LEGEND_TEXT_DECORATION_VISIBLE
+        : LEGEND_TEXT_DECORATION_HIDDEN,
     }}
   >
     <LegendLine
@@ -86,7 +85,7 @@ const LegendSeriesItem = ({
     />
     <LegendItemLabel>{series.name}</LegendItemLabel>
   </LegendItemButton>
-)
+);
 
 export const Legend = ({
   backgroundColor,
@@ -95,16 +94,15 @@ export const Legend = ({
   seriesGroupKeys,
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
-  prepend,
 }: LegendProps) => {
   const { seriesList, groups, ungrouped, handleClick, handleGroupClick } = useLegend({
     seriesVisibility,
     seriesGroupKeys,
     onSeriesVisibilityChange,
     onSeriesVisibilityGroupChange,
-  })
+  });
 
-  if (seriesList.length === 0) return null
+  if (seriesList.length === 0) return null;
 
   return (
     <LegendRoot
@@ -113,14 +111,11 @@ export const Legend = ({
         color: textColor ?? LEGEND_DEFAULT_TEXT_COLOR,
       }}
     >
-      {prepend}
       {groups.map((group) => {
-        const items = group.seriesIndices
-          .map((index) => seriesList[index])
-          .filter(Boolean)
-        if (items.length === 0) return null
-        const allVisible = items.every((item) => item.isVisible)
-        const first = items[0]!
+        const items = group.seriesIndices.map((index) => seriesList[index]).filter(Boolean);
+        if (items.length === 0) return null;
+        const allVisible = items.every((item) => item.isVisible);
+        const first = items[0]!;
         return (
           <LegendGroup key={group.name}>
             <LegendItemButton
@@ -128,7 +123,9 @@ export const Legend = ({
               onClick={() => handleGroupClick(group.seriesIndices)}
               sx={{
                 opacity: allVisible ? LEGEND_OPACITY_VISIBLE : LEGEND_OPACITY_HIDDEN,
-                textDecoration: allVisible ? LEGEND_TEXT_DECORATION_VISIBLE : LEGEND_TEXT_DECORATION_HIDDEN,
+                textDecoration: allVisible
+                  ? LEGEND_TEXT_DECORATION_VISIBLE
+                  : LEGEND_TEXT_DECORATION_HIDDEN,
               }}
             >
               <LegendLine
@@ -147,11 +144,15 @@ export const Legend = ({
               />
             ))}
           </LegendGroup>
-        )
+        );
       })}
       {ungrouped.map((series) => (
-        <LegendSeriesItem key={series.index} series={series} onClick={() => handleClick(series.index)} />
+        <LegendSeriesItem
+          key={series.index}
+          series={series}
+          onClick={() => handleClick(series.index)}
+        />
       ))}
     </LegendRoot>
-  )
-}
+  );
+};

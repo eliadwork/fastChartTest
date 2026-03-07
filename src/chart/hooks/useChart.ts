@@ -1,13 +1,14 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTheme } from '@mui/material/styles'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePointMarkStore } from '../../store/pointMarkStore'
 import { withOpacity } from '../../utils/colorUtils'
+import { CHART_LEGEND_BACKGROUND_OPACITY } from '../chartConstants'
+import type { ChartOptionsInput } from '../chartTypes'
 import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults'
+import type { ChartData, ChartIcon, ChartStyle } from '../types'
 import { useChartSeriesVisibility } from './useChartSeriesVisibility'
 import { useChartWrapperOptions } from './useChartWrapperOptions'
 import { useChartWrapperStyle } from './useChartWrapperStyle'
-import { CHART_LEGEND_BACKGROUND_OPACITY } from '../chartConstants'
-import type { ChartData, ChartIcon, ChartStyle } from '../types'
-import type { ChartOptionsInput } from '../chartTypes'
 
 export interface UseChartParams {
   data: ChartData | null
@@ -16,7 +17,6 @@ export interface UseChartParams {
   options?: ChartOptionsInput
   icons?: ChartIcon[]
   chartStyle?: ChartStyle
-  onSeriesVisibilityChange?: (visibility: boolean[]) => void
 }
 
 export const useChart = ({
@@ -26,7 +26,6 @@ export const useChart = ({
   options = {},
   icons,
   chartStyle,
-  onSeriesVisibilityChange,
 }: UseChartParams) => {
   const theme = useTheme()
   const chartData = data ?? []
@@ -59,6 +58,9 @@ export const useChart = ({
     [setZoomBack, setZoomReset, setPushBeforeReset]
   )
 
+  const chartIdForModal = usePointMarkStore((state) => state.chartIdForModal)
+  const updateModalSeriesVisibility = usePointMarkStore((state) => state.updateModalSeriesVisibility)
+
   const {
     seriesVisibility,
     handleDisableAll,
@@ -68,10 +70,13 @@ export const useChart = ({
   } = useChartSeriesVisibility({
     initialSeriesCount: seriesCount,
     initialVisibility: options.seriesVisibility,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityChangePerIndex: options.onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange: options.onSeriesVisibilityGroupChange,
   })
+
+  useEffect(() => {
+    if (chartId != null && chartId === chartIdForModal) {
+      updateModalSeriesVisibility(seriesVisibility)
+    }
+  }, [chartId, chartIdForModal, seriesVisibility, updateModalSeriesVisibility])
 
   const wrapperStyle = useChartWrapperStyle({
     chartStyle,

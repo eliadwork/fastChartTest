@@ -26,7 +26,7 @@ The chart is split into **generic** and **implementation-specific** layers:
 |-------|------|------|
 | **Generic** | `src/chart/types.ts`, `src/chart/Chart.tsx`, `src/chart/Legend/` | No SciChart imports in Chart. Legend injected via overlaySlot. |
 | **Implementation** | `src/chart/implementation/scichart/` | SciChart-specific code. SciChartWrapper, convert, modifiers, SciChart hooks. |
-| **App wrapper** | `src/detect.tsx`, `src/App.tsx` | Merges defaults and passes options to Chart. |
+| **App wrapper** | `src/Detect.tsx`, `src/App.tsx` | Merges defaults and passes options to Chart. |
 
 - `Chart` receives `ChartData` + `ChartOptions`, converts via `convertData()`, and renders `SciChartChart`.
 - `ConvertedData` has `x: Float64Array` and `ys: Float64Array[]`.

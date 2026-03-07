@@ -1,6 +1,6 @@
-import { useCallback } from 'react'
-import type { ChartDataLike } from '../utils/chartDataLookup'
-import { getNearestPointAtX } from '../utils/chartDataLookup'
+import { useCallback } from 'react';
+import type { ChartDataLike } from '../utils/chartDataLookup';
+import { getNearestPointAtX } from '../utils/chartDataLookup';
 
 /**
  * Hook that returns a lookup function to get Y at X for a given series.
@@ -9,9 +9,9 @@ import { getNearestPointAtX } from '../utils/chartDataLookup'
 export function useChartDataLookup(chartData: ChartDataLike | null) {
   return useCallback(
     (xValue: number, seriesIndex: number) => {
-      if (!chartData) return null
-      return getNearestPointAtX(chartData, xValue, seriesIndex)
+      if (!chartData) return null;
+      return getNearestPointAtX(chartData, xValue, seriesIndex);
     },
     [chartData]
-  )
+  );
 }

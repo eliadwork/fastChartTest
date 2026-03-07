@@ -12,4 +12,4 @@ export {
   PointMarkModalButtons,
   PointMarkModalButton,
   PointMarkModalCancel,
-} from './ChartStyled'
+} from './ChartStyled';

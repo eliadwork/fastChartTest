@@ -1,10 +1,10 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { ThemeProvider, CssBaseline } from '@mui/material'
-import { SnackbarProvider } from 'notistack'
-import { theme } from './theme'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { SnackbarProvider } from 'notistack';
+import { theme } from './theme';
+import './index.css';
+import App from './App.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,5 +14,5 @@ createRoot(document.getElementById('root')!).render(
         <App />
       </SnackbarProvider>
     </ThemeProvider>
-  </StrictMode>,
-)
+  </StrictMode>
+);

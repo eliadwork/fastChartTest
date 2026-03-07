@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.{js,json}\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "copy:wasm": "mkdir -p public && cp node_modules/scichart/_wasm/scichart2d.wasm node_modules/scichart/_wasm/scichart2d-nosimd.wasm public/ 2>/dev/null || true",

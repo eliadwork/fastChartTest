@@ -1,46 +1,25 @@
-import type { ChartIcon, ChartOptions } from '../../types'
+import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon'
 import type { ChartZoomCallbacks } from '../implementationProps'
-import type { ConvertedData, ConvertedSeries } from './convert'
+import type { ConvertedData } from './convert'
+import type { SciChartMergedOptions } from './hooks/useSciChartMergedOptions'
+import type { UseSciChartSyncHooksParams } from './hooks/useSciChartSyncHooks'
 import { SciChartReact } from 'scichart-react'
 import { SkeletonLoading } from '../../../shared'
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../../defaults'
-import { Legend } from '../../Legend'
-import { usePointMarkersSync } from './hooks/usePointMarkersSync'
 import { useSciChartSurfaceRenderer } from './hooks/useSciChartSurfaceRenderer'
-import { useSeriesVisibilitySync } from './hooks/useSeriesVisibilitySync'
-import { useZoomResetSync } from './hooks/useZoomResetSync'
-import {
-  SCI_CHART_DEFAULT_TEXT_COLOR,
-  SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT,
-} from './sciChartWrapperConstants'
+import { useSciChartSyncHooks } from './hooks/useSciChartSyncHooks'
 import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled'
 
-/** Renders inside SciChartReact to provide context for sync hooks. */
-const SciChartSyncHooks = ({
-  zoomCallbacks,
-  icons,
-  defaultIcon,
-  defaultColor,
-  iconSize,
-  seriesVisibility,
-}: {
-  zoomCallbacks?: ChartZoomCallbacks
-  icons: ChartIcon[]
-  defaultIcon: string
-  defaultColor: string
-  iconSize: number
-  seriesVisibility?: boolean[]
-}) => {
-  useZoomResetSync(zoomCallbacks)
-  usePointMarkersSync({ icons, defaultIcon, defaultColor, iconSize })
-  useSeriesVisibilitySync(seriesVisibility)
+const DEFAULT_ICON_COLOR = '#3388ff'
+
+/** Must render inside SciChartReact so useSciChartSyncHooks has context. */
+const SciChartSyncEffects = (params: UseSciChartSyncHooksParams) => {
+  useSciChartSyncHooks(params)
   return null
 }
 
 export interface SciChartSurfaceRendererProps {
   data: ConvertedData
-  options: ChartOptions
-  chartId?: string
+  options: SciChartMergedOptions
   zoomCallbacks?: ChartZoomCallbacks
   overlaySlot?: React.ReactNode
 }
@@ -48,14 +27,12 @@ export interface SciChartSurfaceRendererProps {
 export const SciChartSurfaceRenderer = ({
   data,
   options,
-  chartId,
   zoomCallbacks,
   overlaySlot,
 }: SciChartSurfaceRendererProps) => {
-  const { initChart, pointMarkIcon, pointMarkIconColor } = useSciChartSurfaceRenderer({
+  const { initChart, lineShapes, boxes } = useSciChartSurfaceRenderer({
     data,
     options,
-    chartId,
     zoomCallbacks,
   })
 
@@ -66,27 +43,18 @@ export const SciChartSurfaceRenderer = ({
         fallback={<SkeletonLoading />}
         initChart={initChart}
       >
-        <SciChartSyncHooks
+        <SciChartSyncEffects
           zoomCallbacks={zoomCallbacks}
           icons={options.icons ?? []}
-          defaultIcon={pointMarkIcon}
-          defaultColor={pointMarkIconColor}
-          iconSize={options.pointMarkIconSize ?? SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT}
+          defaultIcon={DEFAULT_POINT_MARK_ICON_SVG}
+          defaultColor={DEFAULT_ICON_COLOR}
+          iconSize={1}
           seriesVisibility={options.seriesVisibility}
+          lineShapes={lineShapes}
+          boxes={boxes}
+          data={data}
         />
-        {!options.chartOnly &&
-          (overlaySlot ?? (
-            <Legend
-              backgroundColor={
-                options.legendBackgroundColor ?? options.backgroundColor ?? DEFAULT_LEGEND_BACKGROUND_COLOR
-              }
-              textColor={options.textColor ?? SCI_CHART_DEFAULT_TEXT_COLOR}
-              seriesVisibility={options.seriesVisibility}
-              seriesGroupKeys={data.series.map((series: ConvertedSeries) => series.lineGroupKey)}
-              onSeriesVisibilityChange={options.onSeriesVisibilityChange}
-              onSeriesVisibilityGroupChange={options.onSeriesVisibilityGroupChange}
-            />
-          ))}
+        {!options.chartOnly && overlaySlot}
       </SciChartReact>
     </SciChartContainer>
   )

@@ -3,43 +3,40 @@
  * Delegates to implementation. No implementation-specific imports.
  */
 
-import type { ChartData, ChartIcon, ChartStyle } from './types'
-import type { ChartOptionsInput } from './chartTypes'
-import { memo } from 'react'
-import UndoIcon from '@mui/icons-material/Undo'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import UndoIcon from '@mui/icons-material/Undo';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { memo } from 'react';
+import { LogoIcon } from '../assets/pointMarkIcon';
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
   ChartPanelNote,
   ChartPanelTitle,
   ChartWrapperBox,
-} from '../styled'
-import { ChartToolbarButton } from './ChartToolbarButton'
-import { LogoIcon } from '../assets/pointMarkIcon'
-import { Legend } from './Legend'
-import { SciChartWrapper } from './implementation/scichart'
+} from '../styled';
 import {
   CHART_TOOLTIP_DISABLE_ALL,
   CHART_TOOLTIP_ENABLE_ALL,
   CHART_TOOLTIP_ZOOM_BACK,
   CHART_TOOLTIP_ZOOM_RESET,
-} from './chartConstants'
-import { ChartToolbar } from './ChartStyled'
-import { useChart } from './hooks/useChart'
+} from './chartConstants';
+import { ChartToolbar } from './ChartStyled';
+import { ChartToolbarButton } from './ChartToolbarButton';
+import { useChart } from './hooks/useChart';
+import { SciChartWrapper } from './implementation/scichart';
+import { Legend } from './Legend';
+import type { ChartData, ChartIcon, ChartOptions, ChartStyle } from './types';
 
 export interface ChartProps {
-  data: ChartData | null
-  chartId?: string
-  title?: string
-  options?: ChartOptionsInput
-  style?: React.CSSProperties
-  icons?: ChartIcon[]
+  data: ChartData | null;
+  chartId?: string;
+  title?: string;
+  options?: ChartOptions;
+  style?: React.CSSProperties;
+  icons?: ChartIcon[];
   /** Optional style override. When absent, built from theme. */
-  chartStyle?: ChartStyle
-  /** Called when series visibility changes (e.g. for Detect modal sync). */
-  onSeriesVisibilityChange?: (visibility: boolean[]) => void
+  chartStyle?: ChartStyle;
 }
 
 const ChartComponent = ({
@@ -50,7 +47,6 @@ const ChartComponent = ({
   style,
   icons,
   chartStyle,
-  onSeriesVisibilityChange,
 }: ChartProps) => {
   const {
     chartData,
@@ -74,9 +70,7 @@ const ChartComponent = ({
     options,
     icons,
     chartStyle,
-    onSeriesVisibilityChange,
-  })
-
+  });
 
   return (
     <ChartWrapperBox>
@@ -84,7 +78,9 @@ const ChartComponent = ({
         <ChartPanelHeader sx={headerSx}>
           <ChartPanelHeaderText>
             {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
-            {options.note != null && <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>}
+            {options.note != null && (
+              <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>
+            )}
           </ChartPanelHeaderText>
           {!loading && (
             <ChartToolbar>
@@ -125,7 +121,7 @@ const ChartComponent = ({
         loading={loading}
       />
     </ChartWrapperBox>
-  )
-}
+  );
+};
 
-export const Chart = memo(ChartComponent)
+export const Chart = memo(ChartComponent);

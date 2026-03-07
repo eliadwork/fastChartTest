@@ -22,8 +22,6 @@ export const SCI_CHART_DEFAULT_SERIES_COLORS = [
 export const SCI_CHART_DEFAULT_STROKE_THICKNESS = 2
 export const SCI_CHART_DEFAULT_ROLLOVER_STROKE = '#FF0000'
 export const SCI_CHART_DEFAULT_ROLLOVER_DASH = [8, 4] as number[]
-export const SCI_CHART_DEFAULT_POINT_MARK_ICON = '📍'
-export const SCI_CHART_DEFAULT_POINT_MARK_COLOR = '#3388ff'
 export const SCI_CHART_DEFAULT_AXIS_LABEL_COLOR = '#ffffff'
 export const SCI_CHART_DEFAULT_TEXT_COLOR = '#ffffff'
 export const SCI_CHART_DEFAULT_ZERO_LINE_COLOR = '#ffffff'
@@ -52,9 +50,6 @@ export const SCI_CHART_BOX_DEFAULT_Y2 = 1
 
 /** Axis stretch modifier sensitivity. */
 export const SCI_CHART_STRETCH_SENSITIVITY = 0.5
-
-/** Point mark icon size default. */
-export const SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT = 1.5
 
 /** Box label font size. */
 export const SCI_CHART_BOX_LABEL_FONT_SIZE = 12

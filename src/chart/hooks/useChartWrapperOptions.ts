@@ -1,22 +1,18 @@
-import { useMemo } from 'react'
-import type { ChartOptions } from '../types'
+import { useMemo } from 'react';
+import { CHART_RESAMPLING_PRECISION_DEFAULT } from '../chartConstants';
 import type {
   ChartImplementationOptions,
-  ChartImplementationOptionsOverrides,
-} from '../implementation/implementationProps'
-import type { ChartOptionsInput } from '../chartTypes'
-import {
-  CHART_RESAMPLING_PRECISION_DEFAULT,
-  CHART_RESAMPLING_PRECISION_OFF,
-} from '../chartConstants'
+  ChartImplementationOptionsWithHandlers,
+} from '../implementation/implementationProps';
+import type { ChartOptions } from '../types';
 
 export interface UseChartWrapperOptionsParams {
-  options: ChartOptionsInput
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
-  seriesVisibility: boolean[]
-  handleSeriesVisibilityChange: (index: number, visible: boolean) => void
-  handleSeriesVisibilityGroupChange: (indices: number[], visible: boolean) => void
-  handleDisableAll: () => void
+  options: ChartOptions;
+  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  seriesVisibility: boolean[];
+  handleSeriesVisibilityChange: (index: number, visible: boolean) => void;
+  handleSeriesVisibilityGroupChange: (indices: number[], visible: boolean) => void;
+  handleDisableAll: () => void;
 }
 
 export const useChartWrapperOptions = ({
@@ -26,30 +22,30 @@ export const useChartWrapperOptions = ({
   handleSeriesVisibilityChange,
   handleSeriesVisibilityGroupChange,
   handleDisableAll,
-}: UseChartWrapperOptionsParams): ChartImplementationOptionsOverrides => {
+}: UseChartWrapperOptionsParams): ChartImplementationOptionsWithHandlers => {
   return useMemo(() => {
-    const opts = options
-    const isResamplingObject =
-      opts.resampling != null && opts.resampling !== true && opts.resampling !== false
-    const resamplingObj: ChartImplementationOptions['resampling'] = isResamplingObject
-      ? (opts.resampling as ChartImplementationOptions['resampling'])
-      : {
-            enable: opts.resampling !== false,
-            precision:
-              (opts as ChartOptions).resamplingPrecision ??
-              (opts.resampling ? CHART_RESAMPLING_PRECISION_DEFAULT : CHART_RESAMPLING_PRECISION_OFF),
+    const opts = options;
+    const resamplingObj: ChartImplementationOptions['resampling'] =
+      opts.resampling != null && typeof opts.resampling === 'object'
+        ? {
+            enable: opts.resampling.enable,
+            precision: opts.resampling.precision ?? CHART_RESAMPLING_PRECISION_DEFAULT,
           }
+        : {
+            enable: opts.resampling !== false,
+            precision: CHART_RESAMPLING_PRECISION_DEFAULT,
+          };
     return {
       shapes: opts.shapes,
       icons: icons ?? opts.icons,
       note: opts.note,
       stretch: opts.stretch ?? {
         enable: true,
-        trigger: ((opts as ChartOptions).stretchTrigger ?? 'rightClick') as ChartImplementationOptions['stretch']['trigger'],
+        trigger: 'rightClick' as ChartImplementationOptions['stretch']['trigger'],
       },
       pan: opts.pan ?? {
         enable: true,
-        trigger: ((opts as ChartOptions).panTrigger ?? (opts as ChartOptions).panKey ?? 'shift') as ChartImplementationOptions['pan']['trigger'],
+        trigger: 'shift' as ChartImplementationOptions['pan']['trigger'],
       },
       resampling: resamplingObj,
       clipZoomToData: opts.clipZoomToData !== false,
@@ -58,8 +54,8 @@ export const useChartWrapperOptions = ({
       onSeriesVisibilityChange: handleSeriesVisibilityChange,
       onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
       onDisableAll: handleDisableAll,
-      events: opts.events ?? { onmiddleclick: (opts as ChartOptions).onPointMark },
-    }
+      events: opts.events,
+    };
   }, [
     options,
     icons,
@@ -67,5 +63,5 @@ export const useChartWrapperOptions = ({
     handleSeriesVisibilityChange,
     handleSeriesVisibilityGroupChange,
     handleDisableAll,
-  ])
-}
+  ]);
+};

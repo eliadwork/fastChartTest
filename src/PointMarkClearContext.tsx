@@ -1,66 +1,35 @@
-import { createContext, type ReactNode } from 'react'
+import { createContext, type ReactNode } from 'react';
 
-type RemovePendingFn = () => void
-type RemoveLastPendingFn = () => void
-type ClearStateFn = () => void
+type RemovePendingForChartFn = (chartId: string) => void;
+type RemoveLastPendingForChartFn = (chartId: string) => void;
+type ClearPendingStateForChartFn = (chartId: string) => void;
 
-type RegisterForChartFn = (
-  chartId: string,
-  removePending: RemovePendingFn,
-  clearPendingState: ClearStateFn,
-  removeLastPending?: RemoveLastPendingFn
-) => void
-type RemovePendingForChartFn = (chartId: string) => void
-type RemoveLastPendingForChartFn = (chartId: string) => void
-type ClearPendingStateForChartFn = (chartId: string) => void
-
-const registry = new Map<
-  string,
-  { removePending: RemovePendingFn; removeLastPending: RemoveLastPendingFn; clearPendingState: ClearStateFn }
->()
-
-export function registerForChart(
-  chartId: string,
-  removePending: RemovePendingFn,
-  clearPendingState: ClearStateFn,
-  removeLastPending?: RemoveLastPendingFn
-): void {
-  registry.set(chartId, {
-    removePending,
-    removeLastPending: removeLastPending ?? removePending,
-    clearPendingState,
-  })
+export function removePendingForChart(_chartId: string): void {
+  // No-op: shapes come from options.shapes; clearing is done via store
 }
 
-export function removePendingForChart(chartId: string): void {
-  registry.get(chartId)?.removePending()
+export function removeLastPendingForChart(_chartId: string): void {
+  // No-op: cancelSeriesPickerWithoutChoice restores state; shapes come from options.shapes
 }
 
-export function removeLastPendingForChart(chartId: string): void {
-  registry.get(chartId)?.removeLastPending()
-}
-
-export function clearPendingStateForChart(chartId: string): void {
-  registry.get(chartId)?.clearPendingState()
+export function clearPendingStateForChart(_chartId: string): void {
+  // No-op: shapes come from options.shapes; store clears on modal open
 }
 
 export const PointMarkClearContext = createContext<{
-  registerForChart: RegisterForChartFn
-  removePendingForChart: RemovePendingForChartFn
-  removeLastPendingForChart: RemoveLastPendingForChartFn
-  clearPendingStateForChart: ClearPendingStateForChartFn
+  removePendingForChart: RemovePendingForChartFn;
+  removeLastPendingForChart: RemoveLastPendingForChartFn;
+  clearPendingStateForChart: ClearPendingStateForChartFn;
 }>({
-  registerForChart,
   removePendingForChart,
   removeLastPendingForChart,
   clearPendingStateForChart,
-})
+});
 
 export const PointMarkClearProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PointMarkClearContext.Provider
       value={{
-        registerForChart,
         removePendingForChart,
         removeLastPendingForChart,
         clearPendingStateForChart,
@@ -68,5 +37,5 @@ export const PointMarkClearProvider = ({ children }: { children: ReactNode }) =>
     >
       {children}
     </PointMarkClearContext.Provider>
-  )
-}
+  );
+};

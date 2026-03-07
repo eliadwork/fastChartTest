@@ -1,5 +1,5 @@
-import { createTheme } from '@mui/material/styles'
-import type { ThemeOptions } from '@mui/material/styles'
+import { createTheme } from '@mui/material/styles';
+import type { ThemeOptions } from '@mui/material/styles';
 
 const defaultThemeOptions: ThemeOptions = {
   palette: {
@@ -12,7 +12,7 @@ const defaultThemeOptions: ThemeOptions = {
       main: '#646cff',
     },
   },
-}
+};
 
 /** Create MUI theme. Pass partial overrides to customize. */
 export function createAppTheme(overrides: ThemeOptions = {}) {
@@ -22,8 +22,8 @@ export function createAppTheme(overrides: ThemeOptions = {}) {
     palette: overrides.palette
       ? { ...defaultThemeOptions.palette, ...overrides.palette }
       : defaultThemeOptions.palette,
-  })
+  });
 }
 
 /** Default theme instance */
-export const theme = createAppTheme()
+export const theme = createAppTheme();
