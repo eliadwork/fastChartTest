@@ -11,8 +11,10 @@ export interface ChartTheme {
   defaultSeriesColors: string[]
   /** Base background color (injected from outside, e.g. palette.background.paper). Chart uses this with chartBackgroundOpacity; header uses it at 100%. */
   backgroundColor?: string
-  /** Opacity for chart and legend background. Default 0.2 (20%). */
+  /** Opacity for chart background. Default 0.2 (20%). */
   chartBackgroundOpacity?: number
+  /** Opacity for legend background when derived from backgroundColor. Default 0.08 (8%). */
+  legendBackgroundOpacity?: number
   /** Rollover/hover line stroke color */
   rolloverStroke?: string
   /** Rollover line dash. Default: { isDash: true, steps: [8, 4] } */
@@ -36,6 +38,7 @@ export interface ChartThemeOverrides {
   defaultSeriesColors?: string[]
   backgroundColor?: string
   chartBackgroundOpacity?: number
+  legendBackgroundOpacity?: number
   rolloverStroke?: string
   rolloverDash?: { isDash: boolean; steps: number[] }
   defaultStrokeThickness?: number
@@ -52,6 +55,7 @@ export const withOpacity = (color: string, opacity: number) =>
 
 export const defaultChartTheme: ChartTheme = {
   chartBackgroundOpacity: 0.2,
+  legendBackgroundOpacity: 0.08,
   defaultSeriesColors: [
     '#3ca832',
     '#eb911c',

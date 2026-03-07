@@ -1,11 +1,3 @@
-/**
- * SciChartWrapper – SciChart implementation: conversion, chart surface, and SciChart-specific events.
- * No header, legend, or buttons. Parent provides overlaySlot (e.g. legend) and manages UI state.
- */
-
-import { useContext, useMemo } from 'react'
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
 import {
   BoxAnnotation,
   ECoordinateMode,
@@ -26,51 +18,46 @@ import {
   ZoomPanModifier,
 } from 'scichart'
 import { SciChartReact } from 'scichart-react'
-import { useChartTheme } from '../../ChartThemeContext'
-import { PointMarkClearContext } from '../../PointMarkClearContext'
-import { ChartWrapperBox } from '../../styled'
-import type { ChartOptions, ModifierKey } from '../types'
-import type { ConvertedData } from '../convert'
-import { convertShapes, dashToStrokeArray, normalizeShape } from '../convert'
-import { AxisStretchModifier } from './modifiers/AxisStretchModifier'
-import { LeftClickRubberBandXyZoomModifier } from './modifiers/LeftClickRubberBandXyZoomModifier'
-import { PointMarkModifier } from './modifiers/PointMarkModifier'
-import { ShiftLeftClickZoomPanModifier } from './modifiers/ShiftLeftClickZoomPanModifier'
-import { ZoomHistoryModifier } from './modifiers/ZoomHistoryModifier'
-import { LeftClickZoomPanModifier } from './modifiers/LeftClickZoomPanModifier'
-import { LegendWithToggle } from './components/LegendWithToggle'
-import { PointMarkersSync } from './hooks/usePointMarkersSync'
-import { SeriesVisibilitySync } from './hooks/useSeriesVisibilitySync'
-import { ZoomResetSync } from './hooks/useZoomResetSync'
-import { toInternalOptions } from './convert'
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from './defaults'
-import type { SciChartWrapperProps } from './types'
+import type { ChartOptions, ModifierKey } from '../../types'
+import type { ConvertedData, ConvertedSeries } from '../../convert'
+import { convertShapes, dashToStrokeArray, normalizeShape } from '../../convert'
+import { AxisStretchModifier } from '../modifiers/AxisStretchModifier'
+import { LeftClickRubberBandXyZoomModifier } from '../modifiers/LeftClickRubberBandXyZoomModifier'
+import { PointMarkModifier } from '../modifiers/PointMarkModifier'
+import { ShiftLeftClickZoomPanModifier } from '../modifiers/ShiftLeftClickZoomPanModifier'
+import { ZoomHistoryModifier } from '../modifiers/ZoomHistoryModifier'
+import { LeftClickZoomPanModifier } from '../modifiers/LeftClickZoomPanModifier'
+import { Legend } from '../components/Legend'
+import { PointMarkersSync } from '../hooks/usePointMarkersSync'
+import { SeriesVisibilitySync } from '../hooks/useSeriesVisibilitySync'
+import { ZoomResetSync } from '../hooks/useZoomResetSync'
+import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults'
 
-SciChartSurface.configure({
-  wasmUrl: '/scichart2d.wasm',
-  wasmNoSimdUrl: '/scichart2d-nosimd.wasm',
-})
-
-const DEFAULT_SERIES_COLORS = [
-  '#3ca832',
-  '#eb911c',
-  '#1f77b4',
-  '#ff7f0e',
-  '#2ca02c',
-  '#d62728',
-  '#9467bd',
-  '#8c564b',
-  '#e377c2',
-  '#7f7f7f',
-]
-
-const DEFAULT_STROKE_THICKNESS = 2
-const DEFAULT_ROLLOVER_STROKE = '#FF0000'
-const DEFAULT_ROLLOVER_DASH = [8, 4] as number[]
-const DEFAULT_POINT_MARK_ICON = '📍'
-const DEFAULT_POINT_MARK_COLOR = '#3388ff'
-const DEFAULT_AXIS_LABEL_COLOR = '#ffffff'
-const DEFAULT_ZERO_LINE_COLOR = '#ffffff'
+import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled'
+import {
+  SCI_CHART_DEFAULT_SERIES_COLORS,
+  SCI_CHART_DEFAULT_STROKE_THICKNESS,
+  SCI_CHART_DEFAULT_ROLLOVER_STROKE,
+  SCI_CHART_DEFAULT_ROLLOVER_DASH,
+  SCI_CHART_DEFAULT_POINT_MARK_ICON,
+  SCI_CHART_DEFAULT_POINT_MARK_COLOR,
+  SCI_CHART_DEFAULT_AXIS_LABEL_COLOR,
+  SCI_CHART_DEFAULT_ZERO_LINE_COLOR,
+  SCI_CHART_ZERO_LINE_STROKE_THICKNESS,
+  SCI_CHART_SHAPE_STROKE_THICKNESS,
+  SCI_CHART_BOX_FILL_OPACITY_SUFFIX,
+  SCI_CHART_RESAMPLING_PRECISION_DEFAULT,
+  SCI_CHART_RESAMPLING_PRECISION_OFF,
+  SCI_CHART_VISIBLE_RANGE_PAD_FACTOR,
+  SCI_CHART_BOX_DEFAULT_X1,
+  SCI_CHART_BOX_DEFAULT_X2,
+  SCI_CHART_BOX_DEFAULT_Y1,
+  SCI_CHART_BOX_DEFAULT_Y2,
+  SCI_CHART_STRETCH_SENSITIVITY,
+  SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT,
+  SCI_CHART_BOX_LABEL_FONT_SIZE,
+  SCI_CHART_DEFAULT_TEXT_COLOR,
+} from './sciChartWrapperConstants'
 
 const MODIFIER_KEY_MAP: { [K in ModifierKey]?: EModifierMouseArgKey } = {
   Shift: EModifierMouseArgKey.Shift,
@@ -78,88 +65,19 @@ const MODIFIER_KEY_MAP: { [K in ModifierKey]?: EModifierMouseArgKey } = {
   Alt: EModifierMouseArgKey.Alt,
 }
 
-export const SciChartWrapper = ({
-  chartId,
-  lines,
-  style,
-  options: opts = {},
-  containerStyle,
-  overlaySlot,
-  loading = false,
-}: SciChartWrapperProps) => {
-  if (loading) {
-    return (
-      <ChartWrapperBox style={containerStyle} sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-        <CircularProgress size={40} sx={{ color: 'text.secondary' }} />
-      </ChartWrapperBox>
-    )
-  }
-
-  const chartTheme = useChartTheme()
-  const { registerForChart } = useContext(PointMarkClearContext)
-
-  const seriesVisibility = opts.seriesVisibility ?? Array.from({ length: lines.length }, () => true)
-  const { data, options: convertedOptions } = toInternalOptions(
-    { chartId, lines, style, options: opts },
-    seriesVisibility
-  )
-
-  const onMiddleClick = opts.events?.onmiddleclick
-
-  const mergedOptions = useMemo<ChartOptions>(
-    () => ({
-      ...convertedOptions,
-      defaultSeriesColors: chartTheme.defaultSeriesColors,
-      rolloverStroke: convertedOptions.rolloverStroke ?? chartTheme.rolloverStroke,
-      rolloverDash: convertedOptions.rolloverDash ?? chartTheme.rolloverDash,
-      pointMarkIcon: chartTheme.pointMarkIcon,
-      pointMarkIconColor: chartTheme.pointMarkIconColor,
-      pointMarkIconSize: chartTheme.pointMarkIconSize,
-      onSeriesVisibilityChange: opts.onSeriesVisibilityChange,
-      onSeriesVisibilityGroupChange: opts.onSeriesVisibilityGroupChange,
-      onDisableAll: opts.onDisableAll,
-      onPointMark: onMiddleClick
-        ? (xValue, yValue, context) =>
-            onMiddleClick(xValue, yValue, context) as
-              | import('../types').ChartLineShape
-              | import('../types').ChartMarkerShape
-              | (import('../types').ChartLineShape | import('../types').ChartMarkerShape)[]
-              | null
-        : undefined,
-      ...(chartId && registerForChart
-        ? {
-            pointMarkRegisterForClear: (
-              chartIdParam: string,
-              remove: () => void,
-              clear: () => void,
-              removeLast?: () => void
-            ) => registerForChart(chartIdParam, remove, clear, removeLast),
-          }
-        : {}),
-    }),
-    [convertedOptions, chartTheme, opts.onSeriesVisibilityChange, opts.onSeriesVisibilityGroupChange, opts.onDisableAll, onMiddleClick, chartId, registerForChart]
-  )
-
-  return (
-    <ChartWrapperBox style={containerStyle}>
-      <SciChartSurfaceRenderer
-        data={data}
-        options={mergedOptions}
-        chartId={chartId}
-        overlaySlot={overlaySlot}
-      />
-    </ChartWrapperBox>
-  )
-}
-
-interface SciChartSurfaceRendererProps {
+export interface SciChartSurfaceRendererProps {
   data: ConvertedData
   options: ChartOptions
   chartId?: string
   overlaySlot?: React.ReactNode
 }
 
-const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciChartSurfaceRendererProps) => {
+export const SciChartSurfaceRenderer = ({
+  data,
+  options,
+  chartId,
+  overlaySlot,
+}: SciChartSurfaceRendererProps) => {
   const { lines: lineShapes, boxes } = convertShapes(options.shapes)
 
   const stretchEnable = options.stretchEnable !== false
@@ -173,18 +91,20 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
   const panOnShift = panTrigger === 'Shift'
   const panKey = panOnLeftClick ? undefined : MODIFIER_KEY_MAP[panTrigger as ModifierKey]
 
-  const seriesColors = options.defaultSeriesColors ?? DEFAULT_SERIES_COLORS
-  const strokeThickness = options.defaultStrokeThickness ?? DEFAULT_STROKE_THICKNESS
+  const seriesColors = options.defaultSeriesColors ?? [...SCI_CHART_DEFAULT_SERIES_COLORS]
+  const strokeThickness = options.defaultStrokeThickness ?? SCI_CHART_DEFAULT_STROKE_THICKNESS
 
   const rolloverShow = options.rolloverShow !== false
-  const rolloverStroke = options.rolloverStroke ?? DEFAULT_ROLLOVER_STROKE
-  const rolloverDash = dashToStrokeArray(options.rolloverDash) ?? DEFAULT_ROLLOVER_DASH
+  const rolloverStroke = options.rolloverStroke ?? SCI_CHART_DEFAULT_ROLLOVER_STROKE
+  const rolloverDash = dashToStrokeArray(options.rolloverDash) ?? SCI_CHART_DEFAULT_ROLLOVER_DASH
 
   const resamplingMode = options.resampling !== false ? EResamplingMode.Auto : EResamplingMode.None
-  const resamplingPrecision = options.resamplingPrecision ?? (options.resampling ? 1 : 0)
+  const resamplingPrecision =
+    options.resamplingPrecision ??
+    (options.resampling ? SCI_CHART_RESAMPLING_PRECISION_DEFAULT : SCI_CHART_RESAMPLING_PRECISION_OFF)
 
-  const pointMarkIcon = options.pointMarkIcon ?? DEFAULT_POINT_MARK_ICON
-  const pointMarkIconColor = options.pointMarkIconColor ?? DEFAULT_POINT_MARK_COLOR
+  const pointMarkIcon = options.pointMarkIcon ?? SCI_CHART_DEFAULT_POINT_MARK_ICON
+  const pointMarkIconColor = options.pointMarkIconColor ?? SCI_CHART_DEFAULT_POINT_MARK_COLOR
   const onPointMark = options.onPointMark
     ? (xValue: number, yValue: number, context?: { getSeriesVisibility: () => boolean[]; seriesBindable?: boolean[] }) => {
         const contextWithBindable = {
@@ -209,14 +129,14 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
     : undefined
 
   return (
-    <Box component="div" sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 0 }}>
+    <SciChartContainer>
       <SciChartReact
-        style={{ width: '100%', height: '100%', flex: 1, minHeight: 0 }}
+        style={SciChartSurfaceStyle}
         initChart={async (rootElement) => {
           const createOptions = options.backgroundColor != null ? { background: options.backgroundColor } : undefined
           const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement, createOptions)
 
-          const axisLabelColor = options.textColor ?? DEFAULT_AXIS_LABEL_COLOR
+          const axisLabelColor = options.textColor ?? SCI_CHART_DEFAULT_AXIS_LABEL_COLOR
           const axisOptions = { labelStyle: { color: axisLabelColor } }
           const xAxis = new NumericAxis(wasmContext, axisOptions)
           const yAxis = new NumericAxis(wasmContext, axisOptions)
@@ -245,7 +165,8 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
           }
 
           if (options.clipZoomToData !== false && Number.isFinite(xMin)) {
-            const pad = (number: number) => (number === 0 ? 1 : Math.abs(number) * 1e-6)
+            const pad = (number: number) =>
+              number === 0 ? 1 : Math.abs(number) * SCI_CHART_VISIBLE_RANGE_PAD_FACTOR
             xAxis.visibleRangeLimit = new NumberRange(xMin - pad(xMin), xMax + pad(xMax))
             if (Number.isFinite(yMin) && Number.isFinite(yMax)) {
               yAxis.visibleRangeLimit = new NumberRange(yMin - pad(yMin), yMax + pad(yMax))
@@ -279,12 +200,20 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
             sciChartSurface.renderableSeries.add(series)
           }
 
-          const zeroLineColor = options.zeroLineColor ?? DEFAULT_ZERO_LINE_COLOR
+          const zeroLineColor = options.zeroLineColor ?? SCI_CHART_DEFAULT_ZERO_LINE_COLOR
           sciChartSurface.annotations.add(
-            new VerticalLineAnnotation({ x1: 0, stroke: zeroLineColor, strokeThickness: 1 })
+            new VerticalLineAnnotation({
+              x1: 0,
+              stroke: zeroLineColor,
+              strokeThickness: SCI_CHART_ZERO_LINE_STROKE_THICKNESS,
+            })
           )
           sciChartSurface.annotations.add(
-            new HorizontalLineAnnotation({ y1: 0, stroke: zeroLineColor, strokeThickness: 1 })
+            new HorizontalLineAnnotation({
+              y1: 0,
+              stroke: zeroLineColor,
+              strokeThickness: SCI_CHART_ZERO_LINE_STROKE_THICKNESS,
+            })
           )
 
           for (const shape of lineShapes) {
@@ -293,7 +222,7 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
                 new VerticalLineAnnotation({
                   x1: shape.lineValue,
                   stroke: shape.color,
-                  strokeThickness: 2,
+                  strokeThickness: SCI_CHART_SHAPE_STROKE_THICKNESS,
                   strokeDashArray: shape.strokeDashArray,
                 })
               )
@@ -302,7 +231,7 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
                 new HorizontalLineAnnotation({
                   y1: shape.lineValue,
                   stroke: shape.color,
-                  strokeThickness: 2,
+                  strokeThickness: SCI_CHART_SHAPE_STROKE_THICKNESS,
                   strokeDashArray: shape.strokeDashArray,
                 })
               )
@@ -311,23 +240,23 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
 
           const hasDataBounds = Number.isFinite(xMin) && Number.isFinite(yMin)
           for (const box of boxes) {
-            const bx1 = box.x1 ?? (hasDataBounds ? xMin : 0)
-            const bx2 = box.x2 ?? (hasDataBounds ? xMax : 1)
-            const by1 = box.y1 ?? (hasDataBounds ? yMin : 0)
-            const by2 = box.y2 ?? (hasDataBounds ? yMax : 1)
+            const bx1 = box.x1 ?? (hasDataBounds ? xMin : SCI_CHART_BOX_DEFAULT_X1)
+            const bx2 = box.x2 ?? (hasDataBounds ? xMax : SCI_CHART_BOX_DEFAULT_X2)
+            const by1 = box.y1 ?? (hasDataBounds ? yMin : SCI_CHART_BOX_DEFAULT_Y1)
+            const by2 = box.y2 ?? (hasDataBounds ? yMax : SCI_CHART_BOX_DEFAULT_Y2)
             const useRelativeX = box.x1 == null && box.x2 == null && !hasDataBounds
             const useRelativeY = box.y1 == null && box.y2 == null && !hasDataBounds
             sciChartSurface.annotations.add(
               new BoxAnnotation({
-                x1: useRelativeX ? 0 : bx1,
-                x2: useRelativeX ? 1 : bx2,
-                y1: useRelativeY ? 0 : by1,
-                y2: useRelativeY ? 1 : by2,
+                x1: useRelativeX ? SCI_CHART_BOX_DEFAULT_X1 : bx1,
+                x2: useRelativeX ? SCI_CHART_BOX_DEFAULT_X2 : bx2,
+                y1: useRelativeY ? SCI_CHART_BOX_DEFAULT_Y1 : by1,
+                y2: useRelativeY ? SCI_CHART_BOX_DEFAULT_Y2 : by2,
                 xCoordinateMode: useRelativeX ? ECoordinateMode.Relative : ECoordinateMode.DataValue,
                 yCoordinateMode: useRelativeY ? ECoordinateMode.Relative : ECoordinateMode.DataValue,
-                fill: box.fill ?? box.color + '33',
+                fill: box.fill ?? box.color + SCI_CHART_BOX_FILL_OPACITY_SUFFIX,
                 stroke: box.color,
-                strokeThickness: 2,
+                strokeThickness: SCI_CHART_SHAPE_STROKE_THICKNESS,
               })
             )
             if (box.name) {
@@ -335,13 +264,13 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
               const labelY = box.y2 ?? box.y1 ?? (hasDataBounds ? yMax : undefined)
               sciChartSurface.annotations.add(
                 new NativeTextAnnotation({
-                  x1: labelX ?? 0,
-                  y1: labelY ?? 1,
+                  x1: labelX ?? SCI_CHART_BOX_DEFAULT_X1,
+                  y1: labelY ?? SCI_CHART_BOX_DEFAULT_Y2,
                   xCoordinateMode: labelX != null ? ECoordinateMode.DataValue : ECoordinateMode.Relative,
                   yCoordinateMode: labelY != null ? ECoordinateMode.DataValue : ECoordinateMode.Relative,
                   text: box.name,
                   textColor: box.color,
-                  fontSize: 12,
+                  fontSize: SCI_CHART_BOX_LABEL_FONT_SIZE,
                   horizontalAnchorPoint: EHorizontalAnchorPoint.Left,
                 })
               )
@@ -351,7 +280,7 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
           const modifiers: InstanceType<typeof import('scichart').ChartModifierBase2D>[] = [
             new PointMarkModifier({
               onPointMark,
-              iconSize: options.pointMarkIconSize ?? 1.5,
+              iconSize: options.pointMarkIconSize ?? SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT,
               chartId: chartId ?? undefined,
               onRegisterForClear: options.pointMarkRegisterForClear,
             }),
@@ -363,17 +292,19 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
               new AxisStretchModifier({
                 executeOnRightClick: stretchOnRightClick,
                 executeCondition: stretchKey != null ? { key: stretchKey } : undefined,
-                sensitivity: 0.5,
+                sensitivity: SCI_CHART_STRETCH_SENSITIVITY,
               })
             )
           }
           if (panEnable) {
             modifiers.push(
-              new (panOnShift ? ShiftLeftClickZoomPanModifier : panOnLeftClick ? LeftClickZoomPanModifier : ZoomPanModifier)({
-                executeCondition: {
-                  key: panOnShift ? EModifierMouseArgKey.Shift : panKey ?? EModifierMouseArgKey.None,
-                },
-              })
+              new (panOnShift ? ShiftLeftClickZoomPanModifier : panOnLeftClick ? LeftClickZoomPanModifier : ZoomPanModifier)(
+                {
+                  executeCondition: {
+                    key: panOnShift ? EModifierMouseArgKey.Shift : panKey ?? EModifierMouseArgKey.None,
+                  },
+                }
+              )
             )
           }
           modifiers.push(new MouseWheelZoomModifier(), new ZoomExtentsModifier())
@@ -402,21 +333,23 @@ const SciChartSurfaceRenderer = ({ data, options, chartId, overlaySlot }: SciCha
           icons={options.icons ?? []}
           defaultIcon={pointMarkIcon}
           defaultColor={pointMarkIconColor}
-          iconSize={options.pointMarkIconSize ?? 1.5}
+          iconSize={options.pointMarkIconSize ?? SCI_CHART_POINT_MARK_ICON_SIZE_DEFAULT}
         />
         <SeriesVisibilitySync seriesVisibility={options.seriesVisibility} />
         {!options.chartOnly &&
           (overlaySlot ?? (
-            <LegendWithToggle
-              backgroundColor={options.legendBackgroundColor ?? options.backgroundColor ?? DEFAULT_LEGEND_BACKGROUND_COLOR}
-              textColor={options.textColor ?? '#ffffff'}
+            <Legend
+              backgroundColor={
+                options.legendBackgroundColor ?? options.backgroundColor ?? DEFAULT_LEGEND_BACKGROUND_COLOR
+              }
+              textColor={options.textColor ?? SCI_CHART_DEFAULT_TEXT_COLOR}
               seriesVisibility={options.seriesVisibility}
-              seriesGroupKeys={data.series.map((series) => series.lineGroupKey)}
+              seriesGroupKeys={data.series.map((series: ConvertedSeries) => series.lineGroupKey)}
               onSeriesVisibilityChange={options.onSeriesVisibilityChange}
               onSeriesVisibilityGroupChange={options.onSeriesVisibilityGroupChange}
             />
           ))}
       </SciChartReact>
-    </Box>
+    </SciChartContainer>
   )
 }

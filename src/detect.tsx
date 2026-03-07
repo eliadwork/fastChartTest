@@ -233,7 +233,11 @@ export const Detect = ({
             <Select
               labelId="series-select-label"
               label="Series"
-              value={selectedSeriesIndex >= 0 ? selectedSeriesIndex : ''}
+              value={
+                selectedSeriesIndex >= 0 && seriesOptions.includes(selectedSeriesIndex)
+                  ? selectedSeriesIndex
+                  : ''
+              }
               onChange={(e) => setSelectedSeriesIndex(Number(e.target.value))}
             >
               {seriesOptions.map((seriesIndex) => (

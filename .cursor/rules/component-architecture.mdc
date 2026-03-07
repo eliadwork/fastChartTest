@@ -1,0 +1,117 @@
+---
+description: Component architecture – theme, constants, hooks, MUI styled
+globs: "**/*.{ts,tsx}"
+alwaysApply: true
+---
+
+# Component Architecture
+
+When writing or refactoring components (e.g. Legend, SciChartWrapper, Chart), follow these rules.
+
+## 1. Use the Theme
+
+- **Take what you can from the theme.** Use `theme.spacing()`, `theme.palette`, `theme.shape`, `theme.typography`, `theme.zIndex` where applicable.
+- **Add what is not there.** If a value has no natural MUI slot, extend the theme via `declare module '@mui/material/styles'` and add it to `Theme` / `ThemeOptions`.
+- Prefer theme-driven values over hardcoded strings/numbers in styled components and `sx` props.
+
+```tsx
+// ✅ GOOD – theme-driven
+const LegendRoot = styled('div')(({ theme }) => ({
+  top: theme.spacing(theme.chartLegend.inset),
+  zIndex: theme.chartLegend.zIndex,
+}))
+
+// ❌ BAD – hardcoded
+const LegendRoot = styled('div')({
+  top: '0.5rem',
+  zIndex: 10,
+})
+```
+
+## 2. Move Magic Strings/Numbers to Constants
+
+- Extract magic strings and numbers into a `*Constants.ts` file (e.g. `legendConstants.ts`, `sciChartWrapperConstants.ts`).
+- Use descriptive constant names (e.g. `LEGEND_OPACITY_HIDDEN`, `LEGEND_DEFAULT_STROKE`).
+- Colocate constants with the feature (same folder as the component).
+
+```tsx
+// ✅ GOOD
+// legendConstants.ts
+export const LEGEND_OPACITY_HIDDEN = 0.5
+export const LEGEND_DEFAULT_STROKE = '#888'
+
+// Legend.tsx
+opacity: series.isVisible ? LEGEND_OPACITY_VISIBLE : LEGEND_OPACITY_HIDDEN
+
+// ❌ BAD
+opacity: series.isVisible ? 1 : 0.5
+stroke: series.stroke ?? '#888'
+```
+
+## 3. Separate Logic into Hooks
+
+- Extract data fetching, state, and event handlers into custom hooks (e.g. `useLegend`, `useChart`).
+- Keep components focused on rendering; hooks own the logic.
+- Name hooks `use<Feature>` and place them in a `hooks/` folder or alongside the component.
+
+```tsx
+// ✅ GOOD
+// useLegend.ts
+export const useLegend = (options) => {
+  const [state, setState] = useState(...)
+  const handleClick = useCallback(...)
+  return { seriesList, groups, handleClick }
+}
+
+// Legend.tsx
+const Legend = (props) => {
+  const { seriesList, handleClick } = useLegend(props)
+  return <LegendRoot>...</LegendRoot>
+}
+
+// ❌ BAD – all logic in component
+const Legend = (props) => {
+  const [state, setState] = useState(...)
+  const handleClick = useCallback(...)
+  const seriesList = ...
+  return <LegendRoot>...</LegendRoot>
+}
+```
+
+## 4. Use MUI Styled for Components
+
+- Create a `*Styled.ts` file with MUI `styled()` components for layout and visual styling.
+- Use `styled('div')`, `styled('button')`, `styled('span')` etc. for semantic elements.
+- Keep components thin: they compose styled components and use hooks.
+
+```tsx
+// ✅ GOOD
+// LegendStyled.ts
+export const LegendRoot = styled('div')(({ theme }) => ({ ... }))
+export const LegendItemButton = styled('button')(({ theme }) => ({ ... }))
+
+// Legend.tsx
+return (
+  <LegendRoot>
+    <LegendItemButton onClick={...}>...</LegendItemButton>
+  </LegendRoot>
+)
+
+// ❌ BAD – inline sx everywhere
+return (
+  <Box sx={{ position: 'absolute', top: '0.5rem', ... }}>
+    <Box component="button" sx={{ display: 'flex', ... }}>...</Box>
+  </Box>
+)
+```
+
+## Summary
+
+| Rule | Action |
+|------|--------|
+| Theme | Use `theme.*`; extend theme for missing values |
+| Constants | Put magic strings/numbers in `*Constants.ts` |
+| Hooks | Extract logic into `use*` hooks |
+| Styled | Put styles in `*Styled.ts` with MUI `styled()` |
+
+Apply these when creating new components or refactoring existing ones (Legend, SciChartWrapper, Chart, etc.).

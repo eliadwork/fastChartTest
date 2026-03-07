@@ -1,0 +1,67 @@
+import { useMemo } from 'react'
+import type { ChartOptions } from '../types'
+import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from '../scichart/types'
+import type { ChartOptionsInput } from './chartTypes'
+import {
+  CHART_RESAMPLING_PRECISION_DEFAULT,
+  CHART_RESAMPLING_PRECISION_OFF,
+} from './chartConstants'
+
+export interface UseChartWrapperOptionsParams {
+  options: ChartOptionsInput
+  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
+  seriesVisibility: boolean[]
+  handleSeriesVisibilityChange: (index: number, visible: boolean) => void
+  handleSeriesVisibilityGroupChange: (indices: number[], visible: boolean) => void
+  handleDisableAll: () => void
+}
+
+export const useChartWrapperOptions = ({
+  options,
+  icons,
+  seriesVisibility,
+  handleSeriesVisibilityChange,
+  handleSeriesVisibilityGroupChange,
+  handleDisableAll,
+}: UseChartWrapperOptionsParams): SciChartWrapperOptionsOverrides => {
+  return useMemo(() => {
+    const opts = options
+    const resamplingObj =
+      opts.resampling && typeof opts.resampling === 'object'
+        ? opts.resampling
+        : {
+            enable: opts.resampling !== false,
+            precision:
+              (opts as ChartOptions).resamplingPrecision ??
+              (opts.resampling ? CHART_RESAMPLING_PRECISION_DEFAULT : CHART_RESAMPLING_PRECISION_OFF),
+          }
+    return {
+      shapes: opts.shapes,
+      icons: icons ?? opts.icons,
+      note: opts.note,
+      stretch: opts.stretch ?? {
+        enable: true,
+        trigger: ((opts as ChartOptions).stretchTrigger ?? 'rightClick') as SciChartWrapperOptions['stretch']['trigger'],
+      },
+      pan: opts.pan ?? {
+        enable: true,
+        trigger: ((opts as ChartOptions).panTrigger ?? (opts as ChartOptions).panKey ?? 'shift') as SciChartWrapperOptions['pan']['trigger'],
+      },
+      resampling: resamplingObj,
+      clipZoomToData: opts.clipZoomToData !== false,
+      seriesVisibility,
+      seriesGroupKeys: opts.seriesGroupKeys,
+      onSeriesVisibilityChange: handleSeriesVisibilityChange,
+      onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
+      onDisableAll: handleDisableAll,
+      events: opts.events ?? { onmiddleclick: (opts as ChartOptions).onPointMark },
+    }
+  }, [
+    options,
+    icons,
+    seriesVisibility,
+    handleSeriesVisibilityChange,
+    handleSeriesVisibilityGroupChange,
+    handleDisableAll,
+  ])
+}

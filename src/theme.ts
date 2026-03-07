@@ -1,6 +1,41 @@
 import { createTheme } from '@mui/material/styles'
 import type { ThemeOptions } from '@mui/material/styles'
 
+import { CHART_LEGEND_THEME_DEFAULTS } from './chart/scichart/components/Legend/legendConstants'
+
+declare module '@mui/material/styles' {
+  interface Theme {
+    chartLegend: {
+      zIndex: number
+      inset: number
+      gap: number
+      padding: number
+      paddingBlock: number
+      borderRadius: number
+      groupGap: number
+      itemPaddingBlock: number
+      fontSize: number
+      defaultBackground: string
+      defaultTextColor: string
+    }
+  }
+  interface ThemeOptions {
+    chartLegend?: {
+      zIndex?: number
+      inset?: number
+      gap?: number
+      padding?: number
+      paddingBlock?: number
+      borderRadius?: number
+      groupGap?: number
+      itemPaddingBlock?: number
+      fontSize?: number
+      defaultBackground?: string
+      defaultTextColor?: string
+    }
+  }
+}
+
 const defaultThemeOptions: ThemeOptions = {
   palette: {
     mode: 'dark',
@@ -12,6 +47,7 @@ const defaultThemeOptions: ThemeOptions = {
       main: '#646cff',
     },
   },
+  chartLegend: CHART_LEGEND_THEME_DEFAULTS,
 }
 
 /** Create MUI theme. Pass partial overrides to customize. */
