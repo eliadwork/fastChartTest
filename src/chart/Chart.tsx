@@ -4,22 +4,9 @@
  */
 
 import type { ChartData } from './types'
-import type { SciChartWrapperStyle, SciChartWrapperOptionsOverrides } from './implementation/scichart/types'
-import type { ChartOptionsInput } from './chartTypes'
-
-export interface ChartProps {
-  data: ChartData | null
-  chartId?: string
-  title?: string
-  options?: ChartOptionsInput
-  style?: React.CSSProperties
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
-  /** Optional style override. When absent, built from chartTheme. */
-  chartStyle?: SciChartWrapperStyle
-  /** Called when series visibility changes (e.g. for Detect modal sync). */
-  onSeriesVisibilityChange?: (visibility: boolean[]) => void
-}
-
+import type {
+  ChartImplementationStyle,
+} from './implementation/implementationProps'
 import { memo } from 'react'
 import Tooltip from '@mui/material/Tooltip'
 import { useChartTheme } from '../ChartThemeContext'
@@ -57,8 +44,22 @@ import {
   CHART_ARIA_ENABLE_ALL,
   CHART_TOOLBAR_ICON_SIZE,
 } from './chartConstants'
+import type { ChartOptionsInput } from './chartTypes'
 
-export type { ChartOptionsInput }
+export interface ChartProps {
+  data: ChartData | null
+  chartId?: string
+  title?: string
+  options?: ChartOptionsInput
+  style?: React.CSSProperties
+  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
+  /** Optional style override. When absent, built from chartTheme. */
+  chartStyle?: ChartImplementationStyle
+  /** Called when series visibility changes (e.g. for Detect modal sync). */
+  onSeriesVisibilityChange?: (visibility: boolean[]) => void
+}
+
+
 
 const ChartComponent = ({
   data,
@@ -193,7 +194,7 @@ const ChartComponent = ({
         chartId={chartId}
         data={chartData}
         style={wrapperStyle}
-        options={wrapperOptions as SciChartWrapperOptionsOverrides}
+        options={wrapperOptions}
         containerStyle={style}
         overlaySlot={legendOverlay ?? undefined}
         loading={data == null}

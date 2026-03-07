@@ -89,20 +89,3 @@ export function usePointMarkersSync({
     }
   }, [initResult, icons, defaultIcon, defaultColor, iconSize])
 }
-
-interface PointMarkersSyncProps {
-  icons?: ChartIcon[]
-  defaultIcon?: string
-  defaultColor?: string
-  iconSize?: number
-}
-
-export const PointMarkersSync = ({
-  icons = [],
-  defaultIcon = DEFAULT_POINT_MARK_ICON_SVG,
-  defaultColor = DEFAULT_ICON_COLOR,
-  iconSize = DEFAULT_ICON_SIZE,
-}: PointMarkersSyncProps) => {
-  usePointMarkersSync({ icons, defaultIcon, defaultColor, iconSize })
-  return null
-}

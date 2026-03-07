@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import type { ChartOptions } from '../../../types'
-import type { SciChartWrapperProps } from '../types'
+import type { ChartImplementationProps } from '../../implementationProps'
 
 export interface UseSciChartMergedOptionsParams {
   convertedOptions: ChartOptions
   chartTheme: { defaultSeriesColors: string[]; rolloverStroke?: string; rolloverDash?: { isDash: boolean; steps: number[] }; pointMarkIcon?: string; pointMarkIconColor?: string; pointMarkIconSize?: number }
-  opts: NonNullable<SciChartWrapperProps['options']>
+  opts: NonNullable<ChartImplementationProps['options']>
   onMiddleClick?: (
     xValue: number,
     yValue: number,

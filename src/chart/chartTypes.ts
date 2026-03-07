@@ -1,8 +1,11 @@
 import type { ChartOptions } from './types'
-import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from './implementation/scichart/types'
+import type {
+  ChartImplementationOptions,
+  ChartImplementationOptionsOverrides,
+} from './implementation/implementationProps'
 
-/** Accepts ChartOptions (legacy flat) or SciChartWrapperOptionsOverrides (nested). */
+/** Accepts ChartOptions (legacy flat) or ChartImplementationOptionsOverrides (nested). */
 export type ChartOptionsInput = Omit<ChartOptions, 'resampling'> &
-  Omit<SciChartWrapperOptionsOverrides, 'resampling'> & {
-    resampling?: boolean | SciChartWrapperOptions['resampling']
+  Omit<ChartImplementationOptionsOverrides, 'resampling'> & {
+    resampling?: boolean | ChartImplementationOptions['resampling']
   }

@@ -3,7 +3,7 @@
  * No header, legend, or buttons. Parent provides overlaySlot (e.g. legend) and manages UI state.
  */
 
-import type { SciChartWrapperProps } from './types'
+import type { ChartImplementationProps } from '../implementationProps'
 
 import { useContext } from 'react'
 import { SciChartSurface } from 'scichart'
@@ -30,7 +30,7 @@ export const SciChartWrapper = ({
   containerStyle,
   overlaySlot,
   loading = false,
-}: SciChartWrapperProps) => {
+}: ChartImplementationProps) => {
   if (loading) {
     return (
       <ChartWrapperBox style={containerStyle}>

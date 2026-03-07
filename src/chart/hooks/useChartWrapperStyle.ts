@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { withOpacity } from '../../chartTheme'
-import type { SciChartWrapperStyle } from '../implementation/scichart/types'
+import type { ChartImplementationStyle } from '../implementation/implementationProps'
 import type { ChartTheme } from '../../chartTheme'
 import {
   CHART_BACKGROUND_OPACITY_DEFAULT,
@@ -12,7 +12,7 @@ import {
 
 export interface UseChartWrapperStyleOptions {
   chartTheme: ChartTheme
-  chartStyle?: SciChartWrapperStyle
+  chartStyle?: ChartImplementationStyle
   optionsTextColor?: string
   optionsZeroLineColor?: string
 }
@@ -22,7 +22,7 @@ export const useChartWrapperStyle = ({
   chartStyle,
   optionsTextColor,
   optionsZeroLineColor,
-}: UseChartWrapperStyleOptions): SciChartWrapperStyle => {
+}: UseChartWrapperStyleOptions): ChartImplementationStyle => {
   return useMemo(
     () =>
       chartStyle ?? {

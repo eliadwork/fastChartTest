@@ -19,12 +19,3 @@ export function useZoomResetSync(chartId?: string) {
     return unregister
   }, [chartId, initResult?.sciChartSurface])
 }
-
-interface ZoomResetSyncProps {
-  chartId?: string
-}
-
-export const ZoomResetSync = ({ chartId }: ZoomResetSyncProps) => {
-  useZoomResetSync(chartId)
-  return null
-}

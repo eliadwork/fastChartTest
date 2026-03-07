@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 import type { ChartOptions } from '../types'
-import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from '../implementation/scichart/types'
+import type {
+  ChartImplementationOptions,
+  ChartImplementationOptionsOverrides,
+} from '../implementation/implementationProps'
 import type { ChartOptionsInput } from '../chartTypes'
 import {
   CHART_RESAMPLING_PRECISION_DEFAULT,
@@ -23,7 +26,7 @@ export const useChartWrapperOptions = ({
   handleSeriesVisibilityChange,
   handleSeriesVisibilityGroupChange,
   handleDisableAll,
-}: UseChartWrapperOptionsParams): SciChartWrapperOptionsOverrides => {
+}: UseChartWrapperOptionsParams): ChartImplementationOptionsOverrides => {
   return useMemo(() => {
     const opts = options
     const resamplingObj =
@@ -41,11 +44,11 @@ export const useChartWrapperOptions = ({
       note: opts.note,
       stretch: opts.stretch ?? {
         enable: true,
-        trigger: ((opts as ChartOptions).stretchTrigger ?? 'rightClick') as SciChartWrapperOptions['stretch']['trigger'],
+        trigger: ((opts as ChartOptions).stretchTrigger ?? 'rightClick') as ChartImplementationOptions['stretch']['trigger'],
       },
       pan: opts.pan ?? {
         enable: true,
-        trigger: ((opts as ChartOptions).panTrigger ?? (opts as ChartOptions).panKey ?? 'shift') as SciChartWrapperOptions['pan']['trigger'],
+        trigger: ((opts as ChartOptions).panTrigger ?? (opts as ChartOptions).panKey ?? 'shift') as ChartImplementationOptions['pan']['trigger'],
       },
       resampling: resamplingObj,
       clipZoomToData: opts.clipZoomToData !== false,

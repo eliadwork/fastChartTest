@@ -11,7 +11,11 @@ import {
   DEFAULT_TEXT_COLOR,
   DEFAULT_ZERO_LINE_COLOR,
 } from '../../defaults'
-import type { SciChartWrapperProps, SciChartWrapperOptions, TriggerKey } from './types'
+import type {
+  ChartImplementationOptions,
+  ChartImplementationProps,
+  ChartImplementationTriggerKey,
+} from '../implementationProps'
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
 export const dashToStrokeArray = (dash?: DashConfig): number[] | undefined =>
@@ -134,8 +138,8 @@ export function normalizeShape(
   }
 }
 
-const DEFAULT_STRETCH = { enable: true, trigger: 'rightClick' as TriggerKey }
-const DEFAULT_PAN = { enable: true, trigger: 'shift' as TriggerKey }
+const DEFAULT_STRETCH = { enable: true, trigger: 'rightClick' as ChartImplementationTriggerKey }
+const DEFAULT_PAN = { enable: true, trigger: 'shift' as ChartImplementationTriggerKey }
 const DEFAULT_RESAMPLING = { enable: true, precision: 1 }
 
 function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
@@ -151,11 +155,11 @@ function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
 }
 
 export const toInternalOptions = (
-  props: SciChartWrapperProps,
+  props: ChartImplementationProps,
   seriesVisibility: boolean[]
 ): { data: ConvertedData; options: ChartOptions } => {
   const { data: chartData, style, options: opts = {} } = props
-  const opt: SciChartWrapperOptions = {
+  const opt: ChartImplementationOptions = {
     stretch: DEFAULT_STRETCH,
     pan: DEFAULT_PAN,
     resampling: DEFAULT_RESAMPLING,

@@ -8,7 +8,29 @@ alwaysApply: true
 
 When writing or refactoring components (e.g. Legend, SciChartWrapper, Chart), follow these rules.
 
-## 1. Use the Theme
+## 1. Imports at the Top
+
+- **Place all imports at the top of the file**, before any other code (props interfaces, constants, components).
+- Group imports: type imports first, then library imports, then local imports.
+- Do not scatter imports throughout the file.
+
+```tsx
+// ✅ GOOD
+import type { ChartData } from '../types'
+import { memo } from 'react'
+import { Chart } from './Chart'
+
+export interface ChartProps { ... }
+const ChartComponent = (...) => { ... }
+
+// ❌ BAD – imports mixed with code
+export interface ChartProps { ... }
+import { memo } from 'react'
+const ChartComponent = (...) => { ... }
+import { Chart } from './Chart'
+```
+
+## 2. Use the Theme
 
 - **Take what you can from the theme.** Use `theme.spacing()`, `theme.palette`, `theme.shape`, `theme.typography`, `theme.zIndex` where applicable.
 - **Add what is not there.** If a value has no natural MUI slot, extend the theme via `declare module '@mui/material/styles'` and add it to `Theme` / `ThemeOptions`.
@@ -28,7 +50,7 @@ const LegendRoot = styled('div')({
 })
 ```
 
-## 2. Move Magic Strings/Numbers to Constants
+## 3. Move Magic Strings/Numbers to Constants
 
 - Extract magic strings and numbers into a `*Constants.ts` file (e.g. `legendConstants.ts`, `sciChartWrapperConstants.ts`).
 - Use descriptive constant names (e.g. `LEGEND_OPACITY_HIDDEN`, `LEGEND_DEFAULT_STROKE`).
@@ -48,7 +70,7 @@ opacity: series.isVisible ? 1 : 0.5
 stroke: series.stroke ?? '#888'
 ```
 
-## 3. Separate Logic into Hooks
+## 4. Separate Logic into Hooks
 
 - Extract data fetching, state, and event handlers into custom hooks (e.g. `useLegend`, `useChart`).
 - Keep components focused on rendering; hooks own the logic.
@@ -78,7 +100,7 @@ const Legend = (props) => {
 }
 ```
 
-## 4. Use MUI Styled for Components
+## 5. Use MUI Styled for Components
 
 - Create a `*Styled.ts` file with MUI `styled()` components for layout and visual styling.
 - Use `styled('div')`, `styled('button')`, `styled('span')` etc. for semantic elements.
@@ -109,6 +131,7 @@ return (
 
 | Rule | Action |
 |------|--------|
+| Imports | Place all imports at the top of the file |
 | Theme | Use `theme.*`; extend theme for missing values |
 | Constants | Put magic strings/numbers in `*Constants.ts` |
 | Hooks | Extract logic into `use*` hooks |

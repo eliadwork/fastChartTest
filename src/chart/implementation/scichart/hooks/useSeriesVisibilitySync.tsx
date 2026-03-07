@@ -16,12 +16,3 @@ export function useSeriesVisibilitySync(seriesVisibility?: boolean[]) {
     surface.invalidateElement()
   }, [initResult, seriesVisibility])
 }
-
-interface SeriesVisibilitySyncProps {
-  seriesVisibility?: boolean[]
-}
-
-export const SeriesVisibilitySync = ({ seriesVisibility }: SeriesVisibilitySyncProps) => {
-  useSeriesVisibilitySync(seriesVisibility)
-  return null
-}
