@@ -41,18 +41,38 @@ const App = () => {
     const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
       type: 'module',
     })
+    worker.onerror = (event) => {
+      console.error('[dataWorker] Error:', event.message, event.filename, event.lineno)
+      // Fallback: minimal sample data so chart still renders
+      const sampleX = new Float64Array([0, 100_000, 200_000, 300_000, 400_000, 500_000])
+      const sampleY = new Float64Array([0, 1000, -500, 2000, -1000, 0])
+      setChartData([
+        {
+          x: sampleX,
+          y: sampleY,
+          name: 'Fallback-S0',
+          lineGroupKey: 'Fallback',
+          style: { bindable: true },
+        },
+      ])
+      worker.terminate()
+    }
     worker.onmessage = ({
       data: { lines },
     }: {
       data: { lines: Array<{ x: ArrayBuffer; y: ArrayBuffer; name: string; lineGroupKey?: string; style: ChartDataSeries['style'] }> }
     }) => {
+      if (!lines?.length) {
+        console.warn('[dataWorker] Received empty lines')
+        return
+      }
       setChartData(
-        lines.map((l) => ({
-          x: new Float64Array(l.x),
-          y: new Float64Array(l.y),
-          name: l.name,
-          lineGroupKey: l.lineGroupKey,
-          style: l.style,
+        lines.map((line) => ({
+          x: new Float64Array(line.x),
+          y: new Float64Array(line.y),
+          name: line.name,
+          lineGroupKey: line.lineGroupKey,
+          style: line.style ?? { bindable: true },
         }))
       )
       worker.terminate()
