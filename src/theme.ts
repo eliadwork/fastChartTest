@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles'
 import type { ThemeOptions } from '@mui/material/styles'
 
-import { CHART_LEGEND_THEME_DEFAULTS } from './chart/scichart/components/Legend/legendConstants'
+import { CHART_LEGEND_THEME_DEFAULTS } from './chart/Legend/legendConstants'
 
 declare module '@mui/material/styles' {
   interface Theme {

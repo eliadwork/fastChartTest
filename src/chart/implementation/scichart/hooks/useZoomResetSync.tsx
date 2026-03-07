@@ -1,8 +1,8 @@
 import { useContext, useEffect } from 'react'
 import { SciChartSurface } from 'scichart'
 import { SciChartSurfaceContext } from 'scichart-react'
-import { useZoomBackStore } from '../../../store/zoomBackStore'
-import { useZoomResetStore } from '../../../store/zoomResetStore'
+import { useZoomBackStore } from '../../../../store/zoomBackStore'
+import { useZoomResetStore } from '../../../../store/zoomResetStore'
 
 export function useZoomResetSync(chartId?: string) {
   const initResult = useContext(SciChartSurfaceContext)

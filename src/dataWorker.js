@@ -1,6 +1,7 @@
-// Generates chart data in per-line format: [{ x, y, name, lineGroupKey?, style }, ...]
-// 500,000 points per line. X range 0-500000. Y range -5000 to 5000.
-// Group 1: step 0.5. Group 2: alternating steps 0.3 and 0.7.
+// Fetches chartData.json if present, otherwise generates data.
+// Output: { lines: [{ x, y, name, lineGroupKey?, style }, ...] }
+// x/y are ArrayBuffer (Float64Array) for transfer when generated; number[] when from JSON.
+
 const POINTS_PER_LINE = 500_000
 const X_MAX = 500_000
 const Y_MIN = -5000
@@ -18,7 +19,6 @@ function genY(n, seriesIdx, xArr) {
     v += (seed(seriesIdx, i) - 0.5) * 80
     y[i] = Math.max(Y_MIN, Math.min(Y_MAX, v))
   }
-  // Spikes: 10-20 per series
   const spikeCount = 10 + (seriesIdx % 11)
   for (let s = 0; s < spikeCount; s++) {
     const center = Math.floor(seed(seriesIdx, s * 13) * (n - 20)) + 10
@@ -30,7 +30,6 @@ function genY(n, seriesIdx, xArr) {
       y[idx] = Math.max(Y_MIN, Math.min(Y_MAX, y[idx] + sign * amp * (1 - w / width)))
     }
   }
-  // Drops: 5-10 per series
   const dropCount = 5 + (seriesIdx % 6)
   for (let d = 0; d < dropCount; d++) {
     const start = Math.floor(seed(seriesIdx, d * 31 + 100) * (n - 100)) + 20
@@ -44,9 +43,8 @@ function genY(n, seriesIdx, xArr) {
   return y
 }
 
-self.onmessage = () => {
+function generateData() {
   const n = POINTS_PER_LINE
-  // Group 1: x at 0.5 steps — 0, 0.5, 1, 1.5, ... 500k points, scale to 0-500000
   const x1 = new Float64Array(n)
   const x1Max = (n - 1) * step1
   for (let i = 0; i < n; i++) x1[i] = (i * step1 * X_MAX) / x1Max
@@ -67,7 +65,6 @@ self.onmessage = () => {
     }
   })
 
-  // Group 2: x with alternating steps 0.3, 0.7, 0.3, 0.7, ... — 500k points, scale to 0-500000
   const x2 = new Float64Array(n)
   x2[0] = 0
   for (let i = 1; i < n; i++) {
@@ -89,6 +86,31 @@ self.onmessage = () => {
   })
 
   const lines = [...group1, ...group2]
-  const transferables = lines.flatMap((l) => [l.x, l.y])
+  const transferables = lines.flatMap((line) => [line.x, line.y])
+  return { lines, transferables }
+}
+
+self.onmessage = async () => {
+  try {
+    const response = await fetch('/chartData.json')
+    if (response.ok) {
+      const { lines } = await response.json()
+      if (lines?.length) {
+        const transferLines = lines.map((line) => ({
+          x: new Float64Array(line.x).buffer,
+          y: new Float64Array(line.y).buffer,
+          name: line.name,
+          lineGroupKey: line.lineGroupKey,
+          style: line.style ?? { bindable: true },
+        }))
+        const transferables = transferLines.flatMap((line) => [line.x, line.y])
+        self.postMessage({ lines: transferLines }, transferables)
+        return
+      }
+    }
+  } catch (_) {
+    // File missing or invalid – fall through to generate
+  }
+  const { lines, transferables } = generateData()
   self.postMessage({ lines }, transferables)
 }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { withOpacity } from '../../chartTheme'
-import type { SciChartWrapperStyle } from '../scichart/types'
+import type { SciChartWrapperStyle } from '../implementation/scichart/types'
 import type { ChartTheme } from '../../chartTheme'
 import {
   CHART_BACKGROUND_OPACITY_DEFAULT,
@@ -8,7 +8,7 @@ import {
   CHART_FALLBACK_ROLLOVER_STROKE,
   CHART_FALLBACK_TEXT_COLOR,
   CHART_ROLLOVER_DASH_STEPS,
-} from './chartConstants'
+} from '../chartConstants'
 
 export interface UseChartWrapperStyleOptions {
   chartTheme: ChartTheme

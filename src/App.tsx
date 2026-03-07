@@ -43,7 +43,6 @@ const App = () => {
     })
     worker.onerror = (event) => {
       console.error('[dataWorker] Error:', event.message, event.filename, event.lineno)
-      // Fallback: minimal sample data so chart still renders
       const sampleX = new Float64Array([0, 100_000, 200_000, 300_000, 400_000, 500_000])
       const sampleY = new Float64Array([0, 1000, -500, 2000, -1000, 0])
       setChartData([

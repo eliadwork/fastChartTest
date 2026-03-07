@@ -2,7 +2,7 @@
  * Default values for SciChartWrapper and shape styling.
  */
 
-import type { ChartLineStyle } from '../types'
+import type { ChartLineStyle } from './types'
 
 /** Default styling for shapes when no style is specified. */
 export const DEFAULT_SHAPE_STYLE: Pick<ChartLineStyle, 'color' | 'thickness' | 'dash'> = {

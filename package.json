@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "copy:wasm": "mkdir -p public && cp node_modules/scichart/_wasm/scichart2d.wasm node_modules/scichart/_wasm/scichart2d-nosimd.wasm public/ 2>/dev/null || true",
+    "generate:data": "node scripts/generateChartData.js",
     "postinstall": "patch-package && npm run copy:wasm"
   },
   "dependencies": {

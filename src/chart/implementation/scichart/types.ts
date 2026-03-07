@@ -2,8 +2,7 @@
  * Types for SciChartWrapper – generic interface for chart configuration.
  */
 
-import type { ChartIcon, ChartLineStyle, ChartShape, DashConfig } from '../types'
-import type { ConvertedSeries } from '../convert'
+import type { ChartData, ChartIcon, ChartLineStyle, ChartShape, DashConfig } from '../../types'
 
 export type TriggerKey = 'rightClick' | 'leftClick' | 'shift' | 'ctrl' | 'alt'
 
@@ -69,7 +68,6 @@ export interface SciChartWrapperOptions {
   seriesVisibility?: boolean[]
   seriesGroupKeys?: (string | undefined)[]
   events?: SciChartWrapperEvents
-  /** Parent provides these – SciChartWrapper passes through to chart. */
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
   onDisableAll?: () => void
@@ -94,12 +92,17 @@ export interface SciChartWrapperOptionsOverrides {
 
 export interface SciChartWrapperProps {
   chartId?: string
-  lines: ConvertedSeries[]
+  data: ChartData
   style: SciChartWrapperStyle
   options?: SciChartWrapperOptionsOverrides
   /** CSS style for the wrapper container */
   containerStyle?: React.CSSProperties
-  /** Optional overlay slot (e.g. legend) – rendered inside SciChartReact. Parent provides this. */
+  /**
+   * Optional overlay slot (e.g. legend) – rendered inside the chart surface.
+   * Parent provides this. Example:
+   * @example
+   * overlaySlot={<Legend seriesVisibility={...} onSeriesVisibilityChange={...} />}
+   */
   overlaySlot?: React.ReactNode
   /** When true, show loader instead of chart. */
   loading?: boolean

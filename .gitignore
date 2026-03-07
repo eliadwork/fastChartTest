@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 public/scichart2d*.wasm
+public/chartData.json
 dist-ssr
 *.local
 

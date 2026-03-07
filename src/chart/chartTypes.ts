@@ -1,5 +1,5 @@
-import type { ChartOptions } from '../types'
-import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from '../scichart/types'
+import type { ChartOptions } from './types'
+import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from './implementation/scichart/types'
 
 /** Accepts ChartOptions (legacy flat) or SciChartWrapperOptionsOverrides (nested). */
 export type ChartOptionsInput = Omit<ChartOptions, 'resampling'> &

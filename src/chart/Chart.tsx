@@ -3,48 +3,9 @@
  * Delegates to SciChartWrapper. No SciChart imports.
  */
 
-import { memo, useMemo } from 'react'
-import Tooltip from '@mui/material/Tooltip'
-import { useChartTheme } from '../../ChartThemeContext'
-import { withOpacity } from '../../chartTheme'
-import { SciChartWrapper, Legend, DEFAULT_LEGEND_BACKGROUND_COLOR } from '../scichart'
-import type { ChartData } from '../types'
-import { convertData } from '../convert'
-import {
-  ChartPanelHeader,
-  ChartPanelHeaderText,
-  ChartPanelTitle,
-  ChartPanelNote,
-  ChartToolbarButton,
-  ChartWrapperBox,
-} from '../../styled'
-import { LogoIcon } from '../../assets/pointMarkIcon'
-import UndoIcon from '@mui/icons-material/Undo'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import { useZoomBackStore } from '../../store/zoomBackStore'
-import { useZoomResetStore } from '../../store/zoomResetStore'
-import type { SciChartWrapperStyle, SciChartWrapperOptionsOverrides } from '../scichart'
-
-import { useChartSeriesVisibility } from './useChartSeriesVisibility'
-import { useChartWrapperStyle } from './useChartWrapperStyle'
-import { useChartWrapperOptions } from './useChartWrapperOptions'
-import { ChartToolbar } from './ChartStyled'
-import {
-  CHART_LEGEND_BACKGROUND_OPACITY,
-  CHART_TOOLTIP_ZOOM_BACK,
-  CHART_TOOLTIP_ZOOM_RESET,
-  CHART_TOOLTIP_DISABLE_ALL,
-  CHART_TOOLTIP_ENABLE_ALL,
-  CHART_ARIA_ZOOM_BACK,
-  CHART_ARIA_ZOOM_RESET,
-  CHART_ARIA_DISABLE_ALL,
-  CHART_ARIA_ENABLE_ALL,
-  CHART_TOOLBAR_ICON_SIZE,
-} from './chartConstants'
+import type { ChartData } from './types'
+import type { SciChartWrapperStyle, SciChartWrapperOptionsOverrides } from './implementation/scichart/types'
 import type { ChartOptionsInput } from './chartTypes'
-
-export type { ChartOptionsInput }
 
 export interface ChartProps {
   data: ChartData | null
@@ -58,6 +19,46 @@ export interface ChartProps {
   /** Called when series visibility changes (e.g. for Detect modal sync). */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void
 }
+
+import { memo } from 'react'
+import Tooltip from '@mui/material/Tooltip'
+import { useChartTheme } from '../ChartThemeContext'
+import { withOpacity } from '../chartTheme'
+import { SciChartWrapper } from './implementation/scichart'
+import { Legend } from './Legend'
+import { DEFAULT_LEGEND_BACKGROUND_COLOR } from './defaults'
+import {
+  ChartPanelHeader,
+  ChartPanelHeaderText,
+  ChartPanelTitle,
+  ChartPanelNote,
+  ChartToolbarButton,
+  ChartWrapperBox,
+} from '../styled'
+import { LogoIcon } from '../assets/pointMarkIcon'
+import UndoIcon from '@mui/icons-material/Undo'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import { useZoomBackStore } from '../store/zoomBackStore'
+import { useZoomResetStore } from '../store/zoomResetStore'
+import { useChartSeriesVisibility } from './hooks/useChartSeriesVisibility'
+import { useChartWrapperStyle } from './hooks/useChartWrapperStyle'
+import { useChartWrapperOptions } from './hooks/useChartWrapperOptions'
+import { ChartToolbar } from './ChartStyled'
+import {
+  CHART_LEGEND_BACKGROUND_OPACITY,
+  CHART_TOOLTIP_ZOOM_BACK,
+  CHART_TOOLTIP_ZOOM_RESET,
+  CHART_TOOLTIP_DISABLE_ALL,
+  CHART_TOOLTIP_ENABLE_ALL,
+  CHART_ARIA_ZOOM_BACK,
+  CHART_ARIA_ZOOM_RESET,
+  CHART_ARIA_DISABLE_ALL,
+  CHART_ARIA_ENABLE_ALL,
+  CHART_TOOLBAR_ICON_SIZE,
+} from './chartConstants'
+
+export type { ChartOptionsInput }
 
 const ChartComponent = ({
   data,
@@ -74,12 +75,8 @@ const ChartComponent = ({
   const canZoomBack = useZoomBackStore((store) => store.canZoomBackFor(chartId ?? ''))
   const zoomReset = useZoomResetStore((store) => store.zoomReset)
 
-  const convertedData = useMemo(
-    () => convertData(data ?? [], options),
-    [data, options]
-  )
-  const lines = convertedData.series
-  const seriesCount = lines.length
+  const chartData = data ?? []
+  const seriesCount = chartData.length
 
   const {
     seriesVisibility,
@@ -125,7 +122,7 @@ const ChartComponent = ({
         backgroundColor={legendBackgroundColor}
         textColor={textColor}
         seriesVisibility={seriesVisibility}
-        seriesGroupKeys={options.seriesGroupKeys ?? lines.map((series) => series.lineGroupKey)}
+        seriesGroupKeys={options.seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey)}
         onSeriesVisibilityChange={handleSeriesVisibilityChange}
         onSeriesVisibilityGroupChange={handleSeriesVisibilityGroupChange}
       />
@@ -194,7 +191,7 @@ const ChartComponent = ({
       )}
       <SciChartWrapper
         chartId={chartId}
-        lines={lines}
+        data={chartData}
         style={wrapperStyle}
         options={wrapperOptions as SciChartWrapperOptionsOverrides}
         containerStyle={style}

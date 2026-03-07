@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ChartOptions } from '../../../types'
-import type { SciChartWrapperProps } from '../../types'
+import type { SciChartWrapperProps } from '../types'
 
 export interface UseSciChartMergedOptionsParams {
   convertedOptions: ChartOptions

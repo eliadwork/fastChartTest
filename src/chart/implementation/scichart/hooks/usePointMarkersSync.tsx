@@ -9,9 +9,9 @@ import {
 } from 'scichart'
 import { SciChartSurfaceContext } from 'scichart-react'
 
-import type { ChartIcon } from '../../types'
-import { toSvgString } from '../utils/iconUtils'
-import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon'
+import type { ChartIcon } from '../../../types'
+import { toSvgString } from '../../../utils/iconUtils'
+import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../../assets/pointMarkIcon'
 
 const DEFAULT_ICON_SIZE = 1
 const DEFAULT_ICON_PX_BASE = 24

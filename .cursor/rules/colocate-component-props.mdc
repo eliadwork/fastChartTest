@@ -31,3 +31,4 @@ import type { ChartProps } from './types'
 
 - Keep shared types (`ChartData`, `ChartOptions`, etc.) in central type files
 - Only component-specific `*Props` interfaces live beside the component
+- **Place the `*Props` interface at the top of the file**, same page as the component (before or right after imports)

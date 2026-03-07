@@ -3,21 +3,18 @@
  * No header, legend, or buttons. Parent provides overlaySlot (e.g. legend) and manages UI state.
  */
 
+import type { SciChartWrapperProps } from './types'
+
 import { useContext } from 'react'
 import { SciChartSurface } from 'scichart'
 import { useChartTheme } from '../../../ChartThemeContext'
 import { PointMarkClearContext } from '../../../PointMarkClearContext'
 import { ChartWrapperBox } from '../../../styled'
-import { toInternalOptions } from '../convert'
-import type { SciChartWrapperProps } from '../types'
+import { toInternalOptions } from './convert'
 
 import { useSciChartMergedOptions } from './hooks/useSciChartMergedOptions'
-import { SciChartLoadingBox, SciChartLoadingSpinner } from './SciChartWrapperStyled'
-import {
-  SCI_CHART_WASM_URL,
-  SCI_CHART_WASM_NO_SIMD_URL,
-  SCI_CHART_LOADING_SPINNER_SIZE,
-} from './sciChartWrapperConstants'
+import { SkeletonLoading } from '../../../shared'
+import { SCI_CHART_WASM_URL, SCI_CHART_WASM_NO_SIMD_URL } from './sciChartWrapperConstants'
 import { SciChartSurfaceRenderer } from './SciChartSurfaceRenderer'
 
 SciChartSurface.configure({
@@ -27,7 +24,7 @@ SciChartSurface.configure({
 
 export const SciChartWrapper = ({
   chartId,
-  lines,
+  data,
   style,
   options: opts = {},
   containerStyle,
@@ -37,9 +34,7 @@ export const SciChartWrapper = ({
   if (loading) {
     return (
       <ChartWrapperBox style={containerStyle}>
-        <SciChartLoadingBox>
-          <SciChartLoadingSpinner size={SCI_CHART_LOADING_SPINNER_SIZE} />
-        </SciChartLoadingBox>
+        <SkeletonLoading />
       </ChartWrapperBox>
     )
   }
@@ -47,9 +42,9 @@ export const SciChartWrapper = ({
   const chartTheme = useChartTheme()
   const { registerForChart } = useContext(PointMarkClearContext)
 
-  const seriesVisibility = opts.seriesVisibility ?? Array.from({ length: lines.length }, () => true)
-  const { data, options: convertedOptions } = toInternalOptions(
-    { chartId, lines, style, options: opts },
+  const seriesVisibility = opts.seriesVisibility ?? Array.from({ length: data.length }, () => true)
+  const { data: convertedData, options: convertedOptions } = toInternalOptions(
+    { chartId, data, style, options: opts },
     seriesVisibility
   )
 
@@ -67,7 +62,7 @@ export const SciChartWrapper = ({
   return (
     <ChartWrapperBox style={containerStyle}>
       <SciChartSurfaceRenderer
-        data={data}
+        data={convertedData}
         options={mergedOptions}
         chartId={chartId}
         overlaySlot={overlaySlot}

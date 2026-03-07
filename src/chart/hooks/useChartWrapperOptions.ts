@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import type { ChartOptions } from '../types'
-import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from '../scichart/types'
-import type { ChartOptionsInput } from './chartTypes'
+import type { SciChartWrapperOptions, SciChartWrapperOptionsOverrides } from '../implementation/scichart/types'
+import type { ChartOptionsInput } from '../chartTypes'
 import {
   CHART_RESAMPLING_PRECISION_DEFAULT,
   CHART_RESAMPLING_PRECISION_OFF,
-} from './chartConstants'
+} from '../chartConstants'
 
 export interface UseChartWrapperOptionsParams {
   options: ChartOptionsInput

@@ -1,3 +1,13 @@
+import type { ChartOptions, ModifierKey } from '../../types'
+import type { ConvertedData, ConvertedSeries } from './convert'
+
+export interface SciChartSurfaceRendererProps {
+  data: ConvertedData
+  options: ChartOptions
+  chartId?: string
+  overlaySlot?: React.ReactNode
+}
+
 import {
   BoxAnnotation,
   ECoordinateMode,
@@ -18,21 +28,20 @@ import {
   ZoomPanModifier,
 } from 'scichart'
 import { SciChartReact } from 'scichart-react'
-import type { ChartOptions, ModifierKey } from '../../types'
-import type { ConvertedData, ConvertedSeries } from '../../convert'
-import { convertShapes, dashToStrokeArray, normalizeShape } from '../../convert'
-import { AxisStretchModifier } from '../modifiers/AxisStretchModifier'
-import { LeftClickRubberBandXyZoomModifier } from '../modifiers/LeftClickRubberBandXyZoomModifier'
-import { PointMarkModifier } from '../modifiers/PointMarkModifier'
-import { ShiftLeftClickZoomPanModifier } from '../modifiers/ShiftLeftClickZoomPanModifier'
-import { ZoomHistoryModifier } from '../modifiers/ZoomHistoryModifier'
-import { LeftClickZoomPanModifier } from '../modifiers/LeftClickZoomPanModifier'
-import { Legend } from '../components/Legend'
-import { PointMarkersSync } from '../hooks/usePointMarkersSync'
-import { SeriesVisibilitySync } from '../hooks/useSeriesVisibilitySync'
-import { ZoomResetSync } from '../hooks/useZoomResetSync'
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults'
+import { convertShapes, dashToStrokeArray, normalizeShape } from './convert'
+import { AxisStretchModifier } from './modifiers/AxisStretchModifier'
+import { LeftClickRubberBandXyZoomModifier } from './modifiers/LeftClickRubberBandXyZoomModifier'
+import { PointMarkModifier } from './modifiers/PointMarkModifier'
+import { ShiftLeftClickZoomPanModifier } from './modifiers/ShiftLeftClickZoomPanModifier'
+import { ZoomHistoryModifier } from './modifiers/ZoomHistoryModifier'
+import { LeftClickZoomPanModifier } from './modifiers/LeftClickZoomPanModifier'
+import { Legend } from '../../Legend'
+import { PointMarkersSync } from './hooks/usePointMarkersSync'
+import { SeriesVisibilitySync } from './hooks/useSeriesVisibilitySync'
+import { ZoomResetSync } from './hooks/useZoomResetSync'
+import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../../defaults'
 
+import { SkeletonLoading } from '../../../shared'
 import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled'
 import {
   SCI_CHART_DEFAULT_SERIES_COLORS,
@@ -63,13 +72,6 @@ const MODIFIER_KEY_MAP: { [K in ModifierKey]?: EModifierMouseArgKey } = {
   Shift: EModifierMouseArgKey.Shift,
   Ctrl: EModifierMouseArgKey.Ctrl,
   Alt: EModifierMouseArgKey.Alt,
-}
-
-export interface SciChartSurfaceRendererProps {
-  data: ConvertedData
-  options: ChartOptions
-  chartId?: string
-  overlaySlot?: React.ReactNode
 }
 
 export const SciChartSurfaceRenderer = ({
@@ -132,6 +134,7 @@ export const SciChartSurfaceRenderer = ({
     <SciChartContainer>
       <SciChartReact
         style={SciChartSurfaceStyle}
+        fallback={<SkeletonLoading />}
         initChart={async (rootElement) => {
           const createOptions = options.backgroundColor != null ? { background: options.backgroundColor } : undefined
           const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement, createOptions)

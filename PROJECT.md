@@ -73,3 +73,53 @@ Apply these conventions to all new and modified UI code.
 - **Event handlers** – React to user actions in handlers rather than effect-driven side effects.
 - **Refs for subscriptions** – Use refs to hold values that don’t need to trigger re-renders.
 - Reserve `useEffect` for true side effects (e.g. subscriptions, DOM measurement, imperative APIs) that cannot be expressed as render-time computation or event handling.
+
+## Chart Folder Structure
+
+**Single chart folder.** All chart code lives under `src/chart/`. SciChart implementation lives under `implementation/scichart/`.
+
+```
+chart/
+├── Chart.tsx                (facade – header, legend slot, delegates to SciChartWrapper)
+├── ChartStyled.ts
+├── Legend/                  (injected via overlaySlot – lives at chart level)
+├── implementation/
+│   └── scichart/            (SciChart implementation – SciChartWrapper, convert, modifiers, SciChart hooks)
+├── hooks/                   (chart-level hooks: useChartSeriesVisibility, useChartWrapperStyle, useChartWrapperOptions)
+├── types.ts
+├── chartTypes.ts
+├── chartConstants.ts
+├── chartWrapperInterface.ts
+├── defaults.ts
+└── index.ts
+```
+
+- **Legend** – Lives at `chart/Legend/` because it is injected from outside via `overlaySlot`. Parent (Chart) provides it; SciChartWrapper only renders the slot.
+- **SciChartWrapper** – Lives at `chart/implementation/scichart/`. Receives `overlaySlot` (e.g. Legend) from parent. No header, legend, or buttons; parent manages UI state.
+- **Chart hooks** – In `chart/hooks/`. SciChart-specific hooks live in `chart/implementation/scichart/hooks/`.
+
+## Props Interface Placement
+
+**For each component, place the props interface at the top of the file (same page as the component).**
+
+Components: Legend, SciChartWrapper, Chart, SciChartSurfaceRenderer.
+
+```tsx
+// ✅ GOOD – interface at top, same file
+export interface LegendProps {
+  backgroundColor?: string
+  textColor?: string
+  seriesVisibility?: boolean[]
+}
+
+const Legend = ({ backgroundColor, ... }: LegendProps) => { ... }
+```
+
+## Chart Component Definitions
+
+| Component | Location | Role |
+|-----------|----------|------|
+| **Chart** | `chart/Chart.tsx` | Generic facade. Owns header, legend slot, series visibility. Delegates to SciChartWrapper. No SciChart imports. |
+| **Legend** | `chart/Legend/Legend.tsx` | Injected via overlaySlot. Renders series list with toggle. Uses SciChartSurfaceContext. |
+| **SciChartWrapper** | `chart/implementation/scichart/SciChartWrapper.tsx` | SciChart implementation. Receives overlaySlot from parent. No header/legend. |
+| **SciChartSurfaceRenderer** | `chart/implementation/scichart/SciChartSurfaceRenderer.tsx` | Renders SciChart surface, axes, series, modifiers. Receives ConvertedData. |
