@@ -1,6 +1,6 @@
 import { SciChartReact } from 'scichart-react'
 import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon'
-import { SkeletonLoading } from '../../../shared'
+import { SkeletonLoading } from '../../../shared/SkeletonLoading'
 import type { ChartZoomCallbacks } from '../implementationProps'
 import type { ConvertedData } from './convert'
 import type { SciChartMergedOptions } from './hooks/useSciChartMergedOptions'

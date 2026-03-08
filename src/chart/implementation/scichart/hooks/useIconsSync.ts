@@ -1,3 +1,8 @@
+/**
+ * Syncs chart icons to SciChart annotations.
+ * Closed hook: imports only from react, scichart, scichart-react.
+ */
+
 import { useContext, useEffect, useRef } from 'react';
 import {
   CustomAnnotation,
@@ -9,28 +14,43 @@ import {
 } from 'scichart';
 import { SciChartSurfaceContext } from 'scichart-react';
 
-import type { ChartIcon } from '../../../types';
-import { toSvgString } from '../../../utils/iconUtils';
-import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../../assets/pointMarkIcon';
+const ICON_PX_BASE = 24;
+const FONT_SIZE_BASE = 20;
 
-const DEFAULT_ICON_SIZE = 1;
-const DEFAULT_ICON_PX_BASE = 24;
-const DEFAULT_FONT_SIZE_BASE = 20;
-const DEFAULT_ICON_COLOR = '#3388ff';
-
-export interface UsePointMarkersSyncOptions {
-  icons?: ChartIcon[];
-  defaultIcon?: string;
-  defaultColor?: string;
-  iconSize?: number;
+export interface ChartIconInput {
+  iconImage: string;
+  location: { x: number; y: number };
+  color?: string;
 }
 
-export function usePointMarkersSync({
-  icons = [],
-  defaultIcon = DEFAULT_POINT_MARK_ICON_SVG,
-  defaultColor = DEFAULT_ICON_COLOR,
-  iconSize = DEFAULT_ICON_SIZE,
-}: UsePointMarkersSyncOptions = {}) {
+export interface UseIconsSyncOptions {
+  icons: ChartIconInput[];
+  defaultIcon: string;
+  defaultColor: string;
+  iconSize: number;
+}
+
+function toSvgString(iconImage: string, sizePx: number, color: string): string {
+  if (iconImage.startsWith('<')) {
+    let svg = iconImage.replace(/\{\{color\}\}/g, color);
+    if (!/ viewBox=/i.test(svg)) {
+      svg = svg.replace(/^<svg/, '<svg viewBox="0 0 24 24"');
+    }
+    svg = svg
+      .replace(/ width="[^"]*"/i, '')
+      .replace(/ height="[^"]*"/i, '')
+      .replace(/^<svg/, `<svg width="${sizePx}" height="${sizePx}"`);
+    return svg;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="${color}"/></svg>`;
+}
+
+export const useIconsSync = ({
+  icons,
+  defaultIcon,
+  defaultColor,
+  iconSize,
+}: UseIconsSyncOptions) => {
   const initResult = useContext(SciChartSurfaceContext);
   const annotationRefs = useRef<(CustomAnnotation | NativeTextAnnotation)[]>([]);
 
@@ -39,7 +59,7 @@ export function usePointMarkersSync({
     if (!surface) return;
 
     const chartSurface = surface as SciChartSurface;
-    const iconsToRender: ChartIcon[] = [...icons];
+    const iconsToRender = [...icons];
 
     for (const annotationRef of annotationRefs.current) {
       chartSurface.annotations.remove(annotationRef);
@@ -47,7 +67,7 @@ export function usePointMarkersSync({
     }
     annotationRefs.current = [];
 
-    const iconPx = Math.round(DEFAULT_ICON_PX_BASE * iconSize);
+    const iconPx = Math.round(ICON_PX_BASE * iconSize);
 
     for (const icon of iconsToRender) {
       const { x, y } = icon.location;
@@ -70,7 +90,7 @@ export function usePointMarkersSync({
             yCoordinateMode: ECoordinateMode.DataValue,
             text: icon.iconImage,
             textColor: color,
-            fontSize: Math.round(DEFAULT_FONT_SIZE_BASE * iconSize),
+            fontSize: Math.round(FONT_SIZE_BASE * iconSize),
             horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
             verticalAnchorPoint: EVerticalAnchorPoint.Center,
           });
@@ -88,4 +108,4 @@ export function usePointMarkersSync({
       annotationRefs.current = [];
     };
   }, [initResult, icons, defaultIcon, defaultColor, iconSize]);
-}
+};

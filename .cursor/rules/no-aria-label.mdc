@@ -1,0 +1,17 @@
+---
+description: Do not add aria-label or other aria-* attributes
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: true
+---
+
+# No aria-label
+
+Do not add `aria-label`, `aria-labelledby`, or other `aria-*` attributes to elements in this project.
+
+```tsx
+// ❌ BAD
+<button aria-label="Select red color">...</button>
+
+// ✅ GOOD
+<button title="red">...</button>
+```

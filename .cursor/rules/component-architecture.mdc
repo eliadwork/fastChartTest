@@ -109,7 +109,7 @@ const Legend = (props) => {
 // ✅ GOOD – hook holds the logic; minimal component only when context is required
 const useSciChartSyncHooks = (params) => {
   useZoomResetSync(params.zoomCallbacks)
-  usePointMarkersSync(params)
+  useIconsSync(params)
   useSeriesVisibilitySync(params.seriesVisibility)
 }
 const SciChartSyncEffects = (params) => {
@@ -120,7 +120,7 @@ const SciChartSyncEffects = (params) => {
 // ❌ BAD – component with hook logic; should be a hook
 const SciChartSyncHooks = (props) => {
   useZoomResetSync(props.zoomCallbacks)
-  usePointMarkersSync(props)
+  useIconsSync(props)
   useSeriesVisibilitySync(props.seriesVisibility)
   return null
 }

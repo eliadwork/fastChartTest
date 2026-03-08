@@ -1,6 +1,5 @@
 export { Chart } from './Chart';
 export type { ChartProps } from './Chart';
-export type { ChartOptionsInput } from './chartTypes';
 export { Legend } from './Legend';
 export type { LegendProps } from './Legend';
 export { DEFAULT_LEGEND_BACKGROUND_COLOR } from './defaults';
@@ -13,6 +12,7 @@ export type {
   ChartLineStyle,
   ChartMiddleClickEvent,
   ChartOptions,
+  KeyTriggeredOptionInput,
   ChartRolloverStyle,
   ChartShape,
   ChartStyle,

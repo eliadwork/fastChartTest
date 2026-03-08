@@ -91,6 +91,12 @@ export interface KeyTriggeredOption {
   trigger: TriggerKey;
 }
 
+/** Input form: trigger is optional (defaults: stretch=rightClick, pan=shift). */
+export interface KeyTriggeredOptionInput {
+  enable: boolean;
+  trigger?: TriggerKey;
+}
+
 export interface ChartResamplingOption {
   enable: boolean;
   precision: number;
@@ -125,12 +131,14 @@ export interface ChartIcon {
 }
 
 export interface ChartOptions {
-  shapes?: ChartShape[];
-  icons?: ChartIcon[];
   note?: string;
-  stretch?: KeyTriggeredOption;
-  pan?: KeyTriggeredOption;
+  /** Default when omitted: { enable: true, trigger: 'rightClick' }. Omit trigger to use default. */
+  stretch?: KeyTriggeredOptionInput;
+  /** Default when omitted: { enable: true, trigger: 'shift' }. Omit trigger to use default. */
+  pan?: KeyTriggeredOptionInput;
+  /** Default when omitted: { enable: false, precision: 0 }. */
   resampling?: ChartResamplingOption;
+  /** Default when omitted: true. */
   clipZoomToData?: boolean;
   seriesVisibility?: boolean[];
   seriesGroupKeys?: (string | undefined)[];

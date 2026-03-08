@@ -1,7 +1,7 @@
 import type { ChartIcon } from '../../../types'
 import type { ChartZoomCallbacks } from '../../implementationProps'
 import type { ConvertedBox, ConvertedData, ConvertedShape } from '../convert'
-import { usePointMarkersSync } from './usePointMarkersSync'
+import { useIconsSync } from './useIconsSync'
 import { useSeriesVisibilitySync } from './useSeriesVisibilitySync'
 import { useShapesSync } from './useShapesSync'
 import { useZoomResetSync } from './useZoomResetSync'
@@ -21,7 +21,7 @@ export interface UseSciChartSyncHooksParams {
 /** Runs zoom, point markers, visibility, and shapes sync. Must be called from a component inside SciChartReact. */
 export const useSciChartSyncHooks = (params: UseSciChartSyncHooksParams) => {
   useZoomResetSync(params.zoomCallbacks)
-  usePointMarkersSync({
+  useIconsSync({
     icons: params.icons,
     defaultIcon: params.defaultIcon,
     defaultColor: params.defaultColor,

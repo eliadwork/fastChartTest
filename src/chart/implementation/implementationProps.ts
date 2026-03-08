@@ -39,8 +39,6 @@ export interface ChartImplementationEvents {
 }
 
 export interface ChartImplementationOptionsOverrides {
-  shapes?: ChartShape[];
-  icons?: ChartIcon[];
   note?: string;
   stretch?: KeyTriggeredOption;
   pan?: KeyTriggeredOption;
@@ -67,6 +65,8 @@ export interface ChartImplementationOptions {
 
 /** Internal: options with visibility handlers set by Chart. Used only by implementations. */
 export interface ChartImplementationOptionsWithHandlers extends ChartImplementationOptionsOverrides {
+  shapes?: ChartShape[];
+  icons?: ChartIcon[];
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void;
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void;
   onDisableAll?: () => void;

@@ -9,6 +9,8 @@ export {
   ChartWrapperBox,
   PointMarkModalOverlay,
   PointMarkModalTitle,
+  PointMarkModalSection,
+  PointMarkModalSectionLabel,
   PointMarkModalButtons,
   PointMarkModalButton,
   PointMarkModalCancel,

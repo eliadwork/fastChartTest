@@ -84,35 +84,76 @@ export const PointMarkModalOverlay = styled(Dialog)(({ theme }) => ({
     backgroundColor: theme.palette.background.paper,
     border: '1px solid',
     borderColor: theme.palette.divider,
-    borderRadius: '0.5rem',
-    padding: '1.5rem',
+    borderRadius: 20,
+    padding: 0,
     maxWidth: '90vw',
+    boxShadow:
+      '0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.03)',
+    overflow: 'hidden',
   },
   '& .MuiBackdrop-root': {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backdropFilter: 'blur(2px)',
   },
 }));
 
-export const PointMarkModalTitle = styled(Typography)({
-  margin: '0 0 1rem',
-  fontSize: '1rem',
-});
+export const PointMarkModalTitle = styled(Typography)(({ theme }) => ({
+  margin: 0,
+  marginBottom: theme.spacing(2),
+  fontSize: theme.typography.pxToRem(18),
+  fontWeight: 600,
+  letterSpacing: '-0.01em',
+  lineHeight: 1.35,
+  color: theme.palette.text.primary,
+  textAlign: 'center',
+}));
 
-export const PointMarkModalButtons = styled(Box)({
+export const PointMarkModalSection = styled(Box)(({ theme }) => ({
+  marginBottom: theme.spacing(2.5),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  '&:last-of-type': {
+    marginBottom: 0,
+  },
+}));
+
+export const PointMarkModalSectionLabel = styled('span')(({ theme }) => ({
+  display: 'block',
+  fontSize: theme.typography.pxToRem(13),
+  fontWeight: 500,
+  color: theme.palette.text.secondary,
+  letterSpacing: '0.02em',
+  marginBottom: theme.spacing(1),
+  textAlign: 'center',
+}));
+
+export const PointMarkModalButtons = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',
-  gap: '0.5rem',
-  marginBottom: '1rem',
-});
+  gap: theme.spacing(1.5),
+  marginTop: theme.spacing(2),
+  paddingTop: theme.spacing(2),
+  borderTop: '1px solid',
+  borderColor: theme.palette.divider,
+  justifyContent: 'center',
+}));
 
-export const PointMarkModalButton = styled(Button)({
+export const PointMarkModalButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
-});
+  fontWeight: 600,
+  borderRadius: 10,
+  padding: theme.spacing(1, 2),
+}));
 
 export const PointMarkModalCancel = styled(Button)(({ theme }) => ({
   textTransform: 'none',
+  fontWeight: 500,
+  borderRadius: 10,
+  padding: theme.spacing(1, 2),
   color: theme.palette.text.secondary,
   '&:hover': {
     color: theme.palette.text.primary,
+    backgroundColor: theme.palette.action.hover,
   },
 }));

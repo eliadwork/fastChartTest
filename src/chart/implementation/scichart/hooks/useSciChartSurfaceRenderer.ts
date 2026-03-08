@@ -14,7 +14,7 @@ import {
   ZoomExtentsModifier,
   ZoomPanModifier,
 } from 'scichart'
-import type { ChartOptions, ModifierKey } from '../../../types'
+import type { ModifierKey } from '../../../types'
 import type { ConvertedData } from '../convert'
 import { convertShapes, dashToStrokeArray } from '../convert'
 import { AxisStretchModifier } from '../modifiers/AxisStretchModifier'
@@ -43,10 +43,11 @@ const ROLLOVER_TOOLTIP_X_LABEL = (formattedX: string) => `X: ${formattedX}`
 const ROLLOVER_TOOLTIP_Y_LABEL = (formattedY: string) => `Y: ${formattedY}`
 
 import type { ChartZoomCallbacks } from '../../implementationProps'
+import type { SciChartMergedOptions } from './useSciChartMergedOptions'
 
 export interface UseSciChartSurfaceRendererParams {
   data: ConvertedData
-  options: ChartOptions
+  options: SciChartMergedOptions
   zoomCallbacks?: ChartZoomCallbacks
 }
 
@@ -74,7 +75,10 @@ export const useSciChartSurfaceRenderer = ({
   const panOnShift = panTrigger === 'shift'
   const panKey = panOnLeftClick ? undefined : SCI_CHART_MODIFIER_KEY_MAP[toModifierKey(panTrigger)]
 
-  const seriesColors = options.defaultSeriesColors ?? [...SCI_CHART_DEFAULT_SERIES_COLORS]
+  const seriesColors = useMemo(
+    () => options.defaultSeriesColors ?? [...SCI_CHART_DEFAULT_SERIES_COLORS],
+    [options.defaultSeriesColors]
+  )
   const strokeThickness = options.defaultStrokeThickness ?? SCI_CHART_DEFAULT_STROKE_THICKNESS
 
   const rolloverShow = options.rolloverShow !== false

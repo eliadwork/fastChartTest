@@ -1,12 +1,84 @@
-import { useTheme } from '@mui/material/styles';
-import { useEffect, useState } from 'react';
-import { DEFAULT_POINT_MARK_ICON_SVG } from './assets/pointMarkIcon';
-import type { ChartData, ChartDataSeries } from './chart';
-import { Detect } from './Detect';
-import { PointMarkClearProvider } from './PointMarkClearContext';
-import { ChartComparison, ChartComparisonGrid, ChartPanel } from './styled';
+import type { ChartData, ChartDataSeries } from './chart/types';
 
-const sharedShapes = [
+import { styled, useTheme } from '@mui/material/styles';
+import { useEffect, useState } from 'react';
+
+import { chartIcons } from './assets/chartIcons';
+import { Detect } from './features/detect/Detect';
+import {
+  ChartComparison,
+  ChartComparisonGrid,
+  ChartPanel,
+} from './styled/ChartStyled';
+
+const DetectStyled = styled(Detect)(() => ({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '100%',
+  minHeight: 0,
+}));
+
+
+const App = () => {
+  const theme = useTheme();
+  const [chartData, setChartData] = useState<ChartData | null>(null);
+  useDataSetting(setChartData);
+
+
+  const baseStyle = {
+    backgroundColor: theme.palette.background.paper,
+    rollover: {
+      show: true,
+      color: '#FF0000',
+      dash: { isDash: true, steps: [8, 4] as number[] },
+    },
+    textColor: theme.palette.text.primary,
+    chartOnly: false,
+  };
+
+
+  return (
+    <ChartComparison>
+      <ChartComparisonGrid>
+        <ChartPanel>
+          <DetectStyled
+            chartId="resampled"
+            title="Resampled (precision 1.0)"
+            data={chartData}
+            style={baseStyle}
+            shapes={exampleShapes}
+            options={{
+              note: 'this is the chart example',
+              resampling: { enable: true, precision: 1 },
+              clipZoomToData: true,
+            }}
+            icons={chartIcons}
+          />
+        </ChartPanel>
+        <ChartPanel>
+          <DetectStyled
+            chartId="no-loss"
+            title="No-loss (every point)"
+            data={chartData}
+            style={baseStyle}
+            shapes={exampleShapes}
+            options={{
+              note: 'this is the chart example',
+              clipZoomToData: true,
+            }}
+          />
+        </ChartPanel>
+      </ChartComparisonGrid>
+    </ChartComparison>
+  );
+};
+
+export default App;
+
+
+
+const exampleShapes = [
   {
     shape: 'line' as const,
     color: '#00ff00',
@@ -28,18 +100,23 @@ const sharedShapes = [
   },
 ];
 
-const App = () => {
-  const theme = useTheme();
-  const [chartData, setChartData] = useState<ChartData | null>(null);
-
+const useDataSetting = (setChartData: (data: ChartData) => void) => {
   useEffect(() => {
     const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
       type: 'module',
     });
-    worker.onerror = (event) => {
-      console.error('[dataWorker] Error:', event.message, event.filename, event.lineno);
+
+    worker.onerror = (errorEvent) => {
+      console.error(
+        '[dataWorker] Error:',
+        errorEvent.message,
+        errorEvent.filename,
+        errorEvent.lineno
+      );
+
       const sampleX = new Float64Array([0, 100_000, 200_000, 300_000, 400_000, 500_000]);
       const sampleY = new Float64Array([0, 1000, -500, 2000, -1000, 0]);
+
       setChartData([
         {
           x: sampleX,
@@ -49,8 +126,10 @@ const App = () => {
           style: { bindable: true },
         },
       ]);
+
       worker.terminate();
     };
+
     worker.onmessage = ({
       data: { lines },
     }: {
@@ -68,6 +147,7 @@ const App = () => {
         console.warn('[dataWorker] Received empty lines');
         return;
       }
+
       setChartData(
         lines.map((line) => ({
           x: new Float64Array(line.x),
@@ -77,70 +157,11 @@ const App = () => {
           style: line.style ?? { bindable: true },
         }))
       );
+
       worker.terminate();
     };
+
     worker.postMessage({});
     return () => worker.terminate();
   }, []);
-
-  const baseStyle = {
-    backgroundColor: theme.palette.background.paper,
-    rollover: {
-      show: true,
-      color: '#FF0000',
-      dash: { isDash: true, steps: [8, 4] as number[] },
-    },
-    textColor: theme.palette.text.primary,
-    chartOnly: false,
-  };
-
-  return (
-    <PointMarkClearProvider>
-      <ChartComparison>
-        <ChartComparisonGrid>
-          <ChartPanel>
-            <Detect
-              chartId="resampled"
-              title="Resampled (precision 1.0)"
-              data={chartData}
-              style={baseStyle}
-              options={{
-                shapes: sharedShapes,
-                note: 'this is the chart example',
-                stretch: { enable: true, trigger: 'rightClick' },
-                pan: { enable: true, trigger: 'shift' },
-                resampling: { enable: true, precision: 1 },
-                clipZoomToData: true,
-              }}
-              icons={[
-                {
-                  iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-                  location: { x: 250000, y: 0 },
-                  color: '#888888',
-                },
-              ]}
-            />
-          </ChartPanel>
-          <ChartPanel>
-            <Detect
-              chartId="no-loss"
-              title="No-loss (every point)"
-              data={chartData}
-              style={baseStyle}
-              options={{
-                shapes: sharedShapes,
-                note: 'this is the chart example',
-                stretch: { enable: true, trigger: 'rightClick' },
-                pan: { enable: true, trigger: 'shift' },
-                resampling: { enable: false, precision: 0 },
-                clipZoomToData: true,
-              }}
-            />
-          </ChartPanel>
-        </ChartComparisonGrid>
-      </ChartComparison>
-    </PointMarkClearProvider>
-  );
-};
-
-export default App;
+}

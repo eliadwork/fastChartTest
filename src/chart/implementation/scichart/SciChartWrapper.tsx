@@ -11,10 +11,10 @@ import {
 import type { ChartImplementationProps } from '../implementationProps'
 
 import { SciChartSurface } from 'scichart'
-import { ChartWrapperBox } from '../../../styled'
+import { ChartWrapperBox } from '../../../styled/ChartStyled'
 import { toInternalOptions } from './convert'
 
-import { SkeletonLoading } from '../../../shared'
+import { SkeletonLoading } from '../../../shared/SkeletonLoading'
 import { useSciChartMergedOptions } from './hooks/useSciChartMergedOptions'
 import { SciChartSurfaceRenderer } from './SciChartSurfaceRenderer'
 import { SCI_CHART_WASM_NO_SIMD_URL, SCI_CHART_WASM_URL } from './sciChartWrapperConstants'

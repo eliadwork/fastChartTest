@@ -1,22 +1,25 @@
-import { useTheme } from '@mui/material/styles'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePointMarkStore } from '../../store/pointMarkStore'
-import { withOpacity } from '../../utils/colorUtils'
-import { CHART_LEGEND_BACKGROUND_OPACITY } from '../chartConstants'
-import type { ChartOptionsInput } from '../chartTypes'
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults'
-import type { ChartData, ChartIcon, ChartStyle } from '../types'
-import { useChartSeriesVisibility } from './useChartSeriesVisibility'
-import { useChartWrapperOptions } from './useChartWrapperOptions'
-import { useChartWrapperStyle } from './useChartWrapperStyle'
+import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../types';
+
+import { useEffect } from 'react';
+
+import { usePointMarkStore } from '../../store/pointMarkStore';
+import { useChartHeaderState } from './useChartHeaderState';
+import { useChartLegendProps } from './useChartLegendProps';
+import { useChartSeriesVisibility } from './useChartSeriesVisibility';
+import { useChartWrapperOptions } from './useChartWrapperOptions';
+import { useChartWrapperStyle } from './useChartWrapperStyle';
+import { useChartZoomCallbacks } from './useChartZoomCallbacks';
+
+const EMPTY_CHART_DATA: ChartData = [];
 
 export interface UseChartParams {
-  data: ChartData | null
-  chartId?: string
-  title?: string
-  options?: ChartOptionsInput
-  icons?: ChartIcon[]
-  chartStyle?: ChartStyle
+  data: ChartData | null;
+  chartId?: string;
+  title?: string;
+  options?: ChartOptions;
+  shapes?: ChartShape[];
+  icons?: ChartIcon[];
+  chartStyle?: ChartStyle;
 }
 
 export const useChart = ({
@@ -24,42 +27,24 @@ export const useChart = ({
   chartId,
   title,
   options = {},
+  shapes,
   icons,
   chartStyle,
 }: UseChartParams) => {
-  const theme = useTheme()
-  const chartData = data ?? []
-  const seriesCount = chartData.length
-  const loading = data == null
+  const chartData = data ?? EMPTY_CHART_DATA;
+  const loading = data == null;
 
-  const zoomBackRef = useRef<(() => void) | null>(null)
-  const zoomResetRef = useRef<(() => void) | null>(null)
-  const [canZoomBack, setCanZoomBack] = useState(false)
-  const pushBeforeResetRef = useRef<(() => void) | null>(null)
+  const chartIdForModal = usePointMarkStore((state) => state.chartIdForModal);
+  const updateModalSeriesVisibility = usePointMarkStore(
+    (state) => state.updateModalSeriesVisibility
+  );
 
-  const setZoomBack = useCallback((fn: () => void) => {
-    zoomBackRef.current = fn
-  }, [])
-  const setZoomReset = useCallback((fn: () => void) => {
-    zoomResetRef.current = fn
-  }, [])
-  const setPushBeforeReset = useCallback((fn: () => void) => {
-    pushBeforeResetRef.current = fn
-  }, [])
-
-  const zoomCallbacks = useMemo<import('../implementation/implementationProps').ChartZoomCallbacks>(
-    () => ({
-      setZoomBack,
-      setZoomReset,
-      setCanZoomBack,
-      setPushBeforeReset,
-      pushBeforeResetRef,
-    }),
-    [setZoomBack, setZoomReset, setPushBeforeReset]
-  )
-
-  const chartIdForModal = usePointMarkStore((state) => state.chartIdForModal)
-  const updateModalSeriesVisibility = usePointMarkStore((state) => state.updateModalSeriesVisibility)
+  const {
+    zoomCallbacks,
+    zoomBackRef,
+    zoomResetRef,
+    canZoomBack,
+  } = useChartZoomCallbacks();
 
   const {
     seriesVisibility,
@@ -68,73 +53,52 @@ export const useChart = ({
     handleSeriesVisibilityGroupChange,
     allSeriesHidden,
   } = useChartSeriesVisibility({
-    initialSeriesCount: seriesCount,
+    initialSeriesCount: chartData.length,
     initialVisibility: options.seriesVisibility,
-  })
+  });
 
   useEffect(() => {
     if (chartId != null && chartId === chartIdForModal) {
-      updateModalSeriesVisibility(seriesVisibility)
+      updateModalSeriesVisibility(seriesVisibility);
     }
-  }, [chartId, chartIdForModal, seriesVisibility, updateModalSeriesVisibility])
+  }, [chartId, chartIdForModal, seriesVisibility, updateModalSeriesVisibility]);
 
   const wrapperStyle = useChartWrapperStyle({
     chartStyle,
     optionsTextColor: options.textColor,
     optionsZeroLineColor: options.zeroLineColor,
-  })
+  });
 
   const wrapperOptions = useChartWrapperOptions({
     options,
+    shapes,
     icons,
     seriesVisibility,
     handleSeriesVisibilityChange,
     handleSeriesVisibilityGroupChange,
     handleDisableAll,
-  })
+  });
 
-  const textColor = wrapperStyle.textColor
-  const showHeader =
-    !wrapperStyle.chartOnly &&
-    (title != null || options.note != null || !loading)
+  const textColor = wrapperStyle.textColor;
 
-  const legendBackgroundColor = useMemo(() => {
-    const bg = theme.palette.background.paper
-    if (bg == null) return DEFAULT_LEGEND_BACKGROUND_COLOR
-    return withOpacity(bg, CHART_LEGEND_BACKGROUND_OPACITY)
-  }, [theme.palette.background.paper])
-
-  const legendProps = useMemo(() => {
-    if (wrapperStyle.chartOnly || data == null) return null
-    return {
-      backgroundColor: legendBackgroundColor,
-      textColor,
-      seriesVisibility,
-      seriesGroupKeys: options.seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey),
-      onSeriesVisibilityChange: handleSeriesVisibilityChange,
-      onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
-    }
-  }, [
-    wrapperStyle.chartOnly,
-    data,
-    legendBackgroundColor,
-    textColor,
-    seriesVisibility,
-    options.seriesGroupKeys,
+  const legendProps = useChartLegendProps({
     chartData,
-    handleSeriesVisibilityChange,
-    handleSeriesVisibilityGroupChange,
-  ])
+    data,
+    seriesVisibility,
+    seriesGroupKeys: options.seriesGroupKeys,
+    textColor,
+    chartOnly: wrapperStyle.chartOnly,
+    onSeriesVisibilityChange: handleSeriesVisibilityChange,
+    onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
+  });
 
-  const headerSx = useMemo(
-    () => ({
-      ...(theme.palette.background.paper
-        ? { backgroundColor: theme.palette.background.paper }
-        : {}),
-      ...(textColor ? { color: textColor } : {}),
-    }),
-    [theme.palette.background.paper, textColor]
-  )
+  const { showHeader, headerSx } = useChartHeaderState({
+    title,
+    note: options.note,
+    textColor,
+    chartOnly: wrapperStyle.chartOnly,
+    loading,
+  });
 
   return {
     chartData,
@@ -153,5 +117,5 @@ export const useChart = ({
     handleDisableAll,
     allSeriesHidden,
     loading,
-  }
-}
+  };
+};

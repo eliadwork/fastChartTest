@@ -5,6 +5,7 @@
 
 import type {
   ChartData,
+  ChartIcon,
   ChartLineShape,
   ChartLineStyle,
   ChartOptions,
@@ -156,7 +157,7 @@ export function normalizeShape(
 
 const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' };
 const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'shift' };
-const DEFAULT_RESAMPLING = { enable: true, precision: 1 };
+const DEFAULT_RESAMPLING = { enable: false, precision: 0 };
 
 function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
   return shapes.map((shape) => {
@@ -170,10 +171,18 @@ function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
   });
 }
 
+/** Internal options with shapes/icons for SciChart. */
+export type SciChartConvertedOptions = ChartOptions & {
+  shapes?: ChartShape[];
+  icons?: ChartIcon[];
+  seriesVisibility?: boolean[];
+  seriesGroupKeys?: (string | undefined)[];
+};
+
 export const toInternalOptions = (
   props: ChartImplementationProps,
   seriesVisibility: boolean[]
-): { data: ConvertedData; options: ChartOptions } => {
+): { data: ConvertedData; options: SciChartConvertedOptions } => {
   const { lines: chartData, style, options: opts = {} } = props;
   const opt: ChartImplementationOptions = {
     stretch: DEFAULT_STRETCH,
@@ -190,7 +199,7 @@ export const toInternalOptions = (
   const backgroundColor =
     style.backgroundColor != null ? withOpacity(style.backgroundColor, 0.2) : undefined;
 
-  const options: ChartOptions = {
+  const options: SciChartConvertedOptions = {
     chartOnly: style.chartOnly,
     shapes: shapesWithDefaults,
     stretch: opt.stretch,

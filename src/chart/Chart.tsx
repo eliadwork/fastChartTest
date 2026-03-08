@@ -1,20 +1,25 @@
 /**
  * Chart – Generic facade. Owns header, legend, series visibility.
- * Delegates to implementation. No implementation-specific imports.
+ * Delegates to injected implementation component.
  */
 
-import UndoIcon from '@mui/icons-material/Undo';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { memo, useMemo } from 'react';
-import { LogoIcon } from '../assets/pointMarkIcon';
+import type { ChartImplementationProps } from './implementation/implementationProps';
+import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from './types';
+
+import {
+  ChartVisibilityOffIcon,
+  ChartVisibilityOnIcon,
+  ChartZoomBackIcon,
+  ChartZoomResetIcon,
+} from '../assets/chartIcons';
+import { memo } from 'react';
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
   ChartPanelNote,
   ChartPanelTitle,
   ChartWrapperBox,
-} from '../styled';
+} from '../styled/ChartStyled';
 import {
   CHART_TOOLTIP_DISABLE_ALL,
   CHART_TOOLTIP_ENABLE_ALL,
@@ -23,47 +28,9 @@ import {
 } from './chartConstants';
 import { ChartToolbar } from './ChartStyled';
 import { ChartToolbarButton } from './ChartToolbarButton';
+import { defaultChartImplementation } from './defaultChartImplementation';
 import { useChart } from './hooks/useChart';
-import { SciChartWrapper } from './implementation/scichart';
-import { Legend } from './Legend';
-import type { ChartData, ChartIcon, ChartOptions, ChartStyle } from './types';
-import type { LegendProps } from './Legend';
-
-export type UseChartLegendSlotParams = { show: boolean } & Partial<LegendProps>;
-
-/** Returns the Legend component for overlaySlot when show is true. */
-export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.ReactNode => {
-  const {
-    show,
-    backgroundColor,
-    textColor,
-    seriesVisibility = [],
-    seriesGroupKeys,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange,
-  } = params;
-  return useMemo(() => {
-    if (!show) return null;
-    return (
-      <Legend
-        backgroundColor={backgroundColor}
-        textColor={textColor}
-        seriesVisibility={seriesVisibility}
-        seriesGroupKeys={seriesGroupKeys}
-        onSeriesVisibilityChange={onSeriesVisibilityChange}
-        onSeriesVisibilityGroupChange={onSeriesVisibilityGroupChange}
-      />
-    );
-  }, [
-    show,
-    backgroundColor,
-    textColor,
-    seriesVisibility,
-    seriesGroupKeys,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange,
-  ]);
-};
+import { useChartLegendSlot } from './hooks/useChartLegendSlot';
 
 export interface ChartProps {
   data: ChartData | null;
@@ -71,9 +38,10 @@ export interface ChartProps {
   title?: string;
   options?: ChartOptions;
   style?: React.CSSProperties;
+  shapes?: ChartShape[];
   icons?: ChartIcon[];
-  /** Optional style override. When absent, built from theme. */
   chartStyle?: ChartStyle;
+  implementationComponent?: React.ComponentType<ChartImplementationProps>;
 }
 
 const ChartComponent = ({
@@ -82,8 +50,10 @@ const ChartComponent = ({
   title,
   options = {},
   style,
+  shapes,
   icons,
   chartStyle,
+  implementationComponent = defaultChartImplementation,
 }: ChartProps) => {
   const {
     chartData,
@@ -105,6 +75,7 @@ const ChartComponent = ({
     chartId,
     title,
     options,
+    shapes,
     icons,
     chartStyle,
   });
@@ -113,6 +84,8 @@ const ChartComponent = ({
     show: !!legendProps,
     ...(legendProps ?? {}),
   });
+
+  const ImplementationComponent = implementationComponent;
 
   return (
     <ChartWrapperBox>
@@ -132,27 +105,27 @@ const ChartComponent = ({
                 onClick={() => zoomBackRef.current?.()}
                 disabled={!canZoomBack}
               >
-                <UndoIcon />
+                <ChartZoomBackIcon />
               </ChartToolbarButton>
               <ChartToolbarButton
                 tooltip={CHART_TOOLTIP_ZOOM_RESET}
                 textColor={textColor}
                 onClick={() => zoomResetRef.current?.()}
               >
-                <LogoIcon />
+                <ChartZoomResetIcon />
               </ChartToolbarButton>
               <ChartToolbarButton
                 tooltip={allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL}
                 textColor={textColor}
                 onClick={handleDisableAll}
               >
-                {allSeriesHidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                {allSeriesHidden ? <ChartVisibilityOnIcon /> : <ChartVisibilityOffIcon />}
               </ChartToolbarButton>
             </ChartToolbar>
           )}
         </ChartPanelHeader>
       )}
-      <SciChartWrapper
+      <ImplementationComponent
         chartId={chartId}
         lines={chartData}
         style={wrapperStyle}
