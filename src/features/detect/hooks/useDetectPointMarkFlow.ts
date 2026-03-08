@@ -14,6 +14,7 @@ import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon';
 import { getInterpolatedPointAtX } from '../../../utils/chartDataLookup';
 import {
   DETECT_COLOR_HEX_BY_NAME,
+  DETECT_HOW_TO_USE_ADDITIONAL,
   DETECT_POINT_MARK_COLORS,
 } from '../detectConstants';
 import {
@@ -164,6 +165,8 @@ export const useDetectPointMarkFlow = ({
   const chartOptions = useMemo(
     () => ({
       ...options,
+      howToUseAdditional:
+        options.howToUseAdditional ?? DETECT_HOW_TO_USE_ADDITIONAL,
       events: data
         ? {
             ...options.events,

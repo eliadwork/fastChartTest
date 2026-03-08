@@ -145,6 +145,8 @@ export interface ChartOptions {
   events?: ChartOptionsEvents;
   /** When true, hide legend and show only the chart surface. */
   chartOnly?: boolean;
+  /** Extra "how to use" text appended after built-in instructions. Used by Detect for 3-click point mark flow. */
+  howToUseAdditional?: string;
   backgroundColor?: string;
   textColor?: string;
   zeroLineColor?: string;

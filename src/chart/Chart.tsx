@@ -7,12 +7,15 @@ import type { ChartImplementationProps } from './implementation/implementationPr
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from './types';
 
 import {
+  ChartInfoIcon,
   ChartVisibilityOffIcon,
   ChartVisibilityOnIcon,
   ChartZoomBackIcon,
   ChartZoomResetIcon,
 } from '../assets/chartIcons';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
@@ -20,6 +23,7 @@ import {
   ChartPanelTitle,
   ChartWrapperBox,
 } from '../styled/ChartStyled';
+import { getChartHowToUseText } from './utils/getChartHowToUseText';
 import {
   CHART_TOOLTIP_DISABLE_ALL,
   CHART_TOOLTIP_ENABLE_ALL,
@@ -93,6 +97,16 @@ const ChartComponent = ({
     ...(legendProps ?? {}),
   });
 
+  const howToUseText = useMemo(
+    () =>
+      getChartHowToUseText({
+        wrapperOptions,
+        chartOnly: wrapperStyle.chartOnly,
+        howToUseAdditional: options.howToUseAdditional,
+      }),
+    [wrapperOptions, wrapperStyle.chartOnly, options.howToUseAdditional]
+  );
+
   const ImplementationComponent = implementationComponent;
 
   return (
@@ -100,10 +114,30 @@ const ChartComponent = ({
       {showHeader && (
         <ChartPanelHeader sx={headerSx}>
           <ChartPanelHeaderText>
-            {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
-            {options.note != null && (
-              <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, flex: 1, minWidth: 0 }}>
+              <Tooltip title={howToUseText}>
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    color: textColor,
+                    opacity: 0.7,
+                    cursor: 'help',
+                    flexShrink: 0,
+                    '&:hover': { opacity: 1 },
+                  }}
+                  aria-label="How to use this chart"
+                >
+                  <ChartInfoIcon sx={{ fontSize: '0.9rem' }} />
+                </Box>
+              </Tooltip>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
+                {options.note != null && (
+                  <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>
+                )}
+              </Box>
+            </Box>
           </ChartPanelHeaderText>
           {!loading && (
             <ChartToolbar>
