@@ -7,15 +7,14 @@ import type { ChartImplementationProps } from './implementation/implementationPr
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from './types';
 
 import {
-  ChartInfoIcon,
   ChartVisibilityOffIcon,
   ChartVisibilityOnIcon,
   ChartZoomBackIcon,
   ChartZoomResetIcon,
 } from '../assets/chartIcons';
+import { InfoTooltip } from '../shared';
 import { memo, useMemo } from 'react';
 import Box from '@mui/material/Box';
-import Tooltip from '@mui/material/Tooltip';
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
@@ -115,22 +114,7 @@ const ChartComponent = ({
         <ChartPanelHeader sx={headerSx}>
           <ChartPanelHeaderText>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, flex: 1, minWidth: 0 }}>
-              <Tooltip title={howToUseText}>
-                <Box
-                  component="span"
-                  sx={{
-                    display: 'inline-flex',
-                    color: textColor,
-                    opacity: 0.7,
-                    cursor: 'help',
-                    flexShrink: 0,
-                    '&:hover': { opacity: 1 },
-                  }}
-                  aria-label="How to use this chart"
-                >
-                  <ChartInfoIcon sx={{ fontSize: '0.9rem' }} />
-                </Box>
-              </Tooltip>
+              <InfoTooltip title={howToUseText} color={textColor} />
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
                 {options.note != null && (

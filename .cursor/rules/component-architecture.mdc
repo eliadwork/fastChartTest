@@ -55,6 +55,7 @@ const LegendRoot = styled('div')({
 - Extract magic strings and numbers into a `*Constants.ts` file (e.g. `legendConstants.ts`, `sciChartWrapperConstants.ts`).
 - Use descriptive constant names (e.g. `LEGEND_OPACITY_HIDDEN`, `LEGEND_DEFAULT_STROKE`).
 - Colocate constants with the feature (same folder as the component).
+- **Applies to shared components too** (e.g. `shared/infoTooltipConstants.ts`).
 
 ```tsx
 // ✅ GOOD
@@ -131,6 +132,7 @@ const SciChartSyncHooks = (props) => {
 - Create a `*Styled.ts` file with MUI `styled()` components for layout and visual styling.
 - Use `styled('div')`, `styled('button')`, `styled('span')` etc. for semantic elements.
 - Keep components thin: they compose styled components and use hooks.
+- **Applies to all components**, including shared components (e.g. `shared/InfoTooltip`). Do not use inline `sx` for static layout—put it in `*Styled.ts`.
 
 ```tsx
 // ✅ GOOD
@@ -210,4 +212,13 @@ In `useSciChartSurfaceRenderer`, `initChart(rootElement: HTMLDivElement | string
 | instanceof | Prefer `Object.prototype.toString`, `value === String(value)` |
 | Runtime validation | Required at boundaries—types are erased at runtime |
 
-Apply these when creating new components or refactoring existing ones (Legend, SciChartWrapper, Chart, etc.).
+Apply these when creating new components or refactoring existing ones (Legend, SciChartWrapper, Chart, **shared components**, etc.).
+
+## New Component Checklist
+
+When creating a **new component** (including in `shared/`):
+
+1. **Styled** – Create `*Styled.ts` with `styled()` for layout and visual styling. No inline `sx` for static styles.
+2. **Constants** – Create `*Constants.ts` for magic numbers/strings (opacity, sizes, colors). Colocate with the component.
+3. **Theme** – Use `theme.spacing()`, `theme.palette`, etc. where applicable.
+4. **Thin component** – The `.tsx` file composes styled components; logic goes in hooks.
