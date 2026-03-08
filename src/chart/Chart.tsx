@@ -6,7 +6,7 @@
 import UndoIcon from '@mui/icons-material/Undo';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { LogoIcon } from '../assets/pointMarkIcon';
 import {
   ChartPanelHeader,
@@ -27,6 +27,43 @@ import { useChart } from './hooks/useChart';
 import { SciChartWrapper } from './implementation/scichart';
 import { Legend } from './Legend';
 import type { ChartData, ChartIcon, ChartOptions, ChartStyle } from './types';
+import type { LegendProps } from './Legend';
+
+export type UseChartLegendSlotParams = { show: boolean } & Partial<LegendProps>;
+
+/** Returns the Legend component for overlaySlot when show is true. */
+export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.ReactNode => {
+  const {
+    show,
+    backgroundColor,
+    textColor,
+    seriesVisibility = [],
+    seriesGroupKeys,
+    onSeriesVisibilityChange,
+    onSeriesVisibilityGroupChange,
+  } = params;
+  return useMemo(() => {
+    if (!show) return null;
+    return (
+      <Legend
+        backgroundColor={backgroundColor}
+        textColor={textColor}
+        seriesVisibility={seriesVisibility}
+        seriesGroupKeys={seriesGroupKeys}
+        onSeriesVisibilityChange={onSeriesVisibilityChange}
+        onSeriesVisibilityGroupChange={onSeriesVisibilityGroupChange}
+      />
+    );
+  }, [
+    show,
+    backgroundColor,
+    textColor,
+    seriesVisibility,
+    seriesGroupKeys,
+    onSeriesVisibilityChange,
+    onSeriesVisibilityGroupChange,
+  ]);
+};
 
 export interface ChartProps {
   data: ChartData | null;
@@ -55,7 +92,7 @@ const ChartComponent = ({
     zoomCallbacks,
     showHeader,
     headerSx,
-    legendOverlay,
+    legendProps,
     textColor,
     zoomBackRef,
     zoomResetRef,
@@ -70,6 +107,11 @@ const ChartComponent = ({
     options,
     icons,
     chartStyle,
+  });
+
+  const legendSlot = useChartLegendSlot({
+    show: !!legendProps,
+    ...(legendProps ?? {}),
   });
 
   return (
@@ -117,7 +159,7 @@ const ChartComponent = ({
         options={wrapperOptions}
         zoomCallbacks={zoomCallbacks}
         containerStyle={style}
-        overlaySlot={legendOverlay ? <Legend {...legendOverlay} /> : undefined}
+        overlaySlot={legendSlot}
         loading={loading}
       />
     </ChartWrapperBox>

@@ -104,15 +104,15 @@ export const useChart = ({
     return withOpacity(bg, CHART_LEGEND_BACKGROUND_OPACITY)
   }, [theme.palette.background.paper])
 
-  const legendOverlay = useMemo(() => {
+  const legendProps = useMemo(() => {
     if (wrapperStyle.chartOnly || data == null) return null
     return {
       backgroundColor: legendBackgroundColor,
       textColor,
       seriesVisibility,
       seriesGroupKeys: options.seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey),
-      handleSeriesVisibilityChange,
-      handleSeriesVisibilityGroupChange,
+      onSeriesVisibilityChange: handleSeriesVisibilityChange,
+      onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
     }
   }, [
     wrapperStyle.chartOnly,
@@ -146,7 +146,7 @@ export const useChart = ({
     showHeader,
     headerSx,
     options,
-    legendOverlay,
+    legendProps,
     zoomBackRef,
     zoomResetRef,
     canZoomBack,

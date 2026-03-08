@@ -3,21 +3,21 @@
  * No header, legend, or buttons. Parent provides overlaySlot (e.g. legend) and manages UI state.
  */
 
-import type { ChartImplementationProps } from '../implementationProps'
 import {
   CHART_DEFAULT_SERIES_COLORS,
   CHART_FALLBACK_ROLLOVER_STROKE,
   CHART_ROLLOVER_DASH_STEPS,
 } from '../../chartConstants'
+import type { ChartImplementationProps } from '../implementationProps'
 
 import { SciChartSurface } from 'scichart'
 import { ChartWrapperBox } from '../../../styled'
 import { toInternalOptions } from './convert'
 
-import { useSciChartMergedOptions } from './hooks/useSciChartMergedOptions'
 import { SkeletonLoading } from '../../../shared'
-import { SCI_CHART_WASM_URL, SCI_CHART_WASM_NO_SIMD_URL } from './sciChartWrapperConstants'
+import { useSciChartMergedOptions } from './hooks/useSciChartMergedOptions'
 import { SciChartSurfaceRenderer } from './SciChartSurfaceRenderer'
+import { SCI_CHART_WASM_NO_SIMD_URL, SCI_CHART_WASM_URL } from './sciChartWrapperConstants'
 
 SciChartSurface.configure({
   wasmUrl: SCI_CHART_WASM_URL,
