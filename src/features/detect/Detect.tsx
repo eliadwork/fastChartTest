@@ -1,15 +1,9 @@
 import type { ChartData, ChartOptions, ChartShape, ChartStyle } from '../../chart/types';
 
-import LayersIcon from '@mui/icons-material/Layers';
-import LayersClearIcon from '@mui/icons-material/LayersClear';
 import { Chart } from '../../chart/Chart';
-import { ChartToolbarButton } from '../../chart/ChartToolbarButton';
 import { useDetectPointMarkFlow } from './hooks/useDetectPointMarkFlow';
 import { SeriesPickerModal } from './SeriesPickerModal';
-import {
-  DETECT_TOOLTIP_HIDE_SHAPES_FOR_HIDDEN,
-  DETECT_TOOLTIP_SHOW_SHAPES_FOR_HIDDEN,
-} from './detectConstants';
+import { ShapesVisibilityToolbarButton } from './component/ShapesVisibilityToolbarButton';
 
 export interface DetectProps {
   chartId: string;
@@ -58,22 +52,11 @@ export const Detect = ({
   });
 
   const shapesVisibilityToolbar = ({ textColor }: { textColor: string }) => (
-    <ChartToolbarButton
-      tooltip={
-        showShapesForHiddenSeries
-          ? DETECT_TOOLTIP_HIDE_SHAPES_FOR_HIDDEN
-          : DETECT_TOOLTIP_SHOW_SHAPES_FOR_HIDDEN
-      }
+    <ShapesVisibilityToolbarButton
       textColor={textColor}
-      onClick={toggleShowShapesForHiddenSeries}
-      sx={showShapesForHiddenSeries ? { opacity: 1 } : { opacity: 0.6 }}
-    >
-      {showShapesForHiddenSeries ? (
-        <LayersIcon />
-      ) : (
-        <LayersClearIcon />
-      )}
-    </ChartToolbarButton>
+      showShapesForHiddenSeries={showShapesForHiddenSeries}
+      onToggle={toggleShowShapesForHiddenSeries}
+    />
   );
 
   return (
