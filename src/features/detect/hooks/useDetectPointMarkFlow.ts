@@ -1,14 +1,14 @@
 import type {
   ChartData,
   ChartDataSeries,
-  ChartLineShape,
+  ChartIcon,
   ChartMiddleClickEvent,
   ChartOptions,
   ChartShape,
 } from '../../../chart/types';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSnackbar } from 'notistack';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon';
 import { getInterpolatedPointAtX } from '../../../utils/chartDataLookup';
@@ -25,6 +25,26 @@ import {
 type MarkedPointPending = {
   location: { x: number; y?: number };
   color?: (typeof DETECT_POINT_MARK_COLORS)[number];
+};
+
+/** Shape with optional series binding. Stripped before passing to chart. */
+type ChartShapeWithOptionalSeriesIndex = ChartShape & { seriesIndex?: number };
+
+/** Icon with optional series binding. Stripped before passing to chart. */
+type ChartIconWithOptionalSeriesIndex = ChartIcon & { seriesIndex?: number };
+
+const stripSeriesIndexFromShape = (
+  shape: ChartShapeWithOptionalSeriesIndex
+): ChartShape => {
+  const { seriesIndex: _seriesIndex, ...rest } = shape;
+  return rest as ChartShape;
+};
+
+const stripSeriesIndexFromIcon = (
+  icon: ChartIconWithOptionalSeriesIndex
+): ChartIcon => {
+  const { seriesIndex: _seriesIndex, ...rest } = icon;
+  return rest as ChartIcon;
 };
 
 export interface UseDetectPointMarkFlowOptions {
@@ -47,10 +67,15 @@ export const useDetectPointMarkFlow = ({
   const clicksRef = useRef(clicks);
   clicksRef.current = clicks;
 
-  const [confirmedShapes, setConfirmedShapes] = useState<ChartLineShape[]>([]);
-  const [confirmedIcons, setConfirmedIcons] = useState<
-    Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>
+  const [confirmedShapes, setConfirmedShapes] = useState<
+    ChartShapeWithOptionalSeriesIndex[]
   >([]);
+  const [confirmedIcons, setConfirmedIcons] = useState<
+    ChartIconWithOptionalSeriesIndex[]
+  >([]);
+  const [seriesVisibility, setSeriesVisibility] = useState<boolean[]>([]);
+  const [showShapesForHiddenSeries, setShowShapesForHiddenSeries] =
+    useState(false);
   const [seriesPickerOpen, setSeriesPickerOpen] = useState(false);
   const [markedXValues, setMarkedXValues] = useState<
     [number, number, number] | null
@@ -70,10 +95,39 @@ export const useDetectPointMarkFlow = ({
     number | null
   >(null);
 
-  const chartIcons = useMemo(
-    () => (data ? [...icons, ...confirmedIcons] : []),
-    [data, icons, confirmedIcons]
+  const shouldFilterByVisibility = !showShapesForHiddenSeries;
+
+  const isShapeVisible = useCallback(
+    (shape: ChartShapeWithOptionalSeriesIndex) => {
+      if (!shouldFilterByVisibility) return true;
+      const { seriesIndex } = shape;
+      if (seriesIndex == null) return true;
+      return seriesVisibility[seriesIndex] !== false;
+    },
+    [shouldFilterByVisibility, seriesVisibility]
   );
+
+  const isIconVisible = useCallback(
+    (icon: ChartIconWithOptionalSeriesIndex) => {
+      if (!shouldFilterByVisibility) return true;
+      const { seriesIndex } = icon;
+      if (seriesIndex == null) return true;
+      return seriesVisibility[seriesIndex] !== false;
+    },
+    [shouldFilterByVisibility, seriesVisibility]
+  );
+
+  const chartIcons = useMemo(() => {
+    if (!data) return [];
+    const baseIconsWithOptionalSeriesIndex: ChartIconWithOptionalSeriesIndex[] =
+      icons;
+    const allIcons: ChartIconWithOptionalSeriesIndex[] = [
+      ...baseIconsWithOptionalSeriesIndex,
+      ...confirmedIcons,
+    ];
+    const filtered = allIcons.filter(isIconVisible);
+    return filtered.map(stripSeriesIndexFromIcon);
+  }, [data, icons, confirmedIcons, isIconVisible]);
 
   const pendingShapes = useMemo(() => {
     if (clicks.length > 0) {
@@ -89,10 +143,17 @@ export const useDetectPointMarkFlow = ({
     return EMPTY_LINE_SHAPES;
   }, [clicks, seriesPickerOpen, markedXValues]);
 
-  const chartShapes = useMemo(
-    () => [...baseShapes, ...confirmedShapes, ...pendingShapes],
-    [baseShapes, confirmedShapes, pendingShapes]
-  );
+  const chartShapes = useMemo(() => {
+    const baseShapesWithOptionalSeriesIndex: ChartShapeWithOptionalSeriesIndex[] =
+      baseShapes;
+    const allShapes: ChartShapeWithOptionalSeriesIndex[] = [
+      ...baseShapesWithOptionalSeriesIndex,
+      ...confirmedShapes,
+      ...pendingShapes,
+    ];
+    const filtered = allShapes.filter(isShapeVisible);
+    return filtered.map(stripSeriesIndexFromShape);
+  }, [baseShapes, confirmedShapes, pendingShapes, isShapeVisible]);
 
   const handleMiddleClick = useCallback(
     (event: MouseEvent) => {
@@ -252,20 +313,21 @@ export const useDetectPointMarkFlow = ({
 
       if (!leftPoint || !middlePoint || !rightPoint) return;
 
-      const newShapes = markedXValues.map((xValue, index) =>
-        createPendingLineShape(index, xValue)
-      );
+      const newShapes: ChartShapeWithOptionalSeriesIndex[] =
+        markedXValues.map((xValue, index) => ({
+          ...createPendingLineShape(index, xValue),
+          seriesIndex: selectedSeriesIndex,
+        }));
       setConfirmedShapes((prev) => [...prev, ...newShapes]);
 
       const middleColor = markedPoints[1]?.color;
-      setConfirmedIcons((prev) => [
-        ...prev,
-        {
-          iconImage: DEFAULT_POINT_MARK_ICON_SVG,
-          location: middlePoint,
-          color: middleColor ? DETECT_COLOR_HEX_BY_NAME[middleColor] : undefined,
-        },
-      ]);
+      const newIcon: ChartIconWithOptionalSeriesIndex = {
+        iconImage: DEFAULT_POINT_MARK_ICON_SVG,
+        location: middlePoint,
+        color: middleColor ? DETECT_COLOR_HEX_BY_NAME[middleColor] : undefined,
+        seriesIndex: selectedSeriesIndex,
+      };
+      setConfirmedIcons((prev) => [...prev, newIcon]);
 
       enqueueSnackbar('Saved 3 points', { autoHideDuration: 3000 });
       setRequestedSeriesIndex(null);
@@ -331,6 +393,14 @@ export const useDetectPointMarkFlow = ({
     [seriesPickerOpen, bindableIndicesBase]
   );
 
+  const onSeriesVisibilityChange = useCallback(
+    (visibility: boolean[]) => {
+      setSeriesVisibility(visibility);
+      setBindableIndicesFromVisibility(visibility);
+    },
+    [setBindableIndicesFromVisibility]
+  );
+
   useEffect(() => {
     if (!seriesPickerOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -341,6 +411,10 @@ export const useDetectPointMarkFlow = ({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [seriesPickerOpen, handleDone]);
+
+  const toggleShowShapesForHiddenSeries = useCallback(() => {
+    setShowShapesForHiddenSeries((prev) => !prev);
+  }, []);
 
   return {
     chartOptions,
@@ -361,6 +435,8 @@ export const useDetectPointMarkFlow = ({
     onDone: handleDone,
     onUndoLastClick: handleUndoLastClick,
     onCancelFlow: handleCancelFlow,
-    onSeriesVisibilityChange: setBindableIndicesFromVisibility,
+    onSeriesVisibilityChange,
+    showShapesForHiddenSeries,
+    toggleShowShapesForHiddenSeries,
   };
 };

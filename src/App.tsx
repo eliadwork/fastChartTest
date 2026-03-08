@@ -12,14 +12,6 @@ import {
   ChartPanel,
 } from './styled/ChartStyled';
 
-const DetectStyled = styled(Detect)(() => ({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100%',
-  minHeight: 0,
-}));
-
 
 const App = () => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
@@ -37,7 +29,6 @@ const App = () => {
             options={{
               note: 'this is the chart example',
               resampling: { enable: true, precision: 1 },
-              clipZoomToData: true,
             }}
             icons={chartIcons}
           />
@@ -50,7 +41,6 @@ const App = () => {
             shapes={exampleShapes}
             options={{
               note: 'this is the chart example',
-              clipZoomToData: true,
             }}
           />
         </ChartPanel>
@@ -73,6 +63,14 @@ const App = () => {
 export default App;
 
 
+
+const DetectStyled = styled(Detect)(() => ({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '100%',
+  minHeight: 0,
+}));
 
 const exampleShapes = [
   {

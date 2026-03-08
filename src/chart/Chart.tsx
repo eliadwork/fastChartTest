@@ -47,6 +47,8 @@ export interface ChartProps {
   chartStyle?: ChartStyle;
   /** Called when series visibility changes. Used by Detect for modal. */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
+  /** Optional slot for extra toolbar buttons (e.g. Detect shapes visibility toggle). Receives textColor for consistency. */
+  toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
   implementationComponent?: React.ComponentType<ChartImplementationProps>;
 }
 
@@ -60,6 +62,7 @@ const ChartComponent = ({
   icons,
   chartStyle: chartStyleProp,
   onSeriesVisibilityChange,
+  toolbarSlot,
   implementationComponent = defaultChartImplementation,
 }: ChartProps) => {
   const defaultChartStyle = useDefaultChartStyle();
@@ -147,6 +150,9 @@ const ChartComponent = ({
               >
                 {allSeriesHidden ? <ChartVisibilityOnIcon /> : <ChartVisibilityOffIcon />}
               </ChartToolbarButton>
+              {typeof toolbarSlot === 'function'
+                ? toolbarSlot({ textColor })
+                : toolbarSlot}
             </ChartToolbar>
           )}
         </ChartPanelHeader>

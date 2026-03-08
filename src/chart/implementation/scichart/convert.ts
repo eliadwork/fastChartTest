@@ -3,26 +3,26 @@
  * Converts generic ChartData/ChartShape to implementation-ready formats.
  */
 
-import type {
-  ChartData,
-  ChartIcon,
-  ChartLineShape,
-  ChartLineStyle,
-  ChartOptions,
-  ChartShape,
-  DashConfig,
-} from '../../types';
 import { withOpacity } from '../../../utils/colorUtils';
 import {
-  DEFAULT_LEGEND_BACKGROUND_COLOR,
-  DEFAULT_SHAPE_STYLE,
-  DEFAULT_TEXT_COLOR,
-  DEFAULT_ZERO_LINE_COLOR,
+    DEFAULT_LEGEND_BACKGROUND_COLOR,
+    DEFAULT_SHAPE_STYLE,
+    DEFAULT_TEXT_COLOR,
+    DEFAULT_ZERO_LINE_COLOR,
 } from '../../defaults';
 import type {
-  ChartImplementationOptions,
-  ChartImplementationProps,
-  KeyTriggeredOption,
+    ChartData,
+    ChartIcon,
+    ChartLineShape,
+    ChartLineStyle,
+    ChartOptions,
+    ChartShape,
+    DashConfig,
+} from '../../types';
+import type {
+    ChartImplementationOptions,
+    ChartImplementationProps,
+    KeyTriggeredOption,
 } from '../implementationProps';
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
