@@ -2,14 +2,13 @@ import type { ChartData, ChartOptions, ChartShape, ChartStyle } from '../../char
 
 import { Chart } from '../../chart/Chart';
 import { useDetectPointMarkFlow } from './hooks/useDetectPointMarkFlow';
-import { usePointMarkSeriesPicker } from './hooks/usePointMarkSeriesPicker';
 import { SeriesPickerModal } from './SeriesPickerModal';
 
 export interface DetectProps {
   chartId: string;
   data: ChartData | null;
   title?: string;
-  style: ChartStyle;
+  style?: ChartStyle;
   options?: ChartOptions;
   shapes?: ChartShape[];
   icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
@@ -27,15 +26,10 @@ export const Detect = ({
   icons = [],
   className,
 }: DetectProps) => {
-  const { chartOptions, chartShapes, chartIcons } = useDetectPointMarkFlow({
-    chartId,
-    data,
-    options,
-    shapes,
-    icons,
-  });
-
   const {
+    chartOptions,
+    chartShapes,
+    chartIcons,
     colorOptions,
     selectedColor,
     seriesPickerState,
@@ -45,7 +39,14 @@ export const Detect = ({
     onDone,
     onUndoLastClick,
     onCancelFlow,
-  } = usePointMarkSeriesPicker();
+    onSeriesVisibilityChange,
+  } = useDetectPointMarkFlow({
+    chartId,
+    data,
+    options,
+    shapes,
+    icons,
+  });
 
   return (
     <div className={className}>
@@ -57,6 +58,7 @@ export const Detect = ({
         shapes={chartShapes}
         icons={chartIcons}
         chartStyle={style}
+        onSeriesVisibilityChange={onSeriesVisibilityChange}
       />
       <SeriesPickerModal
         open={seriesPickerState.open}

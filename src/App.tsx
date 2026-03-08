@@ -1,10 +1,11 @@
 import type { ChartData, ChartDataSeries } from './chart/types';
 
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 
 import { chartIcons } from './assets/chartIcons';
 import { Detect } from './features/detect/Detect';
+import { FastChartingPanel } from './features/fastCharting/FastChartingPanel';
 import {
   ChartComparison,
   ChartComparisonGrid,
@@ -21,32 +22,17 @@ const DetectStyled = styled(Detect)(() => ({
 
 
 const App = () => {
-  const theme = useTheme();
   const [chartData, setChartData] = useState<ChartData | null>(null);
   useDataSetting(setChartData);
 
-
-  const baseStyle = {
-    backgroundColor: theme.palette.background.paper,
-    rollover: {
-      show: true,
-      color: '#FF0000',
-      dash: { isDash: true, steps: [8, 4] as number[] },
-    },
-    textColor: theme.palette.text.primary,
-    chartOnly: false,
-  };
-
-
   return (
-    <ChartComparison>
-      <ChartComparisonGrid>
+    <ChartComparison sx={{ flexDirection: 'row' }}>
+      <ChartComparisonGrid sx={{ flex: 1, minWidth: 0 }}>
         <ChartPanel>
           <DetectStyled
             chartId="resampled"
             title="Resampled (precision 1.0)"
             data={chartData}
-            style={baseStyle}
             shapes={exampleShapes}
             options={{
               note: 'this is the chart example',
@@ -61,7 +47,6 @@ const App = () => {
             chartId="no-loss"
             title="No-loss (every point)"
             data={chartData}
-            style={baseStyle}
             shapes={exampleShapes}
             options={{
               note: 'this is the chart example',
@@ -70,6 +55,17 @@ const App = () => {
           />
         </ChartPanel>
       </ChartComparisonGrid>
+      <FastChartingPanel
+        chartId="fast"
+        title="Fast chart"
+        data={chartData}
+        shapes={exampleShapes}
+        options={{
+          note: '20% panel',
+          clipZoomToData: true,
+        }}
+        icons={chartIcons}
+      />
     </ChartComparison>
   );
 };

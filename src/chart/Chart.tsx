@@ -30,6 +30,7 @@ import { ChartToolbar } from './ChartStyled';
 import { ChartToolbarButton } from './ChartToolbarButton';
 import { defaultChartImplementation } from './defaultChartImplementation';
 import { useChart } from './hooks/useChart';
+import { useDefaultChartStyle } from './hooks/useDefaultChartStyle';
 import { useChartLegendSlot } from './hooks/useChartLegendSlot';
 
 export interface ChartProps {
@@ -41,6 +42,8 @@ export interface ChartProps {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
+  /** Called when series visibility changes. Used by Detect for modal. */
+  onSeriesVisibilityChange?: (visibility: boolean[]) => void;
   implementationComponent?: React.ComponentType<ChartImplementationProps>;
 }
 
@@ -52,9 +55,13 @@ const ChartComponent = ({
   style,
   shapes,
   icons,
-  chartStyle,
+  chartStyle: chartStyleProp,
+  onSeriesVisibilityChange,
   implementationComponent = defaultChartImplementation,
 }: ChartProps) => {
+  const defaultChartStyle = useDefaultChartStyle();
+  const chartStyle = chartStyleProp ?? defaultChartStyle;
+
   const {
     chartData,
     wrapperStyle,
@@ -78,6 +85,7 @@ const ChartComponent = ({
     shapes,
     icons,
     chartStyle,
+    onSeriesVisibilityChange,
   });
 
   const legendSlot = useChartLegendSlot({

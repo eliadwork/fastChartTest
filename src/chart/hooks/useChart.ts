@@ -2,7 +2,6 @@ import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from 
 
 import { useEffect } from 'react';
 
-import { usePointMarkStore } from '../../store/pointMarkStore';
 import { useChartHeaderState } from './useChartHeaderState';
 import { useChartLegendProps } from './useChartLegendProps';
 import { useChartSeriesVisibility } from './useChartSeriesVisibility';
@@ -20,6 +19,8 @@ export interface UseChartParams {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
+  /** Called when series visibility changes (e.g. from legend). Used by Detect for modal. */
+  onSeriesVisibilityChange?: (visibility: boolean[]) => void;
 }
 
 export const useChart = ({
@@ -30,14 +31,10 @@ export const useChart = ({
   shapes,
   icons,
   chartStyle,
+  onSeriesVisibilityChange,
 }: UseChartParams) => {
   const chartData = data ?? EMPTY_CHART_DATA;
   const loading = data == null;
-
-  const chartIdForModal = usePointMarkStore((state) => state.chartIdForModal);
-  const updateModalSeriesVisibility = usePointMarkStore(
-    (state) => state.updateModalSeriesVisibility
-  );
 
   const {
     zoomCallbacks,
@@ -58,10 +55,8 @@ export const useChart = ({
   });
 
   useEffect(() => {
-    if (chartId != null && chartId === chartIdForModal) {
-      updateModalSeriesVisibility(seriesVisibility);
-    }
-  }, [chartId, chartIdForModal, seriesVisibility, updateModalSeriesVisibility]);
+    onSeriesVisibilityChange?.(seriesVisibility);
+  }, [seriesVisibility, onSeriesVisibilityChange]);
 
   const wrapperStyle = useChartWrapperStyle({
     chartStyle,

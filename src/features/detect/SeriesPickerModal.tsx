@@ -1,4 +1,4 @@
-import type { PointMarkColor } from '../../store/pointMarkStore';
+import type { PointMarkColor } from './detectConstants';
 
 import InputLabel from '@mui/material/InputLabel';
 
