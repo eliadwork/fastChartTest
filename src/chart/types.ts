@@ -91,22 +91,24 @@ export interface KeyTriggeredOption {
   trigger: TriggerKey;
 }
 
-/** Input form: trigger is optional (defaults: stretch=rightClick, pan=shift). */
-export interface KeyTriggeredOptionInput {
-  enable: boolean;
-  trigger?: TriggerKey;
-}
-
 export interface ChartResamplingOption {
   enable: boolean;
   precision: number;
 }
 
-/** Augmented MouseEvent with chart coordinates. Used internally when handler type is (event: MouseEvent) => void. */
-export interface ChartMiddleClickEvent extends MouseEvent {
-  xValue: number;
-  yValue: number;
-  getSeriesVisibility?: () => boolean[];
+export interface ChartStyling {
+  chartOnly?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
+  zeroLineColor?: string;
+  legendBackgroundColor?: string;
+  defaultSeriesColors?: string[];
+  defaultStrokeThickness?: number;
+  rollover?: {
+    show?: boolean;
+    color?: string;
+    dash?: DashConfig;
+  };
 }
 
 export interface ChartOptionsEvents {
@@ -120,7 +122,12 @@ export interface ChartOptionsEvents {
   onzoom?: (event: MouseEvent) => void;
   onzoomback?: () => void;
   onzoomreset?: () => void;
-  onmiddleclick?: (event: MouseEvent) => void;
+  onmiddleclick?: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
 }
 
 export interface ChartIcon {
@@ -131,29 +138,19 @@ export interface ChartIcon {
 }
 
 export interface ChartOptions {
+  howToUseAdditional?: string;
   note?: string;
   /** Default when omitted: { enable: true, trigger: 'rightClick' }. Omit trigger to use default. */
-  stretch?: KeyTriggeredOptionInput;
+  stretch?: { enable: boolean; trigger?: TriggerKey };
   /** Default when omitted: { enable: true, trigger: 'shift' }. Omit trigger to use default. */
-  pan?: KeyTriggeredOptionInput;
+  pan?: { enable: boolean; trigger?: TriggerKey };
   /** Default when omitted: { enable: false, precision: 0 }. */
   resampling?: ChartResamplingOption;
   /** Default when omitted: true. */
-  clipZoomToData?: boolean;
   seriesVisibility?: boolean[];
+  /** Group keys for legend. When omitted, derived from data lines' lineGroupKey. */
   seriesGroupKeys?: (string | undefined)[];
   events?: ChartOptionsEvents;
-  /** When true, hide legend and show only the chart surface. */
-  chartOnly?: boolean;
-  /** Extra "how to use" text appended after built-in instructions. Used by Detect for 3-click point mark flow. */
-  howToUseAdditional?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  zeroLineColor?: string;
-  legendBackgroundColor?: string;
-  defaultSeriesColors?: string[];
-  defaultStrokeThickness?: number;
-  rolloverStroke?: string;
-  rolloverDash?: DashConfig;
-  rolloverShow?: boolean;
+  clipZoomToData?: boolean;
+  styling?: ChartStyling;
 }

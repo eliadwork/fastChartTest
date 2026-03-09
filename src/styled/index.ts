@@ -7,11 +7,4 @@ export {
   ChartPanelTitle,
   ChartPanelNote,
   ChartWrapperBox,
-  PointMarkModalOverlay,
-  PointMarkModalTitle,
-  PointMarkModalSection,
-  PointMarkModalSectionLabel,
-  PointMarkModalButtons,
-  PointMarkModalButton,
-  PointMarkModalCancel,
 } from './ChartStyled';

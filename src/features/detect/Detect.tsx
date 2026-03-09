@@ -1,9 +1,13 @@
-import type { ChartData, ChartOptions, ChartShape, ChartStyle } from '../../chart/types';
+import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../../chart/types';
 
 import { Chart } from '../../chart/Chart';
-import { useDetectPointMarkFlow } from './hooks/useDetectPointMarkFlow';
-import { SeriesPickerModal } from './SeriesPickerModal';
 import { ShapesVisibilityToolbarButton } from './component/ShapesVisibilityToolbarButton';
+import { SeriesPickerModal } from './component/popupModal/SeriesPickerModal';
+import {
+  useDetectChart,
+  useDetectModal,
+  useDetectPointMarkFlow,
+} from './hooks/useDetectPointMarkFlow';
 
 export interface DetectProps {
   chartId: string;
@@ -12,8 +16,7 @@ export interface DetectProps {
   style?: ChartStyle;
   options?: ChartOptions;
   shapes?: ChartShape[];
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
-  /** Forwarded to root element for styled(Detect). */
+  icons?: ChartIcon[];
   className?: string;
 }
 
@@ -27,28 +30,57 @@ export const Detect = ({
   icons = [],
   className,
 }: DetectProps) => {
+  const detectPointMarkFlow = useDetectPointMarkFlow({
+    data,
+  });
   const {
-    chartOptions,
-    chartShapes,
-    chartIcons,
+    additionalShapes,
+    additionalIcons,
+    seriesVisibility,
+    showShapesForHiddenSeries,
+    handleMiddleClick,
+    onSeriesVisibilityStateChange,
+    toggleShowShapesForHiddenSeries,
+  } = detectPointMarkFlow;
+  const { chartOptions, finalShapes, finalIcons, onSeriesVisibilityChange } = useDetectChart({
+    data,
+    options,
+    baseShapes: shapes,
+    baseIcons: icons,
+    additionalBindedShapes: additionalShapes,
+    additionalBindedIcons: additionalIcons,
+    seriesVisibility,
+    showShapesForHiddenSeries,
+    onMiddleClick: handleMiddleClick,
+    onSeriesVisibilityStateChange,
+    toggleShowShapesForHiddenSeries,
+  });
+
+  const {
+    open,
     colorOptions,
     selectedColor,
-    seriesPickerState,
+    seriesOptions,
+    seriesNames,
+    selectedSeriesIndex,
     canConfirm,
     setSelectedSeriesIndex,
     setMiddlePointColor,
     onDone,
     onUndoLastClick,
     onCancelFlow,
-    onSeriesVisibilityChange,
-    showShapesForHiddenSeries,
-    toggleShowShapesForHiddenSeries,
-  } = useDetectPointMarkFlow({
-    chartId,
-    data,
-    options,
-    shapes,
-    icons,
+  } = useDetectModal({
+    seriesPickerOpen: detectPointMarkFlow.seriesPickerOpen,
+    chartDataForModal: detectPointMarkFlow.chartDataForModal,
+    bindableIndices: detectPointMarkFlow.bindableIndices,
+    bindableIndicesBase: detectPointMarkFlow.bindableIndicesBase,
+    requestedSeriesIndex: detectPointMarkFlow.requestedSeriesIndex,
+    markedPoints: detectPointMarkFlow.markedPoints,
+    setSelectedSeriesIndex: detectPointMarkFlow.setRequestedSeriesIndex,
+    setMiddlePointColor: detectPointMarkFlow.setMiddlePointColor,
+    confirmSeries: detectPointMarkFlow.confirmSeries,
+    onUndoLastClick: detectPointMarkFlow.onUndoLastClick,
+    onCancelFlow: detectPointMarkFlow.onCancelFlow,
   });
 
   const shapesVisibilityToolbar = ({ textColor }: { textColor: string }) => (
@@ -66,19 +98,19 @@ export const Detect = ({
         data={data}
         title={title}
         options={chartOptions}
-        shapes={chartShapes}
-        icons={chartIcons}
+        shapes={finalShapes}
+        icons={finalIcons}
         chartStyle={style}
         onSeriesVisibilityChange={onSeriesVisibilityChange}
         toolbarSlot={shapesVisibilityToolbar}
       />
       <SeriesPickerModal
-        open={seriesPickerState.open}
+        open={open}
         colorOptions={colorOptions}
         selectedColor={selectedColor}
-        seriesOptions={seriesPickerState.seriesOptions}
-        seriesNames={seriesPickerState.seriesNames}
-        selectedSeriesIndex={seriesPickerState.selectedSeriesIndex}
+        seriesOptions={seriesOptions}
+        seriesNames={seriesNames}
+        selectedSeriesIndex={selectedSeriesIndex}
         canConfirm={canConfirm}
         onColorChange={setMiddlePointColor}
         onSeriesChange={(seriesIndex) => setSelectedSeriesIndex(seriesIndex)}

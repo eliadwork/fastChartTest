@@ -35,7 +35,12 @@ export interface ChartImplementationEvents {
   onzoom?: (event: MouseEvent) => void;
   onzoomback?: () => void;
   onzoomreset?: () => void;
-  onmiddleclick?: (event: MouseEvent) => void;
+  onmiddleclick?: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
 }
 
 export interface ChartImplementationOptionsOverrides {

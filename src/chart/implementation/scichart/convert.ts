@@ -5,24 +5,24 @@
 
 import { withOpacity } from '../../../utils/colorUtils';
 import {
-    DEFAULT_LEGEND_BACKGROUND_COLOR,
-    DEFAULT_SHAPE_STYLE,
-    DEFAULT_TEXT_COLOR,
-    DEFAULT_ZERO_LINE_COLOR,
+  DEFAULT_LEGEND_BACKGROUND_COLOR,
+  DEFAULT_SHAPE_STYLE,
+  DEFAULT_TEXT_COLOR,
+  DEFAULT_ZERO_LINE_COLOR,
 } from '../../defaults';
 import type {
-    ChartData,
-    ChartIcon,
-    ChartLineShape,
-    ChartLineStyle,
-    ChartOptions,
-    ChartShape,
-    DashConfig,
+  ChartData,
+  ChartIcon,
+  ChartLineShape,
+  ChartLineStyle,
+  ChartOptions,
+  ChartShape,
+  DashConfig,
 } from '../../types';
 import type {
-    ChartImplementationOptions,
-    ChartImplementationProps,
-    KeyTriggeredOption,
+  ChartImplementationOptions,
+  ChartImplementationProps,
+  KeyTriggeredOption,
 } from '../implementationProps';
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
@@ -171,12 +171,22 @@ function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
   });
 }
 
-/** Internal options with shapes/icons for SciChart. */
+/** Internal options with shapes/icons and style-derived options for SciChart. */
 export type SciChartConvertedOptions = ChartOptions & {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   seriesVisibility?: boolean[];
   seriesGroupKeys?: (string | undefined)[];
+  chartOnly?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
+  zeroLineColor?: string;
+  legendBackgroundColor?: string;
+  defaultSeriesColors?: string[];
+  defaultStrokeThickness?: number;
+  rolloverStroke?: string;
+  rolloverDash?: DashConfig;
+  rolloverShow?: boolean;
 };
 
 export const toInternalOptions = (

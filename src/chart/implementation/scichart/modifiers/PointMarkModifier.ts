@@ -5,13 +5,17 @@ import {
   Point,
   translateFromCanvasToSeriesViewRect,
 } from 'scichart';
-import type { ChartMiddleClickEvent } from '../../../types';
 
 const CLICK_THRESHOLD_PX = 5;
 const MIDDLE_MOUSE_BUTTON = 1;
 
 export interface IPointMarkModifierOptions {
-  onMiddleClick?: (event: MouseEvent) => void;
+  onMiddleClick?: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
 }
 
 /**
@@ -21,7 +25,12 @@ export interface IPointMarkModifierOptions {
  */
 export class PointMarkModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom;
-  private onMiddleClick?: (event: MouseEvent) => void;
+  private onMiddleClick?: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
   private mouseDownPoint: Point | undefined;
 
   constructor(options?: IPointMarkModifierOptions) {
@@ -78,14 +87,10 @@ export class PointMarkModifier extends ChartModifierBase2D {
       button: MIDDLE_MOUSE_BUTTON,
       bubbles: true,
     });
-    const chartEvent = Object.assign(mouseEvent, {
-      xValue,
-      yValue,
-      getSeriesVisibility: () =>
-        this.parentSurface.renderableSeries
-          .asArray()
-          .map((rs) => (rs as { isVisible: boolean }).isVisible),
-    }) as ChartMiddleClickEvent;
-    this.onMiddleClick(chartEvent);
+    const getSeriesVisibility = () =>
+      this.parentSurface.renderableSeries
+        .asArray()
+        .map((rs) => (rs as { isVisible: boolean }).isVisible);
+    this.onMiddleClick(mouseEvent, xValue, yValue, getSeriesVisibility);
   }
 }

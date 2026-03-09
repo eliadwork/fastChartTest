@@ -1,20 +1,22 @@
-import { useMemo } from 'react'
-import type { ChartIcon, ChartOptions, ChartShape } from '../../../types'
-import type { ChartImplementationProps } from '../../implementationProps'
+import { useMemo } from 'react';
+import type { ChartImplementationProps } from '../../implementationProps';
+import type { SciChartConvertedOptions } from '../convert';
 
 /** Internal: merged options with shapes, icons, and visibility handlers for SciChart. */
-export type SciChartMergedOptions = ChartOptions & {
-  shapes?: ChartShape[]
-  icons?: ChartIcon[]
-  onSeriesVisibilityChange?: (index: number, visible: boolean) => void
-  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void
-  onDisableAll?: () => void
-}
+export type SciChartMergedOptions = SciChartConvertedOptions & {
+  onSeriesVisibilityChange?: (index: number, visible: boolean) => void;
+  onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void;
+  onDisableAll?: () => void;
+};
 
 export interface UseSciChartMergedOptionsParams {
-  convertedOptions: ChartOptions
-  chartTheme: { defaultSeriesColors: string[]; rolloverStroke?: string; rolloverDash?: { isDash: boolean; steps: number[] } }
-  opts: NonNullable<ChartImplementationProps['options']>
+  convertedOptions: SciChartConvertedOptions;
+  chartTheme: {
+    defaultSeriesColors: string[];
+    rolloverStroke?: string;
+    rolloverDash?: { isDash: boolean; steps: number[] };
+  };
+  opts: NonNullable<ChartImplementationProps['options']>;
 }
 
 export const useSciChartMergedOptions = ({
@@ -27,7 +29,7 @@ export const useSciChartMergedOptions = ({
       ...convertedOptions,
       shapes: opts.shapes,
       icons: opts.icons,
-      defaultSeriesColors: chartTheme.defaultSeriesColors,
+      defaultSeriesColors: convertedOptions.defaultSeriesColors ?? chartTheme.defaultSeriesColors,
       rolloverStroke: convertedOptions.rolloverStroke ?? chartTheme.rolloverStroke,
       rolloverDash: convertedOptions.rolloverDash ?? chartTheme.rolloverDash,
       onSeriesVisibilityChange: opts.onSeriesVisibilityChange,
@@ -43,5 +45,5 @@ export const useSciChartMergedOptions = ({
       opts.onSeriesVisibilityGroupChange,
       opts.onDisableAll,
     ]
-  )
-}
+  );
+};

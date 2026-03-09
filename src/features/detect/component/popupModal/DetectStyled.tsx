@@ -1,7 +1,4 @@
 import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
-import Select from '@mui/material/Select';
 import { styled } from '@mui/material/styles';
 
 export const DetectModalContent = styled('div')(({ theme }) => ({
@@ -63,9 +60,7 @@ export const DetectSeriesFormControl = styled(FormControl)(({ theme }) => ({
   width: '100%',
   '& .MuiOutlinedInput-root': {
     borderRadius: theme.spacing(1.5),
-    backgroundColor: theme.palette.mode === 'dark'
-      ? 'rgba(255,255,255,0.05)'
-      : 'rgba(0,0,0,0.02)',
+    backgroundColor: 'rgba(0,0,0,0.02)',
     '& fieldset': {
       borderColor: theme.palette.divider,
       transition: 'border-color 0.2s ease',
@@ -86,48 +81,3 @@ export const DetectSeriesFormControl = styled(FormControl)(({ theme }) => ({
     textAlign: 'center',
   },
 }));
-
-const DetectSelectMenu = styled(Paper)(({ theme }) => ({
-  borderRadius: theme.spacing(1.5),
-  marginTop: theme.spacing(1),
-  boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-  '& .MuiMenuItem-root': {
-    justifyContent: 'center',
-  },
-}));
-
-export interface DetectSeriesSelectProps {
-  labelId: string;
-  label: string;
-  value: number | '';
-  onChange: (seriesIndex: number) => void;
-  seriesOptions: number[];
-  seriesNames: string[];
-}
-
-export const DetectSeriesSelect = ({
-  labelId,
-  label,
-  value,
-  onChange,
-  seriesOptions,
-  seriesNames,
-}: DetectSeriesSelectProps) => (
-  <Select
-    labelId={labelId}
-    label={label}
-    value={value}
-    onChange={(selectEvent) => onChange(Number(selectEvent.target.value))}
-    MenuProps={{
-      PaperProps: {
-        component: DetectSelectMenu,
-      },
-    }}
-  >
-    {seriesOptions.map((seriesIndex) => (
-      <MenuItem key={seriesIndex} value={seriesIndex}>
-        {seriesNames[seriesIndex] ?? `Series ${seriesIndex}`}
-      </MenuItem>
-    ))}
-  </Select>
-);

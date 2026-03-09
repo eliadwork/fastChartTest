@@ -2,13 +2,12 @@ import type {
   ChartData,
   ChartDataSeries,
   ChartIcon,
-  ChartMiddleClickEvent,
   ChartOptions,
   ChartShape,
 } from '../../../chart/types';
 
 import { useSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_POINT_MARK_ICON_SVG } from '../../../assets/pointMarkIcon';
 import { getInterpolatedPointAtX } from '../../../utils/chartDataLookup';
@@ -17,266 +16,190 @@ import {
   DETECT_HOW_TO_USE_ADDITIONAL,
   DETECT_POINT_MARK_COLORS,
 } from '../detectConstants';
-import {
-  createPendingLineShape,
-  EMPTY_LINE_SHAPES,
-} from '../detectPointMarkUtils';
+import { createPendingLineShape, EMPTY_LINE_SHAPES } from '../detectPointMarkUtils';
 
 type MarkedPointPending = {
   location: { x: number; y?: number };
   color?: (typeof DETECT_POINT_MARK_COLORS)[number];
 };
 
-/** Shape with optional series binding. Stripped before passing to chart. */
 type ChartShapeWithOptionalSeriesIndex = ChartShape & { seriesIndex?: number };
-
-/** Icon with optional series binding. Stripped before passing to chart. */
 type ChartIconWithOptionalSeriesIndex = ChartIcon & { seriesIndex?: number };
 
-const stripSeriesIndexFromShape = (
-  shape: ChartShapeWithOptionalSeriesIndex
-): ChartShape => {
-  const { seriesIndex: _seriesIndex, ...rest } = shape;
-  return rest as ChartShape;
-};
-
-const stripSeriesIndexFromIcon = (
-  icon: ChartIconWithOptionalSeriesIndex
-): ChartIcon => {
-  const { seriesIndex: _seriesIndex, ...rest } = icon;
-  return rest as ChartIcon;
-};
-
 export interface UseDetectPointMarkFlowOptions {
-  chartId: string;
+  data: ChartData | null;
+}
+
+export interface DetectPointMarkFlowState {
+  additionalShapes: ChartShapeWithOptionalSeriesIndex[];
+  additionalIcons: ChartIconWithOptionalSeriesIndex[];
+  seriesVisibility: boolean[];
+  showShapesForHiddenSeries: boolean;
+  seriesPickerOpen: boolean;
+  markedPoints: MarkedPointPending[] | null;
+  chartDataForModal: { lines: ChartDataSeries[] } | null;
+  bindableIndices: number[];
+  bindableIndicesBase: number[];
+  requestedSeriesIndex: number | null;
+  setRequestedSeriesIndex: (seriesIndex: number | null) => void;
+  setMiddlePointColor: (color: (typeof DETECT_POINT_MARK_COLORS)[number]) => void;
+  handleMiddleClick: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
+  confirmSeries: (seriesIndex: number) => void;
+  onUndoLastClick: () => void;
+  onCancelFlow: () => void;
+  onSeriesVisibilityStateChange: (visibility: boolean[]) => void;
+  toggleShowShapesForHiddenSeries: () => void;
+}
+
+const useDetectShapes = ({
+  baseShapes,
+  additionalShapes,
+  shouldFilterByVisibility,
+  seriesVisibility,
+}: {
+  baseShapes: ChartShape[];
+  additionalShapes: ChartShapeWithOptionalSeriesIndex[];
+  shouldFilterByVisibility: boolean;
+  seriesVisibility: boolean[];
+}) => {
+  return useMemo(() => {
+    const allShapes: ChartShapeWithOptionalSeriesIndex[] = [
+      ...(baseShapes as ChartShapeWithOptionalSeriesIndex[]),
+      ...additionalShapes,
+    ];
+
+    return allShapes
+      .filter((shape) => {
+        if (!shouldFilterByVisibility) {
+          return true;
+        }
+
+        const shapeSeriesIndex = shape.seriesIndex;
+        if (shapeSeriesIndex == null) {
+          return true;
+        }
+
+        return seriesVisibility[shapeSeriesIndex] !== false;
+      })
+      .map((shape) => {
+        const shapeWithoutSeriesIndex = { ...shape };
+        delete shapeWithoutSeriesIndex.seriesIndex;
+        return shapeWithoutSeriesIndex as ChartShape;
+      });
+  }, [baseShapes, additionalShapes, shouldFilterByVisibility, seriesVisibility]);
+};
+
+const useDetectIcons = ({
+  data,
+  baseIcons,
+  additionalIcons,
+  shouldFilterByVisibility,
+  seriesVisibility,
+}: {
+  data: ChartData | null;
+  baseIcons: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  additionalIcons: ChartIconWithOptionalSeriesIndex[];
+  shouldFilterByVisibility: boolean;
+  seriesVisibility: boolean[];
+}) => {
+  return useMemo(() => {
+    if (!data) {
+      return [];
+    }
+
+    const allIcons: ChartIconWithOptionalSeriesIndex[] = [
+      ...(baseIcons as ChartIconWithOptionalSeriesIndex[]),
+      ...additionalIcons,
+    ];
+
+    return allIcons
+      .filter((icon) => {
+        if (!shouldFilterByVisibility) {
+          return true;
+        }
+
+        const iconSeriesIndex = icon.seriesIndex;
+        if (iconSeriesIndex == null) {
+          return true;
+        }
+
+        return seriesVisibility[iconSeriesIndex] !== false;
+      })
+      .map((icon) => {
+        const iconWithoutSeriesIndex = { ...icon };
+        delete iconWithoutSeriesIndex.seriesIndex;
+        return iconWithoutSeriesIndex as ChartIcon;
+      });
+  }, [data, baseIcons, additionalIcons, shouldFilterByVisibility, seriesVisibility]);
+};
+
+export interface UseDetectChartOptions {
   data: ChartData | null;
   options: ChartOptions;
-  shapes?: ChartShape[];
-  icons: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  baseShapes: ChartShape[];
+  baseIcons: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  additionalBindedShapes: ChartShapeWithOptionalSeriesIndex[];
+  additionalBindedIcons: ChartIconWithOptionalSeriesIndex[];
+  seriesVisibility: boolean[];
+  showShapesForHiddenSeries: boolean;
+  onMiddleClick: (
+    event: MouseEvent,
+    xValue: number,
+    yValue: number,
+    getSeriesVisibility?: () => boolean[]
+  ) => void;
+  onSeriesVisibilityStateChange: (visibility: boolean[]) => void;
+  toggleShowShapesForHiddenSeries: () => void;
+}
+
+export interface UseDetectModalOptions {
+  seriesPickerOpen: boolean;
+  chartDataForModal: { lines: ChartDataSeries[] } | null;
+  bindableIndices: number[];
+  bindableIndicesBase: number[];
+  requestedSeriesIndex: number | null;
+  markedPoints: MarkedPointPending[] | null;
+  setSelectedSeriesIndex: (seriesIndex: number | null) => void;
+  setMiddlePointColor: (color: (typeof DETECT_POINT_MARK_COLORS)[number]) => void;
+  confirmSeries: (seriesIndex: number) => void;
+  onUndoLastClick: () => void;
+  onCancelFlow: () => void;
 }
 
 export const useDetectPointMarkFlow = ({
   data,
-  options,
-  shapes: baseShapes = [],
-  icons,
-}: UseDetectPointMarkFlowOptions) => {
+}: UseDetectPointMarkFlowOptions): DetectPointMarkFlowState => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [clicks, setClicks] = useState<{ x: number; y: number }[]>([]);
-  const clicksRef = useRef(clicks);
-  clicksRef.current = clicks;
-
-  const [confirmedShapes, setConfirmedShapes] = useState<
-    ChartShapeWithOptionalSeriesIndex[]
-  >([]);
-  const [confirmedIcons, setConfirmedIcons] = useState<
-    ChartIconWithOptionalSeriesIndex[]
-  >([]);
+  const [markedPoints, setMarkedPoints] = useState<MarkedPointPending[] | null>(null);
+  const [confirmedShapes, setConfirmedShapes] = useState<ChartShapeWithOptionalSeriesIndex[]>([]);
+  const [confirmedIcons, setConfirmedIcons] = useState<ChartIconWithOptionalSeriesIndex[]>([]);
   const [seriesVisibility, setSeriesVisibility] = useState<boolean[]>([]);
-  const [showShapesForHiddenSeries, setShowShapesForHiddenSeries] =
-    useState(false);
+  const [showShapesForHiddenSeries, setShowShapesForHiddenSeries] = useState(false);
+
   const [seriesPickerOpen, setSeriesPickerOpen] = useState(false);
-  const [markedXValues, setMarkedXValues] = useState<
-    [number, number, number] | null
-  >(null);
-  const [markedPoints, setMarkedPoints] = useState<MarkedPointPending[] | null>(
+  const [markedXValues, setMarkedXValues] = useState<[number, number, number] | null>(null);
+  const [chartDataForModal, setChartDataForModal] = useState<{ lines: ChartDataSeries[] } | null>(
     null
   );
-  const [chartDataForModal, setChartDataForModal] = useState<{
-    lines: ChartDataSeries[];
-  } | null>(null);
   const [bindableIndices, setBindableIndices] = useState<number[]>([]);
   const [bindableIndicesBase, setBindableIndicesBase] = useState<number[]>([]);
-  const [clicksToRestoreOnUndo, setClicksToRestoreOnUndo] = useState<
-    { x: number; y: number }[]
-  >([]);
-  const [requestedSeriesIndex, setRequestedSeriesIndex] = useState<
-    number | null
-  >(null);
+  const [clicksToRestoreOnUndo, setClicksToRestoreOnUndo] = useState<{ x: number; y: number }[]>(
+    []
+  );
+  const [requestedSeriesIndex, setRequestedSeriesIndex] = useState<number | null>(null);
 
   const shouldFilterByVisibility = !showShapesForHiddenSeries;
-
-  const isShapeVisible = useCallback(
-    (shape: ChartShapeWithOptionalSeriesIndex) => {
-      if (!shouldFilterByVisibility) return true;
-      const { seriesIndex } = shape;
-      if (seriesIndex == null) return true;
-      return seriesVisibility[seriesIndex] !== false;
-    },
-    [shouldFilterByVisibility, seriesVisibility]
-  );
-
-  const isIconVisible = useCallback(
-    (icon: ChartIconWithOptionalSeriesIndex) => {
-      if (!shouldFilterByVisibility) return true;
-      const { seriesIndex } = icon;
-      if (seriesIndex == null) return true;
-      return seriesVisibility[seriesIndex] !== false;
-    },
-    [shouldFilterByVisibility, seriesVisibility]
-  );
-
-  const chartIcons = useMemo(() => {
-    if (!data) return [];
-    const baseIconsWithOptionalSeriesIndex: ChartIconWithOptionalSeriesIndex[] =
-      icons;
-    const allIcons: ChartIconWithOptionalSeriesIndex[] = [
-      ...baseIconsWithOptionalSeriesIndex,
-      ...confirmedIcons,
-    ];
-    const filtered = allIcons.filter(isIconVisible);
-    return filtered.map(stripSeriesIndexFromIcon);
-  }, [data, icons, confirmedIcons, isIconVisible]);
-
-  const pendingShapes = useMemo(() => {
-    if (clicks.length > 0) {
-      return clicks.map((click, clickIndex) =>
-        createPendingLineShape(clickIndex, click.x)
-      );
-    }
-    if (seriesPickerOpen && markedXValues) {
-      return markedXValues.map((xValue, clickIndex) =>
-        createPendingLineShape(clickIndex, xValue)
-      );
-    }
-    return EMPTY_LINE_SHAPES;
-  }, [clicks, seriesPickerOpen, markedXValues]);
-
-  const chartShapes = useMemo(() => {
-    const baseShapesWithOptionalSeriesIndex: ChartShapeWithOptionalSeriesIndex[] =
-      baseShapes;
-    const allShapes: ChartShapeWithOptionalSeriesIndex[] = [
-      ...baseShapesWithOptionalSeriesIndex,
-      ...confirmedShapes,
-      ...pendingShapes,
-    ];
-    const filtered = allShapes.filter(isShapeVisible);
-    return filtered.map(stripSeriesIndexFromShape);
-  }, [baseShapes, confirmedShapes, pendingShapes, isShapeVisible]);
-
-  const handleMiddleClick = useCallback(
-    (event: MouseEvent) => {
-      if (!data) return;
-
-      const chartEvent = event as ChartMiddleClickEvent;
-      const seriesBindable = data.map((line) => line.style?.bindable !== false);
-      const seriesVisibility = chartEvent.getSeriesVisibility?.();
-
-      let bindableIndicesComputed = Array.from(
-        { length: data.length },
-        (_, index) => index
-      );
-      if (seriesBindable) {
-        bindableIndicesComputed = bindableIndicesComputed.filter(
-          (index) => seriesBindable[index] !== false
-        );
-      }
-      if (seriesVisibility && seriesVisibility.length > 0) {
-        bindableIndicesComputed = bindableIndicesComputed.filter(
-          (index) => seriesVisibility[index] !== false
-        );
-      }
-
-      const currentClicks = clicksRef.current;
-      const nextClicks = [
-        ...currentClicks,
-        { x: chartEvent.xValue, y: chartEvent.yValue },
-      ];
-
-      if (nextClicks.length === 3) {
-        const [first, second, third] = nextClicks;
-        const minX = Math.min(first.x, third.x);
-        const maxX = Math.max(first.x, third.x);
-        if (second.x < minX || second.x > maxX) {
-          enqueueSnackbar('Pick must be between the two shoulders.', {
-            variant: 'error',
-          });
-          setClicks([first, second]);
-          return;
-        }
-
-        const bindableIndicesBaseComputed = seriesBindable
-          ? Array.from({ length: data.length }, (_, index) => index).filter(
-              (index) => seriesBindable[index] !== false
-            )
-          : Array.from({ length: data.length }, (_, index) => index);
-
-        const openModal = bindableIndicesComputed.length > 0;
-
-        setClicks([]);
-        setClicksToRestoreOnUndo([first, second]);
-        setMarkedXValues([first.x, second.x, third.x]);
-        setMarkedPoints([
-          { location: { x: first.x } },
-          { location: { x: second.x, y: second.y } },
-          { location: { x: third.x } },
-        ]);
-        setChartDataForModal(openModal ? { lines: data } : null);
-        setBindableIndices(openModal ? bindableIndicesComputed : []);
-        setBindableIndicesBase(openModal ? bindableIndicesBaseComputed : []);
-        setSeriesPickerOpen(openModal);
-      } else if (bindableIndicesComputed.length > 0) {
-        setClicks(nextClicks);
-      }
-    },
-    [data, enqueueSnackbar]
-  );
-
-  const chartOptions = useMemo(
-    () => ({
-      ...options,
-      howToUseAdditional:
-        options.howToUseAdditional ?? DETECT_HOW_TO_USE_ADDITIONAL,
-      events: data
-        ? {
-            ...options.events,
-            onmiddleclick: handleMiddleClick,
-          }
-        : options.events,
-    }),
-    [options, data, handleMiddleClick]
-  );
-
-  const modalLines = useMemo(
-    () => chartDataForModal?.lines ?? [],
-    [chartDataForModal]
-  );
-
-  const seriesOptions = useMemo(
-    () =>
-      bindableIndicesBase.length > 0
-        ? bindableIndicesBase
-        : Array.from({ length: modalLines.length }, (_, index) => index),
-    [bindableIndicesBase, modalLines.length]
-  );
-
-  const seriesNames = useMemo(
-    () => modalLines.map((line) => line.name),
-    [modalLines]
-  );
-
-  const selectedSeriesIndex = useMemo(() => {
-    if (!seriesPickerOpen || seriesOptions.length === 0) return -1;
-    if (
-      requestedSeriesIndex != null &&
-      seriesOptions.includes(requestedSeriesIndex)
-    ) {
-      return requestedSeriesIndex;
-    }
-    const firstVisible = bindableIndices[0];
-    const preferVisible =
-      firstVisible != null && seriesOptions.includes(firstVisible);
-    return preferVisible ? firstVisible : seriesOptions[0] ?? -1;
-  }, [seriesPickerOpen, seriesOptions, requestedSeriesIndex, bindableIndices]);
-
-  const canConfirm =
-    selectedSeriesIndex >= 0 && markedPoints?.[1]?.color != null;
 
   const closeSeriesPicker = useCallback(() => {
     setSeriesPickerOpen(false);
     setMarkedXValues(null);
-    setMarkedPoints(null);
     setChartDataForModal(null);
     setBindableIndices([]);
     setBindableIndicesBase([]);
@@ -284,159 +207,361 @@ export const useDetectPointMarkFlow = ({
     setRequestedSeriesIndex(null);
   }, []);
 
-  const handleConfirmSeries = useCallback(
+  const handleMiddleClick = useCallback(
+    (_event: MouseEvent, xValue: number, yValue: number, getSeriesVisibility?: () => boolean[]) => {
+      if (!data) {
+        return;
+      }
+
+      const seriesBindable = data.map((line) => line.style?.bindable !== false);
+      const visibility = getSeriesVisibility?.();
+
+      let visibleBindableIndices = Array.from({ length: data.length }, (_, index) => index);
+      visibleBindableIndices = visibleBindableIndices.filter(
+        (index) => seriesBindable[index] !== false
+      );
+
+      if (visibility && visibility.length > 0) {
+        visibleBindableIndices = visibleBindableIndices.filter(
+          (index) => visibility[index] !== false
+        );
+      }
+
+      setClicks((previousClicks) => {
+        const nextClicks = [...previousClicks, { x: xValue, y: yValue }];
+
+        if (nextClicks.length === 3) {
+          const [firstClick, middleClick, thirdClick] = nextClicks;
+          const minimumX = Math.min(firstClick.x, thirdClick.x);
+          const maximumX = Math.max(firstClick.x, thirdClick.x);
+
+          if (middleClick.x < minimumX || middleClick.x > maximumX) {
+            enqueueSnackbar('Pick must be between the two shoulders.', { variant: 'error' });
+            return [firstClick, middleClick];
+          }
+
+          const bindableIndicesForAllSeries = Array.from(
+            { length: data.length },
+            (_, index) => index
+          ).filter((index) => seriesBindable[index] !== false);
+
+          setMarkedPoints([
+            { location: { x: firstClick.x } },
+            { location: { x: middleClick.x, y: middleClick.y } },
+            { location: { x: thirdClick.x } },
+          ]);
+
+          const shouldOpenModal = visibleBindableIndices.length > 0;
+          setMarkedXValues([firstClick.x, middleClick.x, thirdClick.x]);
+          setChartDataForModal(shouldOpenModal ? { lines: data } : null);
+          setBindableIndices(shouldOpenModal ? visibleBindableIndices : []);
+          setBindableIndicesBase(shouldOpenModal ? bindableIndicesForAllSeries : []);
+          setClicksToRestoreOnUndo([firstClick, middleClick]);
+          setSeriesPickerOpen(shouldOpenModal);
+
+          return [];
+        }
+
+        if (visibleBindableIndices.length > 0) {
+          return nextClicks;
+        }
+
+        return previousClicks;
+      });
+    },
+    [data, enqueueSnackbar]
+  );
+
+  const confirmSeries = useCallback(
     (seriesIndex: number) => {
-      if (
-        !markedPoints ||
-        !markedXValues ||
-        !chartDataForModal
-      ) {
+      if (!markedPoints || !markedXValues || !chartDataForModal) {
         return;
       }
 
       const [leftX, middleX, rightX] = markedXValues;
-      const leftPoint = getInterpolatedPointAtX(
-        chartDataForModal,
-        leftX,
-        seriesIndex
-      );
-      const middlePoint = getInterpolatedPointAtX(
-        chartDataForModal,
-        middleX,
-        seriesIndex
-      );
-      const rightPoint = getInterpolatedPointAtX(
-        chartDataForModal,
-        rightX,
-        seriesIndex
-      );
+      const leftPoint = getInterpolatedPointAtX(chartDataForModal, leftX, seriesIndex);
+      const middlePoint = getInterpolatedPointAtX(chartDataForModal, middleX, seriesIndex);
+      const rightPoint = getInterpolatedPointAtX(chartDataForModal, rightX, seriesIndex);
 
-      if (!leftPoint || !middlePoint || !rightPoint) return;
+      if (!leftPoint || !middlePoint || !rightPoint) {
+        return;
+      }
 
-      const newShapes: ChartShapeWithOptionalSeriesIndex[] =
-        markedXValues.map((xValue, index) => ({
-          ...createPendingLineShape(index, xValue),
-          seriesIndex: selectedSeriesIndex,
-        }));
-      setConfirmedShapes((prev) => [...prev, ...newShapes]);
+      const newShapes: ChartShapeWithOptionalSeriesIndex[] = markedXValues.map((xValue, index) => ({
+        ...createPendingLineShape(index, xValue),
+        seriesIndex,
+      }));
+      setConfirmedShapes((previousShapes) => [...previousShapes, ...newShapes]);
 
       const middleColor = markedPoints[1]?.color;
       const newIcon: ChartIconWithOptionalSeriesIndex = {
         iconImage: DEFAULT_POINT_MARK_ICON_SVG,
         location: middlePoint,
         color: middleColor ? DETECT_COLOR_HEX_BY_NAME[middleColor] : undefined,
-        seriesIndex: selectedSeriesIndex,
+        seriesIndex,
       };
-      setConfirmedIcons((prev) => [...prev, newIcon]);
+      setConfirmedIcons((previousIcons) => [...previousIcons, newIcon]);
 
       enqueueSnackbar('Saved 3 points', { autoHideDuration: 3000 });
-      setRequestedSeriesIndex(null);
+      setMarkedPoints(null);
       closeSeriesPicker();
     },
-    [
-      markedPoints,
-      markedXValues,
-      chartDataForModal,
-      enqueueSnackbar,
-      closeSeriesPicker,
-    ]
+    [markedPoints, markedXValues, chartDataForModal, closeSeriesPicker, enqueueSnackbar]
   );
 
-  const handleDone = useCallback(() => {
-    if (!canConfirm) return;
-    handleConfirmSeries(selectedSeriesIndex);
-  }, [canConfirm, handleConfirmSeries, selectedSeriesIndex]);
-
-  const handleUndoLastClick = useCallback(() => {
+  const onUndoLastClick = useCallback(() => {
     if (seriesPickerOpen) {
       setClicks(clicksToRestoreOnUndo);
-      setClicksToRestoreOnUndo([]);
+      setMarkedPoints(null);
       closeSeriesPicker();
-    } else if (clicks.length > 0) {
-      setClicks((prev) => prev.slice(0, -1));
+      return;
     }
-    setRequestedSeriesIndex(null);
-  }, [seriesPickerOpen, clicksToRestoreOnUndo, clicks.length, closeSeriesPicker]);
 
-  const handleCancelFlow = useCallback(() => {
+    if (clicks.length > 0) {
+      setClicks((previousClicks) => previousClicks.slice(0, -1));
+    }
+  }, [seriesPickerOpen, clicksToRestoreOnUndo, closeSeriesPicker, clicks.length]);
+
+  const onCancelFlow = useCallback(() => {
     setClicks([]);
-    setClicksToRestoreOnUndo([]);
+    setMarkedPoints(null);
     closeSeriesPicker();
   }, [closeSeriesPicker]);
 
-  const updateMarkedPointColor = useCallback(
-    (index: number, color: (typeof DETECT_POINT_MARK_COLORS)[number] | undefined) => {
-      setMarkedPoints((prev) => {
-        if (!prev || index < 0 || index >= prev.length) return prev;
-        const next = [...prev];
-        const point = next[index]!;
-        if (color === undefined) {
-          const { color: _, ...rest } = point;
-          next[index] = rest as MarkedPointPending;
-        } else {
-          next[index] = { ...point, color };
-        }
-        return next;
-      });
-    },
-    []
+  const setMiddlePointColor = useCallback((color: (typeof DETECT_POINT_MARK_COLORS)[number]) => {
+    setMarkedPoints((previousPoints) => {
+      if (!previousPoints || previousPoints.length < 2) {
+        return previousPoints;
+      }
+
+      const nextPoints = [...previousPoints];
+      nextPoints[1] = {
+        ...nextPoints[1]!,
+        color,
+      };
+
+      return nextPoints;
+    });
+  }, []);
+
+  const pendingAdditionalShapes = useMemo<ChartShapeWithOptionalSeriesIndex[]>(() => {
+    if (clicks.length > 0) {
+      return clicks.map((click, clickIndex) => createPendingLineShape(clickIndex, click.x));
+    }
+
+    if (seriesPickerOpen && markedXValues) {
+      return markedXValues.map((xValue, clickIndex) => createPendingLineShape(clickIndex, xValue));
+    }
+
+    return EMPTY_LINE_SHAPES;
+  }, [clicks, seriesPickerOpen, markedXValues]);
+
+  const additionalShapes = useMemo(
+    () => [...confirmedShapes, ...pendingAdditionalShapes],
+    [confirmedShapes, pendingAdditionalShapes]
   );
 
-  const setBindableIndicesFromVisibility = useCallback(
+  const additionalIcons = confirmedIcons;
+
+  const onSeriesVisibilityStateChange = useCallback(
     (visibility: boolean[]) => {
-      if (!seriesPickerOpen || bindableIndicesBase.length === 0) return;
-      const next = bindableIndicesBase.filter(
+      setSeriesVisibility(visibility);
+
+      if (!shouldFilterByVisibility || !seriesPickerOpen) {
+        return;
+      }
+
+      const visibleBindableIndices = bindableIndicesBase.filter(
         (index) => visibility[index] !== false
       );
-      setBindableIndices(next);
+
+      setBindableIndices(visibleBindableIndices);
     },
-    [seriesPickerOpen, bindableIndicesBase]
+    [shouldFilterByVisibility, seriesPickerOpen, bindableIndicesBase]
+  );
+
+  const toggleShowShapesForHiddenSeries = useCallback(() => {
+    setShowShapesForHiddenSeries((isVisible) => !isVisible);
+  }, []);
+
+  return {
+    additionalShapes,
+    additionalIcons,
+    seriesVisibility,
+    showShapesForHiddenSeries,
+    seriesPickerOpen,
+    markedPoints,
+    chartDataForModal,
+    bindableIndices,
+    bindableIndicesBase,
+    requestedSeriesIndex,
+    setRequestedSeriesIndex,
+    setMiddlePointColor,
+    handleMiddleClick,
+    confirmSeries,
+    onUndoLastClick,
+    onCancelFlow,
+    onSeriesVisibilityStateChange,
+    toggleShowShapesForHiddenSeries,
+  };
+};
+
+export const useDetectChart = ({
+  data,
+  options,
+  baseShapes,
+  baseIcons,
+  additionalBindedShapes: additionalShapes,
+  additionalBindedIcons: additionalIcons,
+  seriesVisibility,
+  showShapesForHiddenSeries,
+  onMiddleClick,
+  onSeriesVisibilityStateChange,
+  toggleShowShapesForHiddenSeries,
+}: UseDetectChartOptions) => {
+  const shouldFilterByVisibility = !showShapesForHiddenSeries;
+
+  const finalShapes = useDetectShapes({
+    baseShapes,
+    additionalShapes,
+    shouldFilterByVisibility,
+    seriesVisibility,
+  });
+
+  const finalIcons = useDetectIcons({
+    data,
+    baseIcons,
+    additionalIcons,
+    shouldFilterByVisibility,
+    seriesVisibility,
+  });
+
+  const chartOptions = useMemo(
+    () => ({
+      ...options,
+      howToUseAdditional: options.howToUseAdditional ?? DETECT_HOW_TO_USE_ADDITIONAL,
+      events: data
+        ? {
+            ...options.events,
+            onmiddleclick: (
+              event: MouseEvent,
+              xValue: number,
+              yValue: number,
+              getSeriesVisibility?: () => boolean[]
+            ) => {
+              onMiddleClick(
+                event,
+                xValue,
+                yValue,
+                getSeriesVisibility
+              );
+            },
+          }
+        : options.events,
+    }),
+    [options, data, onMiddleClick]
   );
 
   const onSeriesVisibilityChange = useCallback(
     (visibility: boolean[]) => {
-      setSeriesVisibility(visibility);
-      setBindableIndicesFromVisibility(visibility);
+      onSeriesVisibilityStateChange(visibility);
     },
-    [setBindableIndicesFromVisibility]
+    [onSeriesVisibilityStateChange]
   );
-
-  useEffect(() => {
-    if (!seriesPickerOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter') return;
-      event.preventDefault();
-      handleDone();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [seriesPickerOpen, handleDone]);
-
-  const toggleShowShapesForHiddenSeries = useCallback(() => {
-    setShowShapesForHiddenSeries((prev) => !prev);
-  }, []);
 
   return {
     chartOptions,
-    chartShapes,
-    chartIcons,
-    colorOptions: DETECT_POINT_MARK_COLORS,
-    selectedColor: markedPoints?.[1]?.color,
-    seriesPickerState: {
-      open: seriesPickerOpen && !!chartDataForModal,
-      seriesOptions,
-      seriesNames,
-      selectedSeriesIndex,
-    },
-    canConfirm,
-    setSelectedSeriesIndex: setRequestedSeriesIndex,
-    setMiddlePointColor: (color: (typeof DETECT_POINT_MARK_COLORS)[number]) =>
-      updateMarkedPointColor(1, color),
-    onDone: handleDone,
-    onUndoLastClick: handleUndoLastClick,
-    onCancelFlow: handleCancelFlow,
+    finalShapes,
+    finalIcons,
     onSeriesVisibilityChange,
     showShapesForHiddenSeries,
     toggleShowShapesForHiddenSeries,
+  };
+};
+
+export const useDetectModal = ({
+  seriesPickerOpen,
+  chartDataForModal,
+  bindableIndices,
+  bindableIndicesBase,
+  requestedSeriesIndex,
+  markedPoints,
+  setSelectedSeriesIndex,
+  setMiddlePointColor,
+  confirmSeries,
+  onUndoLastClick,
+  onCancelFlow,
+}: UseDetectModalOptions) => {
+  const seriesOptions = useMemo(
+    () =>
+      bindableIndicesBase.length > 0
+        ? bindableIndicesBase
+        : Array.from({ length: chartDataForModal?.lines.length ?? 0 }, (_, index) => index),
+    [bindableIndicesBase, chartDataForModal?.lines.length]
+  );
+
+  const seriesNames = useMemo(
+    () => chartDataForModal?.lines.map((line) => line.name) ?? [],
+    [chartDataForModal]
+  );
+
+  const selectedSeriesIndex = useMemo(() => {
+    if (!seriesPickerOpen || seriesOptions.length === 0) {
+      return -1;
+    }
+
+    if (requestedSeriesIndex != null && seriesOptions.includes(requestedSeriesIndex)) {
+      return requestedSeriesIndex;
+    }
+
+    const firstVisibleBindable = bindableIndices[0];
+    if (firstVisibleBindable != null && seriesOptions.includes(firstVisibleBindable)) {
+      return firstVisibleBindable;
+    }
+
+    return seriesOptions[0] ?? -1;
+  }, [seriesPickerOpen, requestedSeriesIndex, bindableIndices, seriesOptions]);
+
+  const canConfirm = selectedSeriesIndex >= 0 && markedPoints?.[1]?.color != null;
+
+  const onDone = useCallback(() => {
+    if (!canConfirm) {
+      return;
+    }
+
+    confirmSeries(selectedSeriesIndex);
+  }, [canConfirm, confirmSeries, selectedSeriesIndex]);
+
+  useEffect(() => {
+    if (!seriesPickerOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
+      onDone();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [seriesPickerOpen, onDone]);
+
+  return {
+    open: seriesPickerOpen && !!chartDataForModal,
+    colorOptions: DETECT_POINT_MARK_COLORS,
+    selectedColor: markedPoints?.[1]?.color,
+    seriesOptions,
+    seriesNames,
+    selectedSeriesIndex,
+    canConfirm,
+    setSelectedSeriesIndex,
+    setMiddlePointColor,
+    onDone,
+    onUndoLastClick,
+    onCancelFlow,
   };
 };

@@ -36,12 +36,7 @@ export const useChart = ({
   const chartData = data ?? EMPTY_CHART_DATA;
   const loading = data == null;
 
-  const {
-    zoomCallbacks,
-    zoomBackRef,
-    zoomResetRef,
-    canZoomBack,
-  } = useChartZoomCallbacks();
+  const { zoomCallbacks, zoomBackRef, zoomResetRef, canZoomBack } = useChartZoomCallbacks();
 
   const {
     seriesVisibility,
@@ -60,8 +55,7 @@ export const useChart = ({
 
   const wrapperStyle = useChartWrapperStyle({
     chartStyle,
-    optionsTextColor: options.textColor,
-    optionsZeroLineColor: options.zeroLineColor,
+    styling: options.styling,
   });
 
   const wrapperOptions = useChartWrapperOptions({
