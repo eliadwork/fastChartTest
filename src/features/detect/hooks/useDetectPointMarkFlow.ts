@@ -251,7 +251,7 @@ export const useDetectPointMarkFlow = ({
             { location: { x: thirdClick.x } },
           ]);
 
-          const shouldOpenModal = visibleBindableIndices.length > 0;
+          const shouldOpenModal = data.length > 0;
           setMarkedXValues([firstClick.x, middleClick.x, thirdClick.x]);
           setChartDataForModal(shouldOpenModal ? { lines: data } : null);
           setBindableIndices(shouldOpenModal ? visibleBindableIndices : []);
@@ -262,7 +262,7 @@ export const useDetectPointMarkFlow = ({
           return [];
         }
 
-        if (visibleBindableIndices.length > 0) {
+        if (data.length > 0) {
           return nextClicks;
         }
 
@@ -514,12 +514,16 @@ export const useDetectModal = ({
       return requestedSeriesIndex;
     }
 
+    if (bindableIndices.length === 0) {
+      return -1;
+    }
+
     const firstVisibleBindable = bindableIndices[0];
     if (firstVisibleBindable != null && seriesOptions.includes(firstVisibleBindable)) {
       return firstVisibleBindable;
     }
 
-    return seriesOptions[0] ?? -1;
+    return -1;
   }, [seriesPickerOpen, requestedSeriesIndex, bindableIndices, seriesOptions]);
 
   const canConfirm = selectedSeriesIndex >= 0 && markedPoints?.[1]?.color != null;
