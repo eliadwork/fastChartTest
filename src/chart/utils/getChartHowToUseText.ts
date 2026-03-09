@@ -28,11 +28,7 @@ export const getChartHowToUseText = ({
   const stretch = wrapperOptions.stretch;
   if (stretch?.enable && stretch.trigger != null) {
     const label = TRIGGER_LABEL[stretch.trigger];
-    parts.push(
-      isKeyTrigger(stretch.trigger)
-        ? `Hold ${label} to stretch`
-        : `${label} to stretch`
-    );
+    parts.push(isKeyTrigger(stretch.trigger) ? `Hold ${label} to stretch` : `${label} to stretch`);
   }
 
   const pan = wrapperOptions.pan;
@@ -43,11 +39,6 @@ export const getChartHowToUseText = ({
 
   if (!chartOnly) {
     parts.push('Click legend to toggle series');
-  }
-
-  const hasPointMark = !!wrapperOptions.events?.onmiddleclick;
-  if (hasPointMark) {
-    parts.push('Middle-click for 3-point mark');
   }
 
   let text = parts.join(' • ');

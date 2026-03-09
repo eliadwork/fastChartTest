@@ -1,10 +1,14 @@
-import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../types';
-
-import { useEffect } from 'react';
+import type {
+  ChartData,
+  ChartIcon,
+  ChartOptions,
+  ChartShape,
+  ChartStyle,
+} from '../types';
 
 import { useChartHeaderState } from './useChartHeaderState';
 import { useChartLegendProps } from './useChartLegendProps';
-import { useChartSeriesVisibility } from './useChartSeriesVisibility';
+import { useChartVisibility } from './useChartVisibility';
 import { useChartWrapperOptions } from './useChartWrapperOptions';
 import { useChartWrapperStyle } from './useChartWrapperStyle';
 import { useChartZoomCallbacks } from './useChartZoomCallbacks';
@@ -19,8 +23,40 @@ export interface UseChartParams {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
-  /** Called when series visibility changes (e.g. from legend). Used by Detect for modal. */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
+}
+
+export interface ChartHeaderModel {
+  showHeader: boolean;
+  headerSx: Record<string, unknown>;
+  textColor: string;
+  title?: string;
+  note?: string;
+}
+
+export interface ChartToolbarModel {
+  zoomBackRef: React.MutableRefObject<(() => void) | null>;
+  zoomResetRef: React.MutableRefObject<(() => void) | null>;
+  canZoomBack: boolean;
+  allSeriesHidden: boolean;
+  handleToggleAllSeriesVisibility: () => void;
+}
+
+export interface ChartImplementationModel {
+  chartId?: string;
+  chartData: ChartData;
+  wrapperStyle: ChartStyle;
+  wrapperOptions: ReturnType<typeof useChartWrapperOptions>;
+  zoomCallbacks: ReturnType<typeof useChartZoomCallbacks>['zoomCallbacks'];
+}
+
+export interface UseChartResult {
+  loading: boolean;
+  options: ChartOptions;
+  legendProps: ReturnType<typeof useChartLegendProps>;
+  headerModel: ChartHeaderModel;
+  toolbarModel: ChartToolbarModel;
+  implementationModel: ChartImplementationModel;
 }
 
 export const useChart = ({
@@ -32,7 +68,7 @@ export const useChart = ({
   icons,
   chartStyle,
   onSeriesVisibilityChange,
-}: UseChartParams) => {
+}: UseChartParams): UseChartResult => {
   const chartData = data ?? EMPTY_CHART_DATA;
   const loading = data == null;
 
@@ -40,18 +76,15 @@ export const useChart = ({
 
   const {
     seriesVisibility,
-    handleDisableAll,
     handleSeriesVisibilityChange,
     handleSeriesVisibilityGroupChange,
+    handleToggleAllSeriesVisibility,
     allSeriesHidden,
-  } = useChartSeriesVisibility({
-    initialSeriesCount: chartData.length,
+  } = useChartVisibility({
+    seriesCount: chartData.length,
     initialVisibility: options.seriesVisibility,
+    onSeriesVisibilityChange,
   });
-
-  useEffect(() => {
-    onSeriesVisibilityChange?.(seriesVisibility);
-  }, [seriesVisibility, onSeriesVisibilityChange]);
 
   const wrapperStyle = useChartWrapperStyle({
     chartStyle,
@@ -65,7 +98,7 @@ export const useChart = ({
     seriesVisibility,
     handleSeriesVisibilityChange,
     handleSeriesVisibilityGroupChange,
-    handleDisableAll,
+    handleToggleAllSeriesVisibility,
   });
 
   const textColor = wrapperStyle.textColor;
@@ -90,21 +123,29 @@ export const useChart = ({
   });
 
   return {
-    chartData,
-    chartId,
-    wrapperStyle,
-    wrapperOptions,
-    zoomCallbacks,
-    textColor,
-    showHeader,
-    headerSx,
+    loading,
     options,
     legendProps,
-    zoomBackRef,
-    zoomResetRef,
-    canZoomBack,
-    handleDisableAll,
-    allSeriesHidden,
-    loading,
+    headerModel: {
+      showHeader,
+      headerSx,
+      textColor,
+      title,
+      note: options.note,
+    },
+    toolbarModel: {
+      zoomBackRef,
+      zoomResetRef,
+      canZoomBack,
+      allSeriesHidden,
+      handleToggleAllSeriesVisibility,
+    },
+    implementationModel: {
+      chartId,
+      chartData,
+      wrapperStyle,
+      wrapperOptions,
+      zoomCallbacks,
+    },
   };
 };

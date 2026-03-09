@@ -1,11 +1,8 @@
-/**
- * Chart – Generic facade. Owns header, legend, series visibility.
- * Delegates to injected implementation component.
- */
-
+import type { ChartHeaderModel, ChartToolbarModel } from './hooks/useChart';
 import type { ChartImplementationProps } from './implementation/implementationProps';
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from './types';
 
+import { memo, useMemo } from 'react';
 import {
   ChartVisibilityOffIcon,
   ChartVisibilityOnIcon,
@@ -13,8 +10,6 @@ import {
   ChartZoomResetIcon,
 } from '../assets/chartIcons';
 import { InfoTooltip } from '../shared';
-import { memo, useMemo } from 'react';
-import Box from '@mui/material/Box';
 import {
   ChartPanelHeader,
   ChartPanelHeaderText,
@@ -22,19 +17,19 @@ import {
   ChartPanelTitle,
   ChartWrapperBox,
 } from '../styled/ChartStyled';
-import { getChartHowToUseText } from './utils/getChartHowToUseText';
 import {
   CHART_TOOLTIP_DISABLE_ALL,
   CHART_TOOLTIP_ENABLE_ALL,
   CHART_TOOLTIP_ZOOM_BACK,
   CHART_TOOLTIP_ZOOM_RESET,
 } from './chartConstants';
-import { ChartToolbar } from './ChartStyled';
+import { ChartHeaderContent, ChartHeaderTextContent, ChartToolbar } from './ChartStyled';
 import { ChartToolbarButton } from './ChartToolbarButton';
 import { defaultChartImplementation } from './defaultChartImplementation';
 import { useChart } from './hooks/useChart';
-import { useDefaultChartStyle } from './hooks/useDefaultChartStyle';
 import { useChartLegendSlot } from './hooks/useChartLegendSlot';
+import { useDefaultChartStyle } from './hooks/useDefaultChartStyle';
+import { getChartHowToUseText } from './utils/getChartHowToUseText';
 
 export interface ChartProps {
   data: ChartData | null;
@@ -45,12 +40,100 @@ export interface ChartProps {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
-  /** Called when series visibility changes. Used by Detect for modal. */
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
-  /** Optional slot for extra toolbar buttons (e.g. Detect shapes visibility toggle). Receives textColor for consistency. */
   toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
   implementationComponent?: React.ComponentType<ChartImplementationProps>;
 }
+
+export interface ChartHeaderSectionProps {
+  headerModel: ChartHeaderModel;
+  howToUseText: string;
+  loading: boolean;
+  toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
+  toolbarModel: ChartToolbarModel;
+}
+
+const ChartToolbarSection = ({
+  loading,
+  textColor,
+  toolbarSlot,
+  toolbarModel,
+}: {
+  loading: boolean;
+  textColor: string;
+  toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
+  toolbarModel: ChartToolbarModel;
+}) => {
+  if (loading) {
+    return null;
+  }
+
+  return (
+    <ChartToolbar>
+      <ChartToolbarButton
+        tooltip={CHART_TOOLTIP_ZOOM_BACK}
+        textColor={textColor}
+        onClick={() => toolbarModel.zoomBackRef.current?.()}
+        disabled={!toolbarModel.canZoomBack}
+      >
+        <ChartZoomBackIcon />
+      </ChartToolbarButton>
+      <ChartToolbarButton
+        tooltip={CHART_TOOLTIP_ZOOM_RESET}
+        textColor={textColor}
+        onClick={() => toolbarModel.zoomResetRef.current?.()}
+      >
+        <ChartZoomResetIcon />
+      </ChartToolbarButton>
+      <ChartToolbarButton
+        tooltip={
+          toolbarModel.allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL
+        }
+        textColor={textColor}
+        onClick={toolbarModel.handleToggleAllSeriesVisibility}
+      >
+        {toolbarModel.allSeriesHidden ? <ChartVisibilityOnIcon /> : <ChartVisibilityOffIcon />}
+      </ChartToolbarButton>
+      {typeof toolbarSlot === 'function' ? toolbarSlot({ textColor }) : toolbarSlot}
+    </ChartToolbar>
+  );
+};
+
+const ChartHeaderSection = ({
+  headerModel,
+  howToUseText,
+  loading,
+  toolbarSlot,
+  toolbarModel,
+}: ChartHeaderSectionProps) => {
+  if (!headerModel.showHeader) {
+    return null;
+  }
+
+  return (
+    <ChartPanelHeader sx={headerModel.headerSx}>
+      <ChartPanelHeaderText>
+        <ChartHeaderContent>
+          <InfoTooltip title={howToUseText} color={headerModel.textColor} />
+          <ChartHeaderTextContent>
+            {headerModel.title != null && (
+              <ChartPanelTitle variant="subtitle1">{headerModel.title}</ChartPanelTitle>
+            )}
+            {headerModel.note != null && (
+              <ChartPanelNote variant="body2">{headerModel.note}</ChartPanelNote>
+            )}
+          </ChartHeaderTextContent>
+        </ChartHeaderContent>
+      </ChartPanelHeaderText>
+      <ChartToolbarSection
+        loading={loading}
+        textColor={headerModel.textColor}
+        toolbarSlot={toolbarSlot}
+        toolbarModel={toolbarModel}
+      />
+    </ChartPanelHeader>
+  );
+};
 
 const ChartComponent = ({
   data,
@@ -69,20 +152,12 @@ const ChartComponent = ({
   const chartStyle = chartStyleProp ?? defaultChartStyle;
 
   const {
-    chartData,
-    wrapperStyle,
-    wrapperOptions,
-    zoomCallbacks,
-    showHeader,
-    headerSx,
-    legendProps,
-    textColor,
-    zoomBackRef,
-    zoomResetRef,
-    canZoomBack,
-    handleDisableAll,
-    allSeriesHidden,
     loading,
+    options: resolvedOptions,
+    legendProps,
+    headerModel,
+    toolbarModel,
+    implementationModel,
   } = useChart({
     data,
     chartId,
@@ -102,67 +177,34 @@ const ChartComponent = ({
   const howToUseText = useMemo(
     () =>
       getChartHowToUseText({
-        wrapperOptions,
-        chartOnly: wrapperStyle.chartOnly,
-        howToUseAdditional: options.howToUseAdditional,
+        wrapperOptions: implementationModel.wrapperOptions,
+        chartOnly: implementationModel.wrapperStyle.chartOnly,
+        howToUseAdditional: resolvedOptions.howToUseAdditional,
       }),
-    [wrapperOptions, wrapperStyle.chartOnly, options.howToUseAdditional]
+    [
+      implementationModel.wrapperOptions,
+      implementationModel.wrapperStyle.chartOnly,
+      resolvedOptions.howToUseAdditional,
+    ]
   );
 
   const ImplementationComponent = implementationComponent;
 
   return (
     <ChartWrapperBox>
-      {showHeader && (
-        <ChartPanelHeader sx={headerSx}>
-          <ChartPanelHeaderText>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, flex: 1, minWidth: 0 }}>
-              <InfoTooltip title={howToUseText} color={textColor} />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                {title != null && <ChartPanelTitle variant="subtitle1">{title}</ChartPanelTitle>}
-                {options.note != null && (
-                  <ChartPanelNote variant="body2">{options.note}</ChartPanelNote>
-                )}
-              </Box>
-            </Box>
-          </ChartPanelHeaderText>
-          {!loading && (
-            <ChartToolbar>
-              <ChartToolbarButton
-                tooltip={CHART_TOOLTIP_ZOOM_BACK}
-                textColor={textColor}
-                onClick={() => zoomBackRef.current?.()}
-                disabled={!canZoomBack}
-              >
-                <ChartZoomBackIcon />
-              </ChartToolbarButton>
-              <ChartToolbarButton
-                tooltip={CHART_TOOLTIP_ZOOM_RESET}
-                textColor={textColor}
-                onClick={() => zoomResetRef.current?.()}
-              >
-                <ChartZoomResetIcon />
-              </ChartToolbarButton>
-              <ChartToolbarButton
-                tooltip={allSeriesHidden ? CHART_TOOLTIP_ENABLE_ALL : CHART_TOOLTIP_DISABLE_ALL}
-                textColor={textColor}
-                onClick={handleDisableAll}
-              >
-                {allSeriesHidden ? <ChartVisibilityOnIcon /> : <ChartVisibilityOffIcon />}
-              </ChartToolbarButton>
-              {typeof toolbarSlot === 'function'
-                ? toolbarSlot({ textColor })
-                : toolbarSlot}
-            </ChartToolbar>
-          )}
-        </ChartPanelHeader>
-      )}
+      <ChartHeaderSection
+        headerModel={headerModel}
+        howToUseText={howToUseText}
+        loading={loading}
+        toolbarSlot={toolbarSlot}
+        toolbarModel={toolbarModel}
+      />
       <ImplementationComponent
-        chartId={chartId}
-        lines={chartData}
-        style={wrapperStyle}
-        options={wrapperOptions}
-        zoomCallbacks={zoomCallbacks}
+        chartId={implementationModel.chartId}
+        lines={implementationModel.chartData}
+        style={implementationModel.wrapperStyle}
+        options={implementationModel.wrapperOptions}
+        zoomCallbacks={implementationModel.zoomCallbacks}
         containerStyle={style}
         overlaySlot={legendSlot}
         loading={loading}

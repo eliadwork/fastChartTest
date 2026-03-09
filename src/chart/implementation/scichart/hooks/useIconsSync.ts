@@ -25,7 +25,6 @@ export interface ChartIconInput {
 
 export interface UseIconsSyncOptions {
   icons: ChartIconInput[];
-  defaultIcon: string;
   defaultColor: string;
   iconSize: number;
 }
@@ -47,7 +46,6 @@ function toSvgString(iconImage: string, sizePx: number, color: string): string {
 
 export const useIconsSync = ({
   icons,
-  defaultIcon,
   defaultColor,
   iconSize,
 }: UseIconsSyncOptions) => {
@@ -107,5 +105,5 @@ export const useIconsSync = ({
       }
       annotationRefs.current = [];
     };
-  }, [initResult, icons, defaultIcon, defaultColor, iconSize]);
+  }, [initResult, icons, defaultColor, iconSize]);
 };

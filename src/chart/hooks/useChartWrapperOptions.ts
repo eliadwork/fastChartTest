@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import {
   CHART_RESAMPLING_PRECISION_DEFAULT,
   CHART_RESAMPLING_PRECISION_OFF,
@@ -14,9 +15,9 @@ export interface UseChartWrapperOptionsParams {
   shapes?: ChartShape[];
   icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
   seriesVisibility: boolean[];
-  handleSeriesVisibilityChange: (index: number, visible: boolean) => void;
-  handleSeriesVisibilityGroupChange: (indices: number[], visible: boolean) => void;
-  handleDisableAll: () => void;
+  handleSeriesVisibilityChange: (seriesIndex: number, isVisible: boolean) => void;
+  handleSeriesVisibilityGroupChange: (seriesIndices: number[], isVisible: boolean) => void;
+  handleToggleAllSeriesVisibility: () => void;
 }
 
 export const useChartWrapperOptions = ({
@@ -26,50 +27,61 @@ export const useChartWrapperOptions = ({
   seriesVisibility,
   handleSeriesVisibilityChange,
   handleSeriesVisibilityGroupChange,
-  handleDisableAll,
+  handleToggleAllSeriesVisibility,
 }: UseChartWrapperOptionsParams): ChartImplementationOptionsWithHandlers => {
   return useMemo(() => {
-    const opts = options;
-    const resamplingObj: ChartImplementationOptions['resampling'] =
-      opts.resampling != null && typeof opts.resampling === 'object'
+    const chartOptions = options;
+
+    const resampling: ChartImplementationOptions['resampling'] =
+      chartOptions.resampling != null && typeof chartOptions.resampling === 'object'
         ? {
-            enable: opts.resampling.enable,
+            enable: chartOptions.resampling.enable,
             precision:
-              opts.resampling.precision ??
-              (opts.resampling.enable ? CHART_RESAMPLING_PRECISION_DEFAULT : CHART_RESAMPLING_PRECISION_OFF),
+              chartOptions.resampling.precision ??
+              (chartOptions.resampling.enable
+                ? CHART_RESAMPLING_PRECISION_DEFAULT
+                : CHART_RESAMPLING_PRECISION_OFF),
           }
         : { enable: false, precision: CHART_RESAMPLING_PRECISION_OFF };
 
     const stretch: ChartImplementationOptions['stretch'] =
-      opts.stretch != null
+      chartOptions.stretch != null
         ? {
-            enable: opts.stretch.enable !== false,
-            trigger: (opts.stretch.trigger ?? 'rightClick') as ChartImplementationOptions['stretch']['trigger'],
+            enable: chartOptions.stretch.enable !== false,
+            trigger: (chartOptions.stretch.trigger ??
+              'rightClick') as ChartImplementationOptions['stretch']['trigger'],
           }
-        : { enable: true, trigger: 'rightClick' as ChartImplementationOptions['stretch']['trigger'] };
+        : {
+            enable: true,
+            trigger: 'rightClick' as ChartImplementationOptions['stretch']['trigger'],
+          };
 
     const pan: ChartImplementationOptions['pan'] =
-      opts.pan != null
+      chartOptions.pan != null
         ? {
-            enable: opts.pan.enable !== false,
-            trigger: (opts.pan.trigger ?? 'shift') as ChartImplementationOptions['pan']['trigger'],
+            enable: chartOptions.pan.enable !== false,
+            trigger: (chartOptions.pan.trigger ??
+              'shift') as ChartImplementationOptions['pan']['trigger'],
           }
-        : { enable: true, trigger: 'shift' as ChartImplementationOptions['pan']['trigger'] };
+        : {
+            enable: true,
+            trigger: 'shift' as ChartImplementationOptions['pan']['trigger'],
+          };
 
     return {
       shapes: shapes ?? [],
       icons: icons ?? [],
-      note: opts.note,
+      note: chartOptions.note,
       stretch,
       pan,
-      resampling: resamplingObj,
-      clipZoomToData: opts.clipZoomToData !== false,
+      resampling,
+      clipZoomToData: chartOptions.clipZoomToData !== false,
       seriesVisibility,
-      seriesGroupKeys: opts.seriesGroupKeys,
+      seriesGroupKeys: chartOptions.seriesGroupKeys,
       onSeriesVisibilityChange: handleSeriesVisibilityChange,
       onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
-      onDisableAll: handleDisableAll,
-      events: opts.events,
+      onDisableAll: handleToggleAllSeriesVisibility,
+      events: chartOptions.events,
     };
   }, [
     options,
@@ -78,6 +90,6 @@ export const useChartWrapperOptions = ({
     seriesVisibility,
     handleSeriesVisibilityChange,
     handleSeriesVisibilityGroupChange,
-    handleDisableAll,
+    handleToggleAllSeriesVisibility,
   ]);
 };

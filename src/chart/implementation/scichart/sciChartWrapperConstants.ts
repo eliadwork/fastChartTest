@@ -57,6 +57,9 @@ export const SCI_CHART_BOX_LABEL_FONT_SIZE = 12
 /** Loading spinner size. */
 export const SCI_CHART_LOADING_SPINNER_SIZE = 40
 
+/** Default icon color used when icon.color is not provided. */
+export const SCI_CHART_DEFAULT_ICON_COLOR = '#3388ff'
+
 /** Map ModifierKey to SciChart EModifierMouseArgKey. rightClick/leftClick use separate handling. */
 export const SCI_CHART_MODIFIER_KEY_MAP: Partial<Record<ModifierKey, EModifierMouseArgKey>> = {
   Shift: EModifierMouseArgKey.Shift,
