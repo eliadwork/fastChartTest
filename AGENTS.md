@@ -86,6 +86,58 @@ Before coding, verify:
 
 ---
 
+# Strict Context Pattern (MUST)
+
+When a component or hook depends on context:
+
+- do not call `useContext` directly in feature/component logic
+- create/use a strict custom hook
+- for contexts created in this repo, default must be `undefined`
+- strict hook must throw if provider is missing
+- do not use fake default values
+
+Required pattern:
+
+```ts
+const SomeContext = createContext<SomeContextValue | undefined>(undefined);
+
+export function useSomeContext() {
+  const value = useContext(SomeContext);
+  if (value === undefined) {
+    throw new Error('useSomeContext must be used within SomeContextProvider');
+  }
+  return value;
+}
+```
+
+Prefer shared helper:
+
+```ts
+export function createStrictContext<T>(name: string) {
+  const Context = createContext<T | undefined>(undefined);
+  Context.displayName = name;
+
+  function useStrictContext() {
+    const value = useContext(Context);
+    if (value === undefined) {
+      throw new Error(`use${name} must be used within ${name}Provider`);
+    }
+    return value;
+  }
+
+  return { Context, Provider: Context.Provider, useContext: useStrictContext };
+}
+```
+
+Provider placement rule:
+
+- keep provider scope as small as possible
+- colocate provider near instance root
+- avoid page-level providers for instance-local state
+- support multiple independent instances on the same page
+
+---
+
 # Rule Priority
 
 ## Tier 1 — Invariants

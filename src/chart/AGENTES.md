@@ -203,6 +203,35 @@ compose model and sync hooks
 
 do not embed unrelated helper logic inline
 
+Strict Context Rule (MUST)
+
+For chart hooks/components that depend on context:
+
+- do not call `useContext` directly in runtime hooks/components
+- create/use a strict custom hook per context
+- strict hook must throw when provider is missing
+- do not use fake fallback defaults
+
+Pattern:
+
+```ts
+const SomeContext = createContext<SomeContextValue | undefined>(undefined);
+
+export function useSomeContext() {
+  const value = useContext(SomeContext);
+  if (value === undefined) {
+    throw new Error('useSomeContext must be used within SomeContextProvider');
+  }
+  return value;
+}
+```
+
+Provider scope:
+
+- keep provider placement as low as possible
+- provider should wrap only the chart subtree that needs it
+- multiple chart instances must support isolated providers/state
+
 Lifecycle Cleanup Rule (MUST)
 
 Implementation-layer effects and sync hooks must clean up resources when they allocate them.

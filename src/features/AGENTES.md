@@ -189,6 +189,21 @@ do not embed unrelated helper logic inline
 
 do not mix unrelated concerns inside a single flow hook
 
+Strict Context Rule
+
+When feature hooks/components depend on context:
+
+- use a strict custom hook instead of direct `useContext`
+- context created in this repo must default to `undefined`
+- strict hook must throw when provider is missing
+- do not use fake defaults
+
+Provider placement:
+
+- scope provider to the lowest subtree that needs it
+- avoid page-level providers for instance-local state
+- multiple instances on the same page must work independently unless shared state is intentional
+
 Ghost Effects Rule
 
 Avoid unnecessary useEffect.
