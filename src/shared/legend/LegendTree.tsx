@@ -34,6 +34,7 @@ export interface LegendTreeNode {
 export interface LegendTreeProps {
   nodes: LegendTreeNode[];
   onToggle: (nodeId: string, nextChecked: boolean) => void;
+  onNodeDoubleClick?: (nodeId: string) => void;
   backgroundColor?: string;
   textColor?: string;
   withCheckbox?: boolean;
@@ -59,12 +60,14 @@ const LegendTreeRows = ({
   nodes,
   depth,
   onToggle,
+  onNodeDoubleClick,
   withCheckbox,
   indentSize,
 }: {
   nodes: LegendTreeNode[];
   depth: number;
   onToggle: (nodeId: string, nextChecked: boolean) => void;
+  onNodeDoubleClick?: (nodeId: string) => void;
   withCheckbox: boolean;
   indentSize: string;
 }) => (
@@ -86,6 +89,7 @@ const LegendTreeRows = ({
           <LegendTreeRowButton
             type="button"
             onClick={() => onToggle(node.id, nextChecked)}
+            onDoubleClick={() => onNodeDoubleClick?.(node.id)}
             sx={{ opacity, textDecoration }}
           >
             <LegendTreeIndent $depth={depth} $indentSize={indentSize} />
@@ -107,6 +111,7 @@ const LegendTreeRows = ({
               nodes={node.children}
               depth={depth + 1}
               onToggle={onToggle}
+              onNodeDoubleClick={onNodeDoubleClick}
               withCheckbox={withCheckbox}
               indentSize={indentSize}
             />
@@ -120,6 +125,7 @@ const LegendTreeRows = ({
 export const LegendTree = ({
   nodes,
   onToggle,
+  onNodeDoubleClick,
   backgroundColor,
   textColor,
   withCheckbox = false,
@@ -142,6 +148,7 @@ export const LegendTree = ({
         nodes={nodes}
         depth={0}
         onToggle={onToggle}
+        onNodeDoubleClick={onNodeDoubleClick}
         withCheckbox={withCheckbox}
         indentSize={indentSize}
       />

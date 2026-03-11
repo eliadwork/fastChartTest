@@ -7,6 +7,7 @@ export type LngLatTuple = [number, number];
 export type MapLeafCoordinates = LngLatTuple | LngLatTuple[];
 
 export interface RawMapLayerNode {
+  id?: string;
   name: string;
   children?: RawMapLayerNode[];
   shape?: MapLeafShape;
@@ -15,6 +16,7 @@ export interface RawMapLayerNode {
   color?: string;
   notes?: string;
   source?: LayerNodeSource;
+  allowEdits?: boolean;
   [metadataKey: string]: unknown;
 }
 
@@ -23,6 +25,7 @@ export interface MapLayerGroupNode {
   kind: 'group';
   name: string;
   source: LayerNodeSource;
+  allowEdits: boolean;
   children: MapLayerNode[];
   metadata: Record<string, unknown>;
 }

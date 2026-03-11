@@ -12,4 +12,6 @@ export const MAP_LINE_WEIGHT = 3;
 export const MAP_DOT_RADIUS = 6;
 export const MAP_DASH_PATTERN = '6,4';
 export const MAP_EXPORT_FILE_NAME = 'bus-stops-map-layers.json';
-export const MAP_MOCK_DATA_URL = '/data/bus-stops-israel.json';
+export const MAP_API_BASE_URL = import.meta.env.VITE_MAP_API_BASE_URL ?? 'http://localhost:4000';
+export const MAP_LAYERS_QUERY_KEY = ['map-layers-tree'] as const;
+export const MAP_LAYERS_POLL_INTERVAL_MS = 10_000;

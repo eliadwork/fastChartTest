@@ -1,36 +1,42 @@
 import type { LegendTreeNode } from '../../../shared/legend';
+import type { LayerManagementState } from '../components/MapLayerManagementModal';
+import type {
+  CopyNodeApiSnapshot,
+  MapLayersApiSnapshot,
+  ShapeGeometryPayload,
+} from '../api/mapLayersApi';
 import type {
   DrawShapeDraft,
   MapLayerGroupNode,
   MapLayerLeafNode,
   MapLayerNode,
   MapLeafCoordinates,
-  RawMapLayerNode,
   ShapeDetailsFormValue,
 } from '../types';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  MAP_EXPORT_FILE_NAME,
-  MAP_MOCK_DATA_URL,
-  MAP_SHAPE_MODAL_DEFAULT_COLOR,
-} from '../mapLayersConstants';
+  copyNodeToUser,
+  createLayer,
+  createShape,
+  deleteLayer,
+  deleteShape,
+  deleteShapes as deleteShapesBatch,
+  fetchMapLayersSnapshot,
+  updateLayer,
+  updateShape,
+} from '../api/mapLayersApi';
+import { MAP_LAYERS_POLL_INTERVAL_MS, MAP_LAYERS_QUERY_KEY, MAP_SHAPE_MODAL_DEFAULT_COLOR } from '../mapLayersConstants';
 import { MapShapeSymbol } from '../components/MapShapeSymbol';
 import {
-  addGroupUnderParent,
-  addLeafToGroup,
   buildLayerTreeIndex,
   createDraftFromLeafNode,
-  createLeafNodeFromDraft,
-  deleteLeafNodes,
-  ensureUserLayersRoot,
   getNodeVisibilityState,
-  MAP_LAYERS_STORAGE_KEY,
-  MAP_USER_LAYERS_ROOT_NAME,
   normalizeLayerTree,
   serializeLayerTree,
-  updateLeafNode,
   updateSubtreeVisibility,
 } from '../utils/mapLayerTreeUtils';
 
@@ -74,6 +80,16 @@ const DEFAULT_FORM_VALUE: ShapeDetailsFormValue = {
   newSubLayerPath: '',
 };
 
+const DEFAULT_LAYER_MANAGER_STATE: LayerManagementState = {
+  open: false,
+  selectedLayerId: '',
+  renameLayerName: '',
+  moveParentLayerId: '',
+  createParentLayerId: '',
+  createLayerName: '',
+  allowEdits: true,
+};
+
 const createLegendNodeRecursive = ({
   node,
   visibleLeafIds,
@@ -113,18 +129,21 @@ const createLegendNodeRecursive = ({
 const createLayerSelectionOptionsRecursive = ({
   node,
   depth,
+  includeLeaves,
 }: {
   node: MapLayerNode;
   depth: number;
+  includeLeaves: boolean;
 }): LayerSelectionOption[] => {
-  const options: LayerSelectionOption[] = [
-    {
+  const options: LayerSelectionOption[] = [];
+  if (includeLeaves || node.kind === 'group') {
+    options.push({
       nodeId: node.id,
       label: node.name,
       depth,
       kind: node.kind,
-    },
-  ];
+    });
+  }
 
   if (node.kind === 'group') {
     for (const childNode of node.children) {
@@ -132,6 +151,7 @@ const createLayerSelectionOptionsRecursive = ({
         ...createLayerSelectionOptionsRecursive({
           node: childNode,
           depth: depth + 1,
+          includeLeaves,
         })
       );
     }
@@ -147,6 +167,32 @@ const createDefaultLayerName = () => `Layer ${new Date().toISOString()}`;
 
 const toCoordinatesText = (coordinates: DrawShapeDraft['coordinates']) =>
   JSON.stringify(coordinates, null, 2);
+
+const toShapeGeometryPayload = ({
+  shape,
+  coordinates,
+}: {
+  shape: ShapeDetailsFormValue['shape'];
+  coordinates: MapLeafCoordinates;
+}): ShapeGeometryPayload => {
+  if (shape === 'dot' || shape === 'circle') {
+    const pointCoordinates = coordinates as [number, number];
+    return {
+      point: {
+        lng: pointCoordinates[0],
+        lat: pointCoordinates[1],
+      },
+    };
+  }
+
+  const pathCoordinates = coordinates as [number, number][];
+  return {
+    path: pathCoordinates.map((pointCoordinates) => ({
+      lng: pointCoordinates[0],
+      lat: pointCoordinates[1],
+    })),
+  };
+};
 
 const parseCoordinateTuple = (value: unknown): [number, number] | null => {
   if (!Array.isArray(value) || value.length < 2) {
@@ -172,13 +218,11 @@ const parseCoordinatePath = (value: unknown): [number, number][] | null => {
   }
 
   const coordinatePath: [number, number][] = [];
-
   for (const pointValue of value) {
     const point = parseCoordinateTuple(pointValue);
     if (point == null) {
       return null;
     }
-
     coordinatePath.push(point);
   }
 
@@ -274,22 +318,6 @@ const getShapeDetailsValidationError = ({
   return null;
 };
 
-const computeDefaultExistingLayerNodeId = ({
-  rootNode,
-}: {
-  rootNode: MapLayerGroupNode;
-}) => {
-  const userLayersGroupNode = rootNode.children.find(
-    (childNode) => childNode.kind === 'group' && childNode.name === MAP_USER_LAYERS_ROOT_NAME
-  ) as MapLayerGroupNode | undefined;
-
-  if (userLayersGroupNode != null) {
-    return userLayersGroupNode.id;
-  }
-
-  return rootNode.id;
-};
-
 const resolveGroupNodeIdForSelection = ({
   selectedNodeId,
   currentRootNode,
@@ -317,22 +345,18 @@ const createFormValueFromDraft = ({
 }: {
   rootNode: MapLayerGroupNode;
   draft: DrawShapeDraft;
-}): ShapeDetailsFormValue => {
-  const defaultLayerNodeId = computeDefaultExistingLayerNodeId({ rootNode });
-
-  return {
-    ...DEFAULT_FORM_VALUE,
-    shapeName: `${toShapeTitle(draft.shape)} ${new Date().toISOString()}`,
-    shape: draft.shape,
-    coordinatesText: toCoordinatesText(draft.coordinates),
-    radiusMeters:
-      draft.shape === 'circle'
-        ? String(draft.radiusMeters ?? Number(DEFAULT_CIRCLE_RADIUS))
-        : DEFAULT_CIRCLE_RADIUS,
-    existingLayerNodeId: defaultLayerNodeId,
-    newSubLayerParentNodeId: defaultLayerNodeId,
-  };
-};
+}): ShapeDetailsFormValue => ({
+  ...DEFAULT_FORM_VALUE,
+  shapeName: `${toShapeTitle(draft.shape)} ${new Date().toISOString()}`,
+  shape: draft.shape,
+  coordinatesText: toCoordinatesText(draft.coordinates),
+  radiusMeters:
+    draft.shape === 'circle'
+      ? String(draft.radiusMeters ?? Number(DEFAULT_CIRCLE_RADIUS))
+      : DEFAULT_CIRCLE_RADIUS,
+  existingLayerNodeId: rootNode.id,
+  newSubLayerParentNodeId: rootNode.id,
+});
 
 const createFormValueForEdit = ({
   leafNode,
@@ -358,10 +382,11 @@ const createFormValueForEdit = ({
 });
 
 export const useMapLayers = () => {
-  const [rootNode, setRootNode] = useState<MapLayerGroupNode | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
   const [visibleLeafIds, setVisibleLeafIds] = useState<Set<string>>(new Set());
+  const [mutationErrorMessage, setMutationErrorMessage] = useState<string | null>(null);
+  const [layerManagementValidationError, setLayerManagementValidationError] = useState<string | null>(null);
   const [shapeDetailsModalState, setShapeDetailsModalState] = useState<ShapeDetailsModalState>({
     open: false,
     mode: 'create',
@@ -369,75 +394,30 @@ export const useMapLayers = () => {
     editingLeafId: null,
     formValue: DEFAULT_FORM_VALUE,
   });
+  const [layerManagementState, setLayerManagementState] = useState<LayerManagementState>(
+    DEFAULT_LAYER_MANAGER_STATE
+  );
 
   const previousLeafIdsRef = useRef<Set<string>>(new Set());
+  const previousRevisionRef = useRef<number | null>(null);
+  const suppressRevisionNotificationRef = useRef(false);
 
-  useEffect(() => {
-    let isMounted = true;
+  const snapshotQuery = useQuery({
+    queryKey: MAP_LAYERS_QUERY_KEY,
+    queryFn: fetchMapLayersSnapshot,
+    refetchInterval: MAP_LAYERS_POLL_INTERVAL_MS,
+  });
 
-    const loadMapLayerData = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
+  const rootNode = useMemo(() => {
+    if (snapshotQuery.data == null) {
+      return null;
+    }
 
-      try {
-        const storedLayerDataText = localStorage.getItem(MAP_LAYERS_STORAGE_KEY);
-        if (storedLayerDataText) {
-          const parsedStoredLayerData = JSON.parse(storedLayerDataText) as RawMapLayerNode;
-          const normalizedStoredRootNode = normalizeLayerTree({
-            rawRootNode: parsedStoredLayerData,
-            fallbackSource: 'mock',
-          });
-          const userRootResult = ensureUserLayersRoot({
-            rootNode: normalizedStoredRootNode,
-          });
-
-          if (!isMounted) {
-            return;
-          }
-
-          setRootNode(userRootResult.rootNode);
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await fetch(MAP_MOCK_DATA_URL);
-        if (!response.ok) {
-          throw new Error(`Failed loading map mock data (${response.status})`);
-        }
-
-        const rawMockRootNode = (await response.json()) as RawMapLayerNode;
-        const normalizedRootNode = normalizeLayerTree({
-          rawRootNode: rawMockRootNode,
-          fallbackSource: 'mock',
-        });
-        const userRootResult = ensureUserLayersRoot({
-          rootNode: normalizedRootNode,
-        });
-
-        if (!isMounted) {
-          return;
-        }
-
-        setRootNode(userRootResult.rootNode);
-        setIsLoading(false);
-      } catch (caughtError) {
-        if (!isMounted) {
-          return;
-        }
-
-        setErrorMessage(
-          caughtError instanceof Error ? caughtError.message : 'Unknown map layer loading error.'
-        );
-        setIsLoading(false);
-      }
-    };
-
-    void loadMapLayerData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    return normalizeLayerTree({
+      rawRootNode: snapshotQuery.data.tree,
+      fallbackSource: 'mock',
+    });
+  }, [snapshotQuery.data]);
 
   const treeIndex = useMemo(() => {
     if (rootNode == null) {
@@ -446,6 +426,44 @@ export const useMapLayers = () => {
 
     return buildLayerTreeIndex(rootNode);
   }, [rootNode]);
+
+  const applySnapshot = useCallback(
+    ({
+      snapshot,
+      suppressNotification,
+    }: {
+      snapshot: MapLayersApiSnapshot;
+      suppressNotification?: boolean;
+    }) => {
+      if (suppressNotification) {
+        suppressRevisionNotificationRef.current = true;
+      }
+
+      queryClient.setQueryData(MAP_LAYERS_QUERY_KEY, snapshot);
+    },
+    [queryClient]
+  );
+
+  useEffect(() => {
+    const snapshot = snapshotQuery.data;
+    if (snapshot == null) {
+      return;
+    }
+
+    const revisionChanged = previousRevisionRef.current != null && previousRevisionRef.current !== snapshot.revision;
+    if (revisionChanged) {
+      if (suppressRevisionNotificationRef.current) {
+        suppressRevisionNotificationRef.current = false;
+      } else {
+        enqueueSnackbar('Layers were updated on the server.', {
+          variant: 'info',
+          autoHideDuration: 2500,
+        });
+      }
+    }
+
+    previousRevisionRef.current = snapshot.revision;
+  }, [enqueueSnackbar, snapshotQuery.data]);
 
   useEffect(() => {
     if (treeIndex == null) {
@@ -471,14 +489,6 @@ export const useMapLayers = () => {
     });
   }, [treeIndex]);
 
-  useEffect(() => {
-    if (rootNode == null) {
-      return;
-    }
-
-    localStorage.setItem(MAP_LAYERS_STORAGE_KEY, JSON.stringify(serializeLayerTree(rootNode), null, 2));
-  }, [rootNode]);
-
   const legendNodes = useMemo(() => {
     if (rootNode == null) {
       return [] as LegendTreeNode[];
@@ -501,6 +511,21 @@ export const useMapLayers = () => {
       createLayerSelectionOptionsRecursive({
         node: childNode,
         depth: 0,
+        includeLeaves: true,
+      })
+    );
+  }, [rootNode]);
+
+  const groupSelectionOptions = useMemo(() => {
+    if (rootNode == null) {
+      return [] as LayerSelectionOption[];
+    }
+
+    return rootNode.children.flatMap((childNode) =>
+      createLayerSelectionOptionsRecursive({
+        node: childNode,
+        depth: 0,
+        includeLeaves: false,
       })
     );
   }, [rootNode]);
@@ -517,6 +542,137 @@ export const useMapLayers = () => {
         geometryError: geometryParseResult.error,
       }),
     [geometryParseResult.error, shapeDetailsModalState.formValue]
+  );
+
+  const visibleLeafNodes = useMemo(() => {
+    if (treeIndex == null) {
+      return [] as MapLayerLeafNode[];
+    }
+
+    return treeIndex.leafNodes.filter((leafNode) => visibleLeafIds.has(leafNode.id));
+  }, [treeIndex, visibleLeafIds]);
+
+  const getLockedAncestorGroupId = useCallback(
+    (nodeId: string) => {
+      if (rootNode == null || treeIndex == null) {
+        return null;
+      }
+
+      let currentNodeId: string | null = nodeId;
+      while (currentNodeId != null) {
+        const currentNode = treeIndex.nodeById.get(currentNodeId);
+        if (currentNode == null) {
+          return null;
+        }
+
+        if (
+          currentNode.kind === 'group' &&
+          currentNode.id !== rootNode.id &&
+          currentNode.allowEdits === false
+        ) {
+          return currentNode.id;
+        }
+
+        currentNodeId = treeIndex.parentIdByNodeId.get(currentNodeId) ?? null;
+      }
+
+      return null;
+    },
+    [rootNode, treeIndex]
+  );
+
+  const assertNodeEditable = useCallback(
+    ({
+      nodeId,
+      message,
+    }: {
+      nodeId: string;
+      message: string;
+    }) => {
+      const lockedLayerId = getLockedAncestorGroupId(nodeId);
+      if (lockedLayerId == null) {
+        return true;
+      }
+
+      enqueueSnackbar(message, {
+        variant: 'warning',
+        autoHideDuration: 2800,
+      });
+      return false;
+    },
+    [enqueueSnackbar, getLockedAncestorGroupId]
+  );
+
+  const runMutation = useCallback(
+    async ({
+      mutation,
+      successMessage,
+    }: {
+      mutation: () => Promise<MapLayersApiSnapshot>;
+      successMessage?: string;
+    }) => {
+      setMutationErrorMessage(null);
+      try {
+        const nextSnapshot = await mutation();
+        applySnapshot({
+          snapshot: nextSnapshot,
+          suppressNotification: true,
+        });
+        if (successMessage != null) {
+          enqueueSnackbar(successMessage, {
+            variant: 'success',
+            autoHideDuration: 2200,
+          });
+        }
+        return nextSnapshot;
+      } catch (caughtError) {
+        const nextErrorMessage =
+          caughtError instanceof Error ? caughtError.message : 'Unknown map mutation error.';
+        setMutationErrorMessage(nextErrorMessage);
+        enqueueSnackbar(nextErrorMessage, {
+          variant: 'error',
+          autoHideDuration: 3000,
+        });
+        return null;
+      }
+    },
+    [applySnapshot, enqueueSnackbar]
+  );
+
+  const createEditableCopyIfLocked = useCallback(
+    async ({
+      targetNodeId,
+      promptMessage,
+    }: {
+      targetNodeId: string;
+      promptMessage: string;
+    }) => {
+      const lockedLayerId = getLockedAncestorGroupId(targetNodeId);
+      if (lockedLayerId == null) {
+        return targetNodeId;
+      }
+
+      const shouldCreateCopy = window.confirm(promptMessage);
+      if (!shouldCreateCopy) {
+        return null;
+      }
+
+      const copySnapshot = await runMutation({
+        mutation: () => copyNodeToUser(targetNodeId),
+        successMessage: 'Created editable copy under User Layers.',
+      });
+      if (copySnapshot == null) {
+        return null;
+      }
+
+      const typedCopySnapshot = copySnapshot as CopyNodeApiSnapshot;
+      if (typedCopySnapshot.copiedNodeId == null || typedCopySnapshot.copiedNodeId === '') {
+        return null;
+      }
+
+      return typedCopySnapshot.copiedNodeId;
+    },
+    [getLockedAncestorGroupId, runMutation]
   );
 
   const handleLegendToggle = useCallback(
@@ -577,6 +733,7 @@ export const useMapLayers = () => {
       if (node == null || node.kind !== 'leaf') {
         return;
       }
+
       const currentParentGroupId = treeIndex.parentIdByNodeId.get(leafId) ?? '';
 
       setShapeDetailsModalState({
@@ -630,91 +787,79 @@ export const useMapLayers = () => {
     }));
   }, []);
 
-  const createLayerFromForm = useCallback(() => {
+  const createLayerFromForm = useCallback(async () => {
     if (rootNode == null || treeIndex == null) {
       return;
     }
 
-    const parentGroupId = shapeDetailsModalState.formValue.newSubLayerParentNodeId.trim() === ''
-      ? rootNode.id
-      : resolveGroupNodeIdForSelection({
-          selectedNodeId: shapeDetailsModalState.formValue.newSubLayerParentNodeId,
-          currentRootNode: rootNode,
-          currentIndex: treeIndex,
-        });
-    const layerName = shapeDetailsModalState.formValue.newLayerName.trim() || createDefaultLayerName();
+    const parentGroupId =
+      shapeDetailsModalState.formValue.newSubLayerParentNodeId.trim() === ''
+        ? undefined
+        : resolveGroupNodeIdForSelection({
+            selectedNodeId: shapeDetailsModalState.formValue.newSubLayerParentNodeId,
+            currentRootNode: rootNode,
+            currentIndex: treeIndex,
+          });
+    const layerName =
+      shapeDetailsModalState.formValue.newLayerName.trim() || createDefaultLayerName();
 
-    const createdLayerResult = addGroupUnderParent({
-      rootNode,
-      parentGroupId,
-      groupName: layerName,
-      source: 'user',
+    if (
+      parentGroupId != null &&
+      !assertNodeEditable({
+        nodeId: parentGroupId,
+        message: 'Selected layer is locked. Cannot create a layer under it.',
+      })
+    ) {
+      return;
+    }
+
+    const createdLayerSnapshot = await runMutation({
+      mutation: () =>
+        createLayer({
+          parentGroupId,
+          layerName,
+        }),
+      successMessage: 'Layer created.',
     });
+    if (createdLayerSnapshot == null) {
+      return;
+    }
 
-    let nextRootNode = createdLayerResult.rootNode;
-    let lastCreatedLayerId = createdLayerResult.newGroupId;
-
+    let selectedLayerId = createdLayerSnapshot.updatedNodeId ?? '';
     const pathSegments = shapeDetailsModalState.formValue.newSubLayerPath
       .split(SUB_LAYER_PATH_DELIMITER)
       .map((segment) => segment.trim())
       .filter((segment) => segment !== '');
 
     for (const pathSegment of pathSegments) {
-      const subLayerResult = addGroupUnderParent({
-        rootNode: nextRootNode,
-        parentGroupId: lastCreatedLayerId,
-        groupName: pathSegment,
-        source: 'user',
+      const subLayerSnapshot = await runMutation({
+        mutation: () =>
+          createLayer({
+            parentGroupId: selectedLayerId,
+            layerName: pathSegment,
+          }),
       });
-      nextRootNode = subLayerResult.rootNode;
-      lastCreatedLayerId = subLayerResult.newGroupId;
+      if (subLayerSnapshot == null) {
+        break;
+      }
+      selectedLayerId = subLayerSnapshot.updatedNodeId ?? selectedLayerId;
     }
 
-    setRootNode(nextRootNode);
-    setShapeDetailsModalState((previousState) => ({
-      ...previousState,
-      formValue: {
-        ...previousState.formValue,
-        existingLayerNodeId: lastCreatedLayerId,
-        newSubLayerParentNodeId: lastCreatedLayerId,
-        newLayerName: '',
-        newSubLayerPath: '',
-      },
-    }));
-  }, [rootNode, shapeDetailsModalState.formValue, treeIndex]);
+    if (selectedLayerId !== '') {
+      setShapeDetailsModalState((previousState) => ({
+        ...previousState,
+        formValue: {
+          ...previousState.formValue,
+          existingLayerNodeId: selectedLayerId,
+          newSubLayerParentNodeId: selectedLayerId,
+          newLayerName: '',
+          newSubLayerPath: '',
+        },
+      }));
+    }
+  }, [assertNodeEditable, rootNode, runMutation, shapeDetailsModalState.formValue, treeIndex]);
 
-  const resolveGroupTargetForCreate = useCallback(
-    ({
-      currentRootNode,
-      currentIndex,
-      formValue,
-    }: {
-      currentRootNode: MapLayerGroupNode;
-      currentIndex: ReturnType<typeof buildLayerTreeIndex>;
-      formValue: ShapeDetailsFormValue;
-    }) => {
-      if (formValue.existingLayerNodeId.trim() === '') {
-        return {
-          rootNode: currentRootNode,
-          targetGroupId: currentRootNode.id,
-        };
-      }
-
-      const groupNodeId = resolveGroupNodeIdForSelection({
-        selectedNodeId: formValue.existingLayerNodeId,
-        currentRootNode,
-        currentIndex,
-      });
-
-      return {
-        rootNode: currentRootNode,
-        targetGroupId: groupNodeId,
-      };
-    },
-    []
-  );
-
-  const submitShapeDetails = useCallback(() => {
+  const submitShapeDetails = useCallback(async () => {
     if (rootNode == null || treeIndex == null || shapeDetailsValidationError != null) {
       return;
     }
@@ -724,35 +869,45 @@ export const useMapLayers = () => {
       return;
     }
 
+    const selectedGroupId =
+      shapeDetailsModalState.formValue.existingLayerNodeId.trim() === ''
+        ? undefined
+        : resolveGroupNodeIdForSelection({
+            selectedNodeId: shapeDetailsModalState.formValue.existingLayerNodeId,
+            currentRootNode: rootNode,
+            currentIndex: treeIndex,
+          });
+
     if (shapeDetailsModalState.mode === 'create') {
-      const newLeafNode = createLeafNodeFromDraft({
-        shape: parsedGeometry.shape,
-        coordinates: parsedGeometry.coordinates,
-        radiusMeters: parsedGeometry.radiusMeters,
-        color: shapeDetailsModalState.formValue.color,
-        notes: shapeDetailsModalState.formValue.notes,
-        name: shapeDetailsModalState.formValue.shapeName.trim(),
-      });
+      if (
+        selectedGroupId != null &&
+        !assertNodeEditable({
+          nodeId: selectedGroupId,
+          message: 'Selected layer is locked. Cannot add a shape to it.',
+        })
+      ) {
+        return;
+      }
 
-      const groupResolutionResult = resolveGroupTargetForCreate({
-        currentRootNode: rootNode,
-        currentIndex: treeIndex,
-        formValue: shapeDetailsModalState.formValue,
+      const createdSnapshot = await runMutation({
+        mutation: () =>
+          createShape({
+            targetGroupId: selectedGroupId,
+            shape: parsedGeometry.shape,
+            geometry: toShapeGeometryPayload({
+              shape: parsedGeometry.shape,
+              coordinates: parsedGeometry.coordinates,
+            }),
+            radiusMeters: parsedGeometry.radiusMeters,
+            color: shapeDetailsModalState.formValue.color,
+            notes: shapeDetailsModalState.formValue.notes,
+            name: shapeDetailsModalState.formValue.shapeName.trim(),
+          }),
+        successMessage: 'Shape created.',
       });
-
-      const nextRootNode = addLeafToGroup({
-        rootNode: groupResolutionResult.rootNode,
-        targetGroupId: groupResolutionResult.targetGroupId,
-        leafNode: newLeafNode,
-      });
-
-      setRootNode(nextRootNode);
-      setVisibleLeafIds((previousVisibleLeafIds) => {
-        const nextVisibleLeafIds = new Set(previousVisibleLeafIds);
-        nextVisibleLeafIds.add(newLeafNode.id);
-        return nextVisibleLeafIds;
-      });
-      closeShapeDetailsModal();
+      if (createdSnapshot != null) {
+        closeShapeDetailsModal();
+      }
       return;
     }
 
@@ -760,66 +915,67 @@ export const useMapLayers = () => {
       return;
     }
 
-    const currentLeafNode = treeIndex.nodeById.get(shapeDetailsModalState.editingLeafId);
-    if (currentLeafNode == null || currentLeafNode.kind !== 'leaf') {
+    const editableShapeId = await createEditableCopyIfLocked({
+      targetNodeId: shapeDetailsModalState.editingLeafId,
+      promptMessage:
+        'This layer is locked. Do you want to create an editable copy under User Layers and apply your edit there?',
+    });
+    if (editableShapeId == null) {
       return;
     }
 
-    const nextLeafNode: MapLayerLeafNode = {
-      ...currentLeafNode,
-      name:
-        shapeDetailsModalState.formValue.shapeName.trim() === ''
-          ? currentLeafNode.name
-          : shapeDetailsModalState.formValue.shapeName.trim(),
-      shape: parsedGeometry.shape,
-      coordinates: parsedGeometry.coordinates,
-      radiusMeters: parsedGeometry.shape === 'circle' ? parsedGeometry.radiusMeters : undefined,
-      color: shapeDetailsModalState.formValue.color,
-      notes: shapeDetailsModalState.formValue.notes,
-      metadata: {
-        ...currentLeafNode.metadata,
-        updatedAt: new Date().toISOString(),
-      },
-    };
-
-    const currentParentGroupId =
-      treeIndex.parentIdByNodeId.get(shapeDetailsModalState.editingLeafId) ?? rootNode.id;
-    const targetGroupId =
-      shapeDetailsModalState.formValue.existingLayerNodeId.trim() === ''
-        ? rootNode.id
-        : resolveGroupNodeIdForSelection({
-            selectedNodeId: shapeDetailsModalState.formValue.existingLayerNodeId,
-            currentRootNode: rootNode,
-            currentIndex: treeIndex,
-          });
-
-    const nextRootNode =
-      currentParentGroupId === targetGroupId
-        ? updateLeafNode({
-            rootNode,
-            leafId: shapeDetailsModalState.editingLeafId,
-            updater: () => nextLeafNode,
-          })
-        : addLeafToGroup({
-            rootNode: deleteLeafNodes({
-              rootNode,
-              leafIdsToDelete: new Set([shapeDetailsModalState.editingLeafId]),
+    const updatedSnapshot = await runMutation({
+      mutation: () =>
+        updateShape({
+          shapeId: editableShapeId,
+          payload: {
+            targetGroupId: selectedGroupId,
+            name: shapeDetailsModalState.formValue.shapeName.trim(),
+            geometry: toShapeGeometryPayload({
+              shape: parsedGeometry.shape,
+              coordinates: parsedGeometry.coordinates,
             }),
-            targetGroupId,
-            leafNode: nextLeafNode,
-          });
+            radiusMeters: parsedGeometry.shape === 'circle' ? parsedGeometry.radiusMeters : undefined,
+            color: shapeDetailsModalState.formValue.color,
+            notes: shapeDetailsModalState.formValue.notes,
+          },
+        }),
+      successMessage: 'Shape updated.',
+    });
 
-    setRootNode(nextRootNode);
-    closeShapeDetailsModal();
+    if (updatedSnapshot != null) {
+      closeShapeDetailsModal();
+    }
   }, [
+    assertNodeEditable,
     closeShapeDetailsModal,
+    createEditableCopyIfLocked,
     geometryParseResult.value,
-    resolveGroupTargetForCreate,
     rootNode,
+    runMutation,
     shapeDetailsModalState,
     shapeDetailsValidationError,
     treeIndex,
   ]);
+
+  const deleteEditedShape = useCallback(async () => {
+    if (shapeDetailsModalState.editingLeafId == null) {
+      return;
+    }
+
+    const shouldDelete = window.confirm('Delete this shape?');
+    if (!shouldDelete) {
+      return;
+    }
+
+    const deletedSnapshot = await runMutation({
+      mutation: () => deleteShape(shapeDetailsModalState.editingLeafId as string),
+      successMessage: 'Shape deleted.',
+    });
+    if (deletedSnapshot != null) {
+      closeShapeDetailsModal();
+    }
+  }, [closeShapeDetailsModal, runMutation, shapeDetailsModalState.editingLeafId]);
 
   const updateEditedShapeGeometry = useCallback(
     ({
@@ -837,30 +993,19 @@ export const useMapLayers = () => {
     [openEditShapeDetailsModal]
   );
 
-  const deleteShapes = useCallback((leafIds: string[]) => {
-    if (leafIds.length === 0) {
-      return;
-    }
-
-    setRootNode((previousRootNode) => {
-      if (previousRootNode == null) {
-        return previousRootNode;
+  const deleteShapes = useCallback(
+    async (leafIds: string[]) => {
+      if (leafIds.length === 0) {
+        return;
       }
 
-      return deleteLeafNodes({
-        rootNode: previousRootNode,
-        leafIdsToDelete: new Set(leafIds),
+      await runMutation({
+        mutation: () => deleteShapesBatch(leafIds),
+        successMessage: 'Shapes deleted.',
       });
-    });
-
-    setVisibleLeafIds((previousVisibleLeafIds) => {
-      const nextVisibleLeafIds = new Set(previousVisibleLeafIds);
-      for (const leafId of leafIds) {
-        nextVisibleLeafIds.delete(leafId);
-      }
-      return nextVisibleLeafIds;
-    });
-  }, []);
+    },
+    [runMutation]
+  );
 
   const exportTreeJson = useCallback(() => {
     if (rootNode == null) {
@@ -874,40 +1019,284 @@ export const useMapLayers = () => {
 
     const anchorElement = document.createElement('a');
     anchorElement.href = objectUrl;
-    anchorElement.download = MAP_EXPORT_FILE_NAME;
+    anchorElement.download = 'bus-stops-map-layers.json';
     anchorElement.click();
 
     URL.revokeObjectURL(objectUrl);
   }, [rootNode]);
 
-  const visibleLeafNodes = useMemo(() => {
-    if (treeIndex == null) {
-      return [] as MapLayerLeafNode[];
+  const refreshLayers = useCallback(async () => {
+    suppressRevisionNotificationRef.current = false;
+    await snapshotQuery.refetch();
+  }, [snapshotQuery]);
+
+  const openLayerManagementModal = useCallback(
+    (clickedNodeId: string) => {
+      if (rootNode == null || treeIndex == null) {
+        return;
+      }
+
+      const clickedNode = treeIndex.nodeById.get(clickedNodeId);
+      const selectedLayerId =
+        clickedNode != null && clickedNode.kind === 'group'
+          ? clickedNode.id
+          : treeIndex.parentIdByNodeId.get(clickedNodeId) ?? groupSelectionOptions[0]?.nodeId ?? '';
+
+      const selectedLayerNode = treeIndex.nodeById.get(selectedLayerId);
+      const isGroup = selectedLayerNode != null && selectedLayerNode.kind === 'group';
+
+      setLayerManagementState({
+        open: true,
+        selectedLayerId,
+        renameLayerName: isGroup ? selectedLayerNode.name : '',
+        moveParentLayerId: '',
+        createParentLayerId: selectedLayerId,
+        createLayerName: '',
+        allowEdits: isGroup ? selectedLayerNode.allowEdits : true,
+      });
+      setLayerManagementValidationError(null);
+    },
+    [groupSelectionOptions, rootNode, treeIndex]
+  );
+
+  const closeLayerManagementModal = useCallback(() => {
+    setLayerManagementState(DEFAULT_LAYER_MANAGER_STATE);
+    setLayerManagementValidationError(null);
+  }, []);
+
+  const setLayerManagementFormState = useCallback(
+    (nextState: LayerManagementState) => {
+      if (treeIndex == null) {
+        setLayerManagementState(nextState);
+        setLayerManagementValidationError(null);
+        return;
+      }
+
+      const selectedChanged = nextState.selectedLayerId !== layerManagementState.selectedLayerId;
+      const selectedNode = treeIndex.nodeById.get(nextState.selectedLayerId);
+      if (selectedChanged && selectedNode != null && selectedNode.kind === 'group') {
+        setLayerManagementState({
+          ...nextState,
+          renameLayerName: selectedNode.name,
+          allowEdits: selectedNode.allowEdits,
+        });
+      } else {
+        setLayerManagementState(nextState);
+      }
+      setLayerManagementValidationError(null);
+    },
+    [layerManagementState.selectedLayerId, treeIndex]
+  );
+
+  const createLayerFromManager = useCallback(async () => {
+    if (
+      layerManagementState.createParentLayerId.trim() !== '' &&
+      !assertNodeEditable({
+        nodeId: layerManagementState.createParentLayerId,
+        message: 'Selected layer is locked. Cannot create a layer under it.',
+      })
+    ) {
+      return;
     }
 
-    return treeIndex.leafNodes.filter((leafNode) => visibleLeafIds.has(leafNode.id));
-  }, [treeIndex, visibleLeafIds]);
+    const createdSnapshot = await runMutation({
+      mutation: () =>
+        createLayer({
+          parentGroupId:
+            layerManagementState.createParentLayerId.trim() === ''
+              ? undefined
+              : layerManagementState.createParentLayerId,
+          layerName: layerManagementState.createLayerName.trim() || undefined,
+        }),
+      successMessage: 'Layer created.',
+    });
+
+    if (createdSnapshot?.updatedNodeId) {
+      setLayerManagementState((previousState) => ({
+        ...previousState,
+        selectedLayerId: createdSnapshot.updatedNodeId ?? previousState.selectedLayerId,
+        createLayerName: '',
+      }));
+    }
+  }, [
+    assertNodeEditable,
+    layerManagementState.createLayerName,
+    layerManagementState.createParentLayerId,
+    runMutation,
+  ]);
+
+  const renameManagedLayer = useCallback(async () => {
+    if (layerManagementState.selectedLayerId.trim() === '') {
+      return;
+    }
+
+    if (
+      !assertNodeEditable({
+        nodeId: layerManagementState.selectedLayerId,
+        message: 'Selected layer is locked. Cannot rename it.',
+      })
+    ) {
+      return;
+    }
+
+    await runMutation({
+      mutation: () =>
+        updateLayer({
+          layerId: layerManagementState.selectedLayerId,
+          payload: {
+            layerName: layerManagementState.renameLayerName,
+          },
+        }),
+      successMessage: 'Layer renamed.',
+    });
+  }, [assertNodeEditable, layerManagementState.renameLayerName, layerManagementState.selectedLayerId, runMutation]);
+
+  const moveManagedLayer = useCallback(async () => {
+    if (layerManagementState.selectedLayerId.trim() === '') {
+      return;
+    }
+    if (treeIndex == null) {
+      return;
+    }
+
+    if (layerManagementState.moveParentLayerId === layerManagementState.selectedLayerId) {
+      setLayerManagementValidationError('Layer cannot be moved under itself.');
+      return;
+    }
+
+    const nextParentId = layerManagementState.moveParentLayerId.trim();
+    if (nextParentId !== '') {
+      let currentNodeId: string | null = nextParentId;
+      while (currentNodeId != null) {
+        if (currentNodeId === layerManagementState.selectedLayerId) {
+          setLayerManagementValidationError('Layer cannot be moved under its descendant.');
+          return;
+        }
+        currentNodeId = treeIndex.parentIdByNodeId.get(currentNodeId) ?? null;
+      }
+    }
+
+    const editableLayerId = await createEditableCopyIfLocked({
+      targetNodeId: layerManagementState.selectedLayerId,
+      promptMessage:
+        'This layer is locked. Do you want to create an editable copy under User Layers and move that copy?',
+    });
+    if (editableLayerId == null) {
+      return;
+    }
+
+    await runMutation({
+      mutation: () =>
+        updateLayer({
+          layerId: editableLayerId,
+          payload: {
+            parentGroupId: nextParentId === '' ? null : nextParentId,
+          },
+        }),
+      successMessage: 'Layer moved.',
+    });
+  }, [
+    createEditableCopyIfLocked,
+    layerManagementState.moveParentLayerId,
+    layerManagementState.selectedLayerId,
+    runMutation,
+    treeIndex,
+  ]);
+
+  const toggleManagedLayerAllowEdits = useCallback(async () => {
+    if (layerManagementState.selectedLayerId.trim() === '') {
+      return;
+    }
+
+    await runMutation({
+      mutation: () =>
+        updateLayer({
+          layerId: layerManagementState.selectedLayerId,
+          payload: {
+            allowEdits: layerManagementState.allowEdits,
+          },
+        }),
+      successMessage: 'Layer permissions updated.',
+    });
+  }, [layerManagementState.allowEdits, layerManagementState.selectedLayerId, runMutation]);
+
+  const deleteManagedLayer = useCallback(async () => {
+    if (layerManagementState.selectedLayerId.trim() === '') {
+      return;
+    }
+
+    if (
+      !assertNodeEditable({
+        nodeId: layerManagementState.selectedLayerId,
+        message: 'Selected layer is locked. Cannot delete it.',
+      })
+    ) {
+      return;
+    }
+
+    const shouldDelete = window.confirm('Delete this layer recursively?');
+    if (!shouldDelete) {
+      return;
+    }
+
+    const deletedSnapshot = await runMutation({
+      mutation: () => deleteLayer(layerManagementState.selectedLayerId),
+      successMessage: 'Layer deleted.',
+    });
+    if (deletedSnapshot != null) {
+      setLayerManagementState((previousState) => ({
+        ...previousState,
+        selectedLayerId: groupSelectionOptions[0]?.nodeId ?? '',
+      }));
+    }
+  }, [assertNodeEditable, groupSelectionOptions, layerManagementState.selectedLayerId, runMutation]);
+
+  const errorMessage = useMemo(() => {
+    if (mutationErrorMessage != null) {
+      return mutationErrorMessage;
+    }
+
+    if (snapshotQuery.error instanceof Error) {
+      return snapshotQuery.error.message;
+    }
+
+    return null;
+  }, [mutationErrorMessage, snapshotQuery.error]);
 
   return {
     rootNode,
     treeIndex,
-    isLoading,
+    isLoading: snapshotQuery.isLoading,
+    isRefreshing: snapshotQuery.isFetching,
     errorMessage,
     legendNodes,
     layerSelectionOptions,
+    groupSelectionOptions,
     visibleLeafIds,
     visibleLeafNodes,
     shapeDetailsModalState,
     shapeDetailsValidationError,
+    layerManagementState,
+    layerManagementValidationError,
     handleLegendToggle,
+    openLayerManagementModal,
+    closeLayerManagementModal,
+    setLayerManagementFormState,
+    createLayerFromManager,
+    renameManagedLayer,
+    moveManagedLayer,
+    toggleManagedLayerAllowEdits,
+    deleteManagedLayer,
     openCreateShapeDetailsModal,
     openShapePropertiesEditor,
     setShapeDetailsFormValue,
     createLayerFromForm,
     closeShapeDetailsModal,
     submitShapeDetails,
+    deleteEditedShape,
     updateEditedShapeGeometry,
     deleteShapes,
     exportTreeJson,
+    refreshLayers,
   };
 };

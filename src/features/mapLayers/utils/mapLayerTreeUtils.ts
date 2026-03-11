@@ -30,6 +30,7 @@ const RESERVED_LEAF_FIELDS = new Set([
   'color',
   'notes',
   'source',
+  'allowEdits',
   'metadata',
 ]);
 
@@ -39,6 +40,7 @@ const RESERVED_GROUP_FIELDS = new Set([
   'name',
   'children',
   'source',
+  'allowEdits',
   'metadata',
 ]);
 
@@ -165,7 +167,10 @@ const normalizeNodeRecursive = ({
   const nodeName = typeof rawNode.name === 'string' && rawNode.name.trim() !== ''
     ? rawNode.name.trim()
     : `Node ${siblingIndex + 1}`;
-  const nodeId = createPathId({ parentId, name: nodeName, siblingIndex });
+  const nodeId =
+    typeof rawNode.id === 'string' && rawNode.id.trim() !== ''
+      ? rawNode.id
+      : createPathId({ parentId, name: nodeName, siblingIndex });
   const nodeSource = rawNode.source ?? fallbackSource;
 
   if (typeof rawNode.shape === 'string') {
@@ -225,6 +230,7 @@ const normalizeNodeRecursive = ({
     kind: 'group',
     name: nodeName,
     source: nodeSource,
+    allowEdits: rawNode.allowEdits ?? true,
     children: normalizedChildren,
     metadata: pickMetadata({
       rawNode: rawNode as Record<string, unknown>,
@@ -253,6 +259,7 @@ export const normalizeLayerTree = ({
       kind: 'group',
       name: 'Map Layers',
       source: fallbackSource,
+      allowEdits: true,
       children: [],
       metadata: {},
     };
@@ -267,6 +274,7 @@ export const normalizeLayerTree = ({
     kind: 'group',
     name: 'Map Layers',
     source: fallbackSource,
+    allowEdits: true,
     children: [normalizedRootNode],
     metadata: {},
   };
@@ -275,14 +283,17 @@ export const normalizeLayerTree = ({
 const serializeNodeRecursive = (node: MapLayerNode): RawMapLayerNode => {
   if (node.kind === 'group') {
     return {
+      id: node.id,
       name: node.name,
       source: node.source,
+      allowEdits: node.allowEdits,
       ...node.metadata,
       children: node.children.map((childNode) => serializeNodeRecursive(childNode)),
     };
   }
 
   const leafNode: RawMapLayerNode = {
+    id: node.id,
     name: node.name,
     source: node.source,
     shape: node.shape,
@@ -613,6 +624,7 @@ export const addGroupUnderParent = ({
     kind: 'group',
     name: groupName,
     source,
+    allowEdits: true,
     children: [],
     metadata: {},
   };
@@ -732,6 +744,10 @@ export const ensureUserLayersRoot = ({
   ) as MapLayerGroupNode | undefined;
 
   if (existingUserRoot != null) {
+    if (existingUserRoot.allowEdits !== true) {
+      existingUserRoot.allowEdits = true;
+    }
+
     return {
       rootNode,
       userLayersRootId: existingUserRoot.id,
@@ -743,6 +759,7 @@ export const ensureUserLayersRoot = ({
     kind: 'group',
     name: MAP_USER_LAYERS_ROOT_NAME,
     source: 'user',
+    allowEdits: true,
     children: [],
     metadata: {},
   };
@@ -836,6 +853,18 @@ export const extractGeometryFromDraftLayer = ({
       shape: 'circle',
       coordinates: [center.lng, center.lat],
       radiusMeters: toFiniteNumber(layer.getRadius?.()) ?? CIRCLE_DEFAULT_RADIUS_METERS,
+    };
+  }
+
+  if (layerType === 'marker') {
+    const center = layer.getLatLng?.();
+    if (!center) {
+      return null;
+    }
+
+    return {
+      shape: 'dot',
+      coordinates: [center.lng, center.lat],
     };
   }
 

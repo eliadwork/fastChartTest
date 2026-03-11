@@ -6,9 +6,9 @@ import L from 'leaflet';
 import 'leaflet-draw';
 import {
   Circle,
-  CircleMarker,
   FeatureGroup,
   MapContainer,
+  Marker,
   Polygon,
   Polyline,
   TileLayer,
@@ -21,7 +21,6 @@ import {
   MAP_DEFAULT_CENTER_LAT,
   MAP_DEFAULT_CENTER_LNG,
   MAP_DEFAULT_ZOOM,
-  MAP_DOT_RADIUS,
   MAP_FALLBACK_COLOR,
   MAP_HOVER_CARD_BACKGROUND_COLOR,
   MAP_LINE_WEIGHT,
@@ -47,6 +46,14 @@ type LayerWithNodeId = L.Layer & { __mapLeafNodeId?: string };
 const toLatLng = ([longitude, latitude]: [number, number]): [number, number] => [latitude, longitude];
 
 const toPathLatLngs = (coordinates: [number, number][]) => coordinates.map(toLatLng);
+
+const createDotIcon = (color: string) =>
+  L.divIcon({
+    html: `<span style="display:block;width:12px;height:12px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.9)"></span>`,
+    className: 'map-dot-icon',
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
 
 const getLeafColor = (leafNode: MapLayerLeafNode) => {
   if (leafNode.color && leafNode.color.trim() !== '') {
@@ -200,16 +207,16 @@ const LeafLayer = ({
     leafNode.coordinates.length === 2
   ) {
     return (
-      <CircleMarker
-        center={toLatLng(leafNode.coordinates as [number, number])}
-        radius={MAP_DOT_RADIUS}
-        pathOptions={{ color, fillColor: color, fillOpacity: 0.85 }}
+      <Marker
+        position={toLatLng(leafNode.coordinates as [number, number])}
+        icon={createDotIcon(color)}
+        draggable={editable}
         eventHandlers={layerEventHandlers}
       >
         <Tooltip sticky direction="top" opacity={1}>
           <LeafInfoCard leafNode={leafNode} includeCoordinates={false} hoverVariant />
         </Tooltip>
-      </CircleMarker>
+      </Marker>
     );
   }
 
@@ -275,11 +282,52 @@ const EditableDrawControl = ({
   onDelete: (leafIds: string[]) => void;
 }) => {
   const map = useMap();
+  const isEditModeRef = useRef(false);
+  const isCtrlPressedRef = useRef(false);
 
   useEffect(() => {
     if (editableFeatureGroupRef.current == null) {
       return;
     }
+
+    const applyCtrlEditState = () => {
+      const featureGroup = editableFeatureGroupRef.current;
+      if (featureGroup == null) {
+        return;
+      }
+
+      const allowEditing = isEditModeRef.current && isCtrlPressedRef.current;
+      featureGroup.eachLayer((layer) => {
+        const maybePathLayer = layer as L.Layer & {
+          editing?: {
+            enable: () => void;
+            disable: () => void;
+          };
+        };
+        const maybeMarkerLayer = layer as L.Layer & {
+          dragging?: {
+            enable: () => void;
+            disable: () => void;
+          };
+        };
+
+        if (maybePathLayer.editing != null) {
+          if (allowEditing) {
+            maybePathLayer.editing.enable();
+          } else {
+            maybePathLayer.editing.disable();
+          }
+        }
+
+        if (maybeMarkerLayer.dragging != null) {
+          if (allowEditing) {
+            maybeMarkerLayer.dragging.enable();
+          } else {
+            maybeMarkerLayer.dragging.disable();
+          }
+        }
+      });
+    };
 
     const drawControl = new L.Control.Draw({
       position: 'topright',
@@ -289,7 +337,7 @@ const EditableDrawControl = ({
         remove: true,
       },
       draw: {
-        marker: false,
+        marker: {},
         rectangle: false,
         circlemarker: false,
         polygon: {},
@@ -332,6 +380,8 @@ const EditableDrawControl = ({
           layerType = 'polygon';
         } else if (layer instanceof L.Polyline) {
           layerType = 'polyline';
+        } else if (layer instanceof L.Marker) {
+          layerType = 'marker';
         }
 
         const draft = extractGeometryFromDraftLayer({
@@ -381,17 +431,47 @@ const EditableDrawControl = ({
     const deletedEventHandler: L.LeafletEventHandlerFn = (event) => {
       handleDeleted(event as L.DrawEvents.Deleted);
     };
+    const editStartHandler: L.LeafletEventHandlerFn = () => {
+      isEditModeRef.current = true;
+      applyCtrlEditState();
+    };
+    const editStopHandler: L.LeafletEventHandlerFn = () => {
+      isEditModeRef.current = false;
+      applyCtrlEditState();
+    };
+    const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key !== 'Control') {
+        return;
+      }
+      isCtrlPressedRef.current = true;
+      applyCtrlEditState();
+    };
+    const handleKeyUp = (keyboardEvent: KeyboardEvent) => {
+      if (keyboardEvent.key !== 'Control') {
+        return;
+      }
+      isCtrlPressedRef.current = false;
+      applyCtrlEditState();
+    };
 
     map.addControl(drawControl);
     map.on(L.Draw.Event.CREATED, createdEventHandler);
     map.on(L.Draw.Event.EDITED, editedEventHandler);
     map.on(L.Draw.Event.DELETED, deletedEventHandler);
+    map.on(L.Draw.Event.EDITSTART, editStartHandler);
+    map.on(L.Draw.Event.EDITSTOP, editStopHandler);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
 
     return () => {
       map.off(L.Draw.Event.CREATED, createdEventHandler);
       map.off(L.Draw.Event.EDITED, editedEventHandler);
       map.off(L.Draw.Event.DELETED, deletedEventHandler);
+      map.off(L.Draw.Event.EDITSTART, editStartHandler);
+      map.off(L.Draw.Event.EDITSTOP, editStopHandler);
       map.removeControl(drawControl);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
     };
   }, [editableFeatureGroupRef, map, onCreate, onDelete, onEdit]);
 
@@ -416,7 +496,7 @@ export const LeafletMapCanvas = ({
   const editableFeatureGroupRef = useRef<L.FeatureGroup | null>(null);
 
   const editableLeafNodes = visibleLeafNodes.filter(
-    (leafNode) => leafNode.source === 'user' && leafNode.shape !== 'dot'
+    (leafNode) => leafNode.source === 'user'
   );
   const staticLeafNodes = visibleLeafNodes.filter(
     (leafNode) => !(leafNode.source === 'user' && leafNode.shape !== 'dot')

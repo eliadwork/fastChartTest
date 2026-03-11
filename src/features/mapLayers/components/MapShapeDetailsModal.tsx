@@ -3,9 +3,12 @@ import type { ShapeDetailsFormValue } from '../types';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useState } from 'react';
 
 import {
   SharedModal,
@@ -27,6 +30,7 @@ export interface MapShapeDetailsModalProps {
   onCreateLayer: () => void;
   onCancel: () => void;
   onSave: () => void;
+  onDelete?: () => void;
 }
 
 export const MapShapeDetailsModal = ({
@@ -37,8 +41,11 @@ export const MapShapeDetailsModal = ({
   onCreateLayer,
   onCancel,
   onSave,
+  onDelete,
 }: MapShapeDetailsModalProps) => {
   const { formValue, mode } = state;
+  const [showCoordinates, setShowCoordinates] = useState(false);
+  const [showLayerCreator, setShowLayerCreator] = useState(false);
 
   const onFormValueChange = <FieldKey extends keyof ShapeDetailsFormValue>(
     fieldKey: FieldKey,
@@ -60,6 +67,16 @@ export const MapShapeDetailsModal = ({
           <SharedModalActionButton variant="outlined" onClick={onCancel}>
             Cancel
           </SharedModalActionButton>
+          {mode === 'edit' && onDelete ? (
+            <SharedModalActionButton
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteOutlineIcon />}
+              onClick={onDelete}
+            >
+              Delete
+            </SharedModalActionButton>
+          ) : null}
           <SharedModalActionButton
             variant="contained"
             onClick={onSave}
@@ -112,45 +129,50 @@ export const MapShapeDetailsModal = ({
         </SharedModalSection>
 
         <SharedModalSection>
-          <SharedModalSectionLabel>Create layer before save</SharedModalSectionLabel>
-          <Stack spacing={1.5} sx={{ width: '100%' }}>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label="Create under"
-              value={formValue.newSubLayerParentNodeId}
-              onChange={(event) => onFormValueChange('newSubLayerParentNodeId', event.target.value)}
-              helperText="Empty = root. Select a layer to create under it."
-            >
-              <MenuItem value={ROOT_LAYER_VALUE}>(Root)</MenuItem>
-              {layerSelectionOptions.map((option) => (
-                <MenuItem key={option.nodeId} value={option.nodeId}>
-                  {getOptionLabel(option)}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              fullWidth
-              size="small"
-              label="New layer name"
-              value={formValue.newLayerName}
-              onChange={(event) => onFormValueChange('newLayerName', event.target.value)}
-              placeholder="Leave empty for default name"
-            />
-            <TextField
-              fullWidth
-              size="small"
-              label="Sublayer path"
-              value={formValue.newSubLayerPath}
-              onChange={(event) => onFormValueChange('newSubLayerPath', event.target.value)}
-              placeholder="today -> night"
-              helperText="Optional nested path under the new layer."
-            />
-            <Button variant="outlined" size="small" onClick={onCreateLayer}>
-              Create layer
-            </Button>
-          </Stack>
+          <SharedModalSectionLabel>Layer creator</SharedModalSectionLabel>
+          <Button variant="outlined" size="small" onClick={() => setShowLayerCreator((value) => !value)}>
+            {showLayerCreator ? 'Hide layer creator' : 'Show layer creator'}
+          </Button>
+          <Collapse in={showLayerCreator} sx={{ width: '100%', mt: 1.5 }}>
+            <Stack spacing={1.5} sx={{ width: '100%' }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Create under"
+                value={formValue.newSubLayerParentNodeId}
+                onChange={(event) => onFormValueChange('newSubLayerParentNodeId', event.target.value)}
+                helperText="Empty = root. Select a layer to create under it."
+              >
+                <MenuItem value={ROOT_LAYER_VALUE}>(Root)</MenuItem>
+                {layerSelectionOptions.map((option) => (
+                  <MenuItem key={option.nodeId} value={option.nodeId}>
+                    {getOptionLabel(option)}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                size="small"
+                label="New layer name"
+                value={formValue.newLayerName}
+                onChange={(event) => onFormValueChange('newLayerName', event.target.value)}
+                placeholder="Leave empty for default name"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Sublayer path"
+                value={formValue.newSubLayerPath}
+                onChange={(event) => onFormValueChange('newSubLayerPath', event.target.value)}
+                placeholder="today -> night"
+                helperText="Optional nested path under the new layer."
+              />
+              <Button variant="outlined" size="small" onClick={onCreateLayer}>
+                Create
+              </Button>
+            </Stack>
+          </Collapse>
         </SharedModalSection>
 
         <SharedModalSection>
@@ -179,23 +201,28 @@ export const MapShapeDetailsModal = ({
 
         <SharedModalSection>
           <SharedModalSectionLabel>Location</SharedModalSectionLabel>
-          <TextField
-            size="small"
-            multiline
-            minRows={5}
-            value={formValue.coordinatesText}
-            onChange={(event) => onFormValueChange('coordinatesText', event.target.value)}
-            fullWidth
-            label="Coordinates (JSON)"
-            sx={{
-              '& .MuiInputBase-inputMultiline': {
-                maxHeight: 220,
-                overflowY: 'auto',
-                fontFamily: 'monospace',
-                fontSize: '0.78rem',
-              },
-            }}
-          />
+          <Button variant="outlined" size="small" onClick={() => setShowCoordinates((value) => !value)}>
+            {showCoordinates ? 'Hide coordinates' : 'Show coordinates'}
+          </Button>
+          <Collapse in={showCoordinates} sx={{ width: '100%', mt: 1.5 }}>
+            <TextField
+              size="small"
+              multiline
+              minRows={5}
+              value={formValue.coordinatesText}
+              onChange={(event) => onFormValueChange('coordinatesText', event.target.value)}
+              fullWidth
+              label="Coordinates (JSON)"
+              sx={{
+                '& .MuiInputBase-inputMultiline': {
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                  fontFamily: 'monospace',
+                  fontSize: '0.78rem',
+                },
+              }}
+            />
+          </Collapse>
           {formValue.shape === 'circle' ? (
             <TextField
               sx={{ mt: 1.5 }}
