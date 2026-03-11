@@ -1,0 +1,105 @@
+{
+  "name": "Bus stops in Israel",
+  "children": [
+    {
+      "name": "Beer Sheva",
+      "children": [
+        {
+          "name": "Old City",
+          "children": [
+            {
+              "name": "BS Stop 1",
+              "shape": "line",
+              "coordinates": [
+                [34.7935, 31.2514],
+                [34.7962, 31.2525],
+                [34.7993, 31.2542]
+              ],
+              "stationName": "Keren Hayesod Corridor",
+              "dateOfCreation": "2024-01-12",
+              "dateLastVisited": "2026-03-07",
+              "operator": "Metrodan"
+            },
+            {
+              "name": "BS Stop 2",
+              "shape": "line",
+              "coordinates": [
+                [34.7877, 31.2456],
+                [34.7891, 31.2478],
+                [34.7912, 31.2497]
+              ],
+              "stationName": "Rager Avenue Segment",
+              "dateOfCreation": "2024-03-01",
+              "dateLastVisited": "2026-03-04",
+              "zoneCode": "BS-OLD-02"
+            },
+            {
+              "name": "BS Stop 3",
+              "shape": "dot",
+              "coordinates": [34.8018, 31.2584],
+              "stationName": "University Gate",
+              "dateOfCreation": "2024-02-03",
+              "dateLastVisited": "2026-03-01",
+              "wheelchairAccessible": true
+            }
+          ]
+        },
+        {
+          "name": "North District",
+          "children": [
+            {
+              "name": "BS North 1",
+              "shape": "line",
+              "coordinates": [
+                [34.8101, 31.2733],
+                [34.8133, 31.2744],
+                [34.8166, 31.2758]
+              ],
+              "stationName": "HaNassi Blvd",
+              "dateOfCreation": "2024-04-08",
+              "dateLastVisited": "2026-02-26"
+            },
+            {
+              "name": "BS North 2",
+              "shape": "dot",
+              "coordinates": [34.8188, 31.2776],
+              "stationName": "Tech Park Stop",
+              "dateOfCreation": "2024-04-12",
+              "dateLastVisited": "2026-03-09"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tel Aviv",
+      "children": [
+        {
+          "name": "Central Zone",
+          "children": [
+            {
+              "name": "TA Stop 1",
+              "shape": "line",
+              "coordinates": [
+                [34.7741, 32.0715],
+                [34.7763, 32.0721],
+                [34.7792, 32.0731]
+              ],
+              "stationName": "Ibn Gabirol Segment",
+              "dateOfCreation": "2024-05-13",
+              "dateLastVisited": "2026-03-08"
+            },
+            {
+              "name": "TA Stop 2",
+              "shape": "dot",
+              "coordinates": [34.7804, 32.0744],
+              "stationName": "Rabin Square",
+              "dateOfCreation": "2024-06-01",
+              "dateLastVisited": "2026-03-05"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

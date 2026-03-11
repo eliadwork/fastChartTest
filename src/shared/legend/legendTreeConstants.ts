@@ -1,0 +1,17 @@
+export const LEGEND_TREE_Z_INDEX = 10;
+export const LEGEND_TREE_INSET = 0.5;
+export const LEGEND_TREE_GAP = 0.35;
+export const LEGEND_TREE_PADDING = 0.6;
+export const LEGEND_TREE_PADDING_BLOCK = 0.4;
+export const LEGEND_TREE_BORDER_RADIUS = 0.25;
+export const LEGEND_TREE_ROW_PADDING_BLOCK = 0.15;
+export const LEGEND_TREE_FONT_SIZE = 0.8;
+export const LEGEND_TREE_MAX_HEIGHT = '90%';
+export const LEGEND_TREE_DEFAULT_BACKGROUND = 'rgba(0,0,0,0.6)';
+export const LEGEND_TREE_DEFAULT_TEXT_COLOR = '#ffffff';
+export const LEGEND_TREE_INDENT = '1.5rem';
+export const LEGEND_TREE_OPACITY_VISIBLE = 1;
+export const LEGEND_TREE_OPACITY_HIDDEN = 0.5;
+export const LEGEND_TREE_OPACITY_PARTIAL = 0.85;
+export const LEGEND_TREE_DECORATION_VISIBLE = 'none';
+export const LEGEND_TREE_DECORATION_HIDDEN = 'line-through';

@@ -1,0 +1,15 @@
+export const MAP_PANEL_WIDTH_PERCENT = 80;
+export const MAP_PANEL_MIN_WIDTH_PX = 280;
+export const MAP_DEFAULT_CENTER_LAT = 31.5;
+export const MAP_DEFAULT_CENTER_LNG = 34.85;
+export const MAP_DEFAULT_ZOOM = 8;
+export const MAP_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const MAP_TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors';
+export const MAP_FALLBACK_COLOR = '#00BFFF';
+export const MAP_SHAPE_MODAL_DEFAULT_COLOR = '#ff5722';
+export const MAP_HOVER_CARD_BACKGROUND_COLOR = '#1b3348';
+export const MAP_LINE_WEIGHT = 3;
+export const MAP_DOT_RADIUS = 6;
+export const MAP_DASH_PATTERN = '6,4';
+export const MAP_EXPORT_FILE_NAME = 'bus-stops-map-layers.json';
+export const MAP_MOCK_DATA_URL = '/data/bus-stops-israel.json';

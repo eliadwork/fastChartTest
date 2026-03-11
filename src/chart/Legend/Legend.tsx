@@ -1,12 +1,7 @@
-import type { SeriesInfo } from './useLegend';
 import { useLegend } from './useLegend';
-import {
-  LegendRoot,
-  LegendItemButton,
-  LegendItemLabel,
-  LegendGroup,
-  LegendLineSvg,
-} from './LegendStyled';
+import { LegendTree } from '../../shared/legend';
+import type { LegendTreeNode } from '../../shared/legend';
+import { LegendLineSvg } from './LegendStyled';
 import {
   LEGEND_DEFAULT_BACKGROUND,
   LEGEND_DEFAULT_TEXT_COLOR,
@@ -17,10 +12,6 @@ import {
   LEGEND_LINE_X2,
   LEGEND_LINE_Y1,
   LEGEND_LINE_Y2,
-  LEGEND_OPACITY_HIDDEN,
-  LEGEND_OPACITY_VISIBLE,
-  LEGEND_TEXT_DECORATION_HIDDEN,
-  LEGEND_TEXT_DECORATION_VISIBLE,
   LEGEND_ITEM_INDENT,
   STROKE_DASHARRAY_NONE,
 } from './legendConstants';
@@ -60,33 +51,6 @@ const LegendLine = ({ stroke, strokeThickness, strokeDashArray }: LegendLineProp
   </LegendLineSvg>
 );
 
-export interface LegendSeriesItemProps {
-  series: SeriesInfo;
-  onClick: () => void;
-  indent?: boolean;
-}
-
-const LegendSeriesItem = ({ series, onClick, indent }: LegendSeriesItemProps) => (
-  <LegendItemButton
-    type="button"
-    onClick={onClick}
-    sx={{
-      pl: indent ? LEGEND_ITEM_INDENT : 0,
-      opacity: series.isVisible ? LEGEND_OPACITY_VISIBLE : LEGEND_OPACITY_HIDDEN,
-      textDecoration: series.isVisible
-        ? LEGEND_TEXT_DECORATION_VISIBLE
-        : LEGEND_TEXT_DECORATION_HIDDEN,
-    }}
-  >
-    <LegendLine
-      stroke={series.stroke}
-      strokeThickness={series.strokeThickness}
-      strokeDashArray={series.strokeDashArray}
-    />
-    <LegendItemLabel>{series.name}</LegendItemLabel>
-  </LegendItemButton>
-);
-
 export const Legend = ({
   backgroundColor,
   textColor,
@@ -104,55 +68,96 @@ export const Legend = ({
 
   if (seriesList.length === 0) return null;
 
+  const groupedNodes: LegendTreeNode[] = groups.reduce<LegendTreeNode[]>(
+    (accumulatedNodes, group, groupIndex) => {
+      const items = group.seriesIndices.map((index) => seriesList[index]).filter(Boolean);
+      if (items.length === 0) {
+        return accumulatedNodes;
+      }
+
+      const visibleCount = items.filter((series) => series.isVisible).length;
+      const allVisible = visibleCount === items.length;
+      const anyVisible = visibleCount > 0;
+      const firstItem = items[0]!;
+
+      accumulatedNodes.push({
+        id: `group-${group.name}-${groupIndex}`,
+        label: group.name,
+        checked: allVisible,
+        indeterminate: anyVisible && !allVisible,
+        symbol: (
+          <LegendLine
+            stroke={firstItem.stroke}
+            strokeThickness={firstItem.strokeThickness}
+            strokeDashArray={firstItem.strokeDashArray}
+          />
+        ),
+        children: items.map((series) => ({
+          id: `series-${series.index}`,
+          label: series.name,
+          checked: series.isVisible,
+          indeterminate: false,
+          symbol: (
+            <LegendLine
+              stroke={series.stroke}
+              strokeThickness={series.strokeThickness}
+              strokeDashArray={series.strokeDashArray}
+            />
+          ),
+        })),
+      } satisfies LegendTreeNode);
+
+      return accumulatedNodes;
+    },
+    []
+  );
+
+  const ungroupedNodes: LegendTreeNode[] = ungrouped.map((series) => ({
+    id: `series-${series.index}`,
+    label: series.name,
+    checked: series.isVisible,
+    indeterminate: false,
+    symbol: (
+      <LegendLine
+        stroke={series.stroke}
+        strokeThickness={series.strokeThickness}
+        strokeDashArray={series.strokeDashArray}
+      />
+    ),
+  }));
+
+  const legendNodes = [...groupedNodes, ...ungroupedNodes];
+
   return (
-    <LegendRoot
-      sx={{
-        backgroundColor: backgroundColor ?? LEGEND_DEFAULT_BACKGROUND,
-        color: textColor ?? LEGEND_DEFAULT_TEXT_COLOR,
+    <LegendTree
+      nodes={legendNodes}
+      onToggle={(nodeId) => {
+        if (nodeId.startsWith('series-')) {
+          const seriesIndex = Number(nodeId.slice('series-'.length));
+          if (!Number.isNaN(seriesIndex)) {
+            handleClick(seriesIndex);
+          }
+          return;
+        }
+
+        if (!nodeId.startsWith('group-')) {
+          return;
+        }
+
+        const groupNode = groupedNodes.find((node) => node.id === nodeId);
+        if (!groupNode || !groupNode.children) {
+          return;
+        }
+
+        const seriesIndices = groupNode.children
+          .map((node) => Number(node.id.slice('series-'.length)))
+          .filter((index) => !Number.isNaN(index));
+        handleGroupClick(seriesIndices);
       }}
-    >
-      {groups.map((group) => {
-        const items = group.seriesIndices.map((index) => seriesList[index]).filter(Boolean);
-        if (items.length === 0) return null;
-        const allVisible = items.every((item) => item.isVisible);
-        const first = items[0]!;
-        return (
-          <LegendGroup key={group.name}>
-            <LegendItemButton
-              type="button"
-              onClick={() => handleGroupClick(group.seriesIndices)}
-              sx={{
-                opacity: allVisible ? LEGEND_OPACITY_VISIBLE : LEGEND_OPACITY_HIDDEN,
-                textDecoration: allVisible
-                  ? LEGEND_TEXT_DECORATION_VISIBLE
-                  : LEGEND_TEXT_DECORATION_HIDDEN,
-              }}
-            >
-              <LegendLine
-                stroke={first.stroke}
-                strokeThickness={first.strokeThickness}
-                strokeDashArray={first.strokeDashArray}
-              />
-              <LegendItemLabel>{group.name}</LegendItemLabel>
-            </LegendItemButton>
-            {items.map((series) => (
-              <LegendSeriesItem
-                key={series.index}
-                series={series}
-                onClick={() => handleClick(series.index)}
-                indent
-              />
-            ))}
-          </LegendGroup>
-        );
-      })}
-      {ungrouped.map((series) => (
-        <LegendSeriesItem
-          key={series.index}
-          series={series}
-          onClick={() => handleClick(series.index)}
-        />
-      ))}
-    </LegendRoot>
+      backgroundColor={backgroundColor ?? LEGEND_DEFAULT_BACKGROUND}
+      textColor={textColor ?? LEGEND_DEFAULT_TEXT_COLOR}
+      withCheckbox={false}
+      indentSize={LEGEND_ITEM_INDENT}
+    />
   );
 };

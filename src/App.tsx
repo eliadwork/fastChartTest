@@ -3,9 +3,9 @@ import type { ChartData, ChartDataSeries } from './chart/types';
 import { styled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 
-import { chartIcons } from './assets/chartIcons';
+import { chartIcons } from './assets/chartAnnotationIcons';
 import { Detect } from './features/detect/Detect';
-import { FastChartingPanel } from './features/fastCharting/FastChartingPanel';
+import { MapLayersPanel } from './features/mapLayers';
 import {
   ChartComparison,
   ChartComparisonGrid,
@@ -16,46 +16,39 @@ import {
 const App = () => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   useDataSetting(setChartData);
+  const showCharts = false;
 
   return (
     <ChartComparison sx={{ flexDirection: 'row' }}>
-      <ChartComparisonGrid sx={{ flex: 1, minWidth: 0 }}>
-        <ChartPanel>
-          <DetectStyled
-            chartId="resampled"
-            title="Resampled (precision 1.0)"
-            data={chartData}
-            shapes={exampleShapes}
-            options={{
-              note: 'this is the chart example',
-              resampling: { enable: true, precision: 1 },
-            }}
-            icons={chartIcons}
-          />
-        </ChartPanel>
-        <ChartPanel>
-          <DetectStyled
-            chartId="no-loss"
-            title="No-loss (every point)"
-            data={chartData}
-            shapes={exampleShapes}
-            options={{
-              note: 'this is the chart example',
-            }}
-          />
-        </ChartPanel>
-      </ChartComparisonGrid>
-      <FastChartingPanel
-        chartId="fast"
-        title="Fast chart"
-        data={chartData}
-        shapes={exampleShapes}
-        options={{
-          note: '20% panel',
-          clipZoomToData: true,
-        }}
-        icons={chartIcons}
-      />
+      {showCharts ? (
+        <ChartComparisonGrid sx={{ flex: 1, minWidth: 0 }}>
+          <ChartPanel>
+            <DetectStyled
+              chartId="resampled"
+              title="Resampled (precision 1.0)"
+              data={chartData}
+              shapes={exampleShapes}
+              options={{
+                note: 'this is the chart example',
+                resampling: { enable: true, precision: 1 },
+              }}
+              icons={chartIcons}
+            />
+          </ChartPanel>
+          <ChartPanel>
+            <DetectStyled
+              chartId="no-loss"
+              title="No-loss (every point)"
+              data={chartData}
+              shapes={exampleShapes}
+              options={{
+                note: 'this is the chart example',
+              }}
+            />
+          </ChartPanel>
+        </ChartComparisonGrid>
+      ) : null}
+      <MapLayersPanel />
     </ChartComparison>
   );
 };
@@ -157,5 +150,5 @@ const useDataSetting = (setChartData: (data: ChartData) => void) => {
 
     worker.postMessage({});
     return () => worker.terminate();
-  }, []);
+  }, [setChartData]);
 }
