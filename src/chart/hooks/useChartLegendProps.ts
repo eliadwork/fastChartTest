@@ -1,16 +1,43 @@
 import type { LegendProps } from '../Legend/Legend';
-import type { ChartData } from '../types';
+import type { ChartData, ChartStyle, DashConfig } from '../types';
 
-import { useMemo } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useMemo } from 'react';
 
 import { withOpacity } from '../../utils/colorUtils';
-import { CHART_LEGEND_BACKGROUND_OPACITY } from '../chartConstants';
-import { DEFAULT_LEGEND_BACKGROUND_COLOR } from '../defaults';
+import {
+  CHART_DEFAULT_SERIES_COLORS,
+  CHART_LEGEND_BACKGROUND_OPACITY,
+  DEFAULT_LEGEND_BACKGROUND_COLOR,
+} from '../defaultsChartStyles';
+import { LEGEND_DEFAULT_STROKE, LEGEND_DEFAULT_STROKE_THICKNESS } from '../Legend/legendConstants';
+
+const dashToStrokeDashArray = (dash?: DashConfig): number[] | undefined =>
+  dash?.isDash && dash.steps.length > 0 ? dash.steps : undefined;
+
+const buildLegendSeriesModel = (
+  chartData: ChartData,
+  chartStyle: ChartStyle
+): NonNullable<LegendProps['series']> => {
+  const defaultSeriesColors = chartStyle.defaults?.seriesColors ?? CHART_DEFAULT_SERIES_COLORS;
+  const defaultStrokeThickness =
+    chartStyle.defaults?.strokeThickness ?? LEGEND_DEFAULT_STROKE_THICKNESS;
+
+  return chartData.map((line, index) => ({
+    index,
+    name: line.name,
+    stroke:
+      line.style.color ??
+      defaultSeriesColors[index % defaultSeriesColors.length] ??
+      LEGEND_DEFAULT_STROKE,
+    strokeDashArray: dashToStrokeDashArray(line.style.dash),
+    strokeThickness: line.style.thickness ?? defaultStrokeThickness,
+  }));
+};
 
 export interface UseChartLegendPropsOptions {
   chartData: ChartData;
-  data: ChartData | null;
+  chartStyle: ChartStyle;
   seriesVisibility: boolean[];
   seriesGroupKeys?: (string | undefined)[];
   textColor?: string;
@@ -21,7 +48,7 @@ export interface UseChartLegendPropsOptions {
 
 export const useChartLegendProps = ({
   chartData,
-  data,
+  chartStyle,
   seriesVisibility,
   seriesGroupKeys,
   textColor,
@@ -41,13 +68,14 @@ export const useChartLegendProps = ({
   }, [theme.palette.background.paper]);
 
   return useMemo(() => {
-    if (chartOnly || data == null) {
+    if (chartOnly || chartData.length == 0) {
       return null;
     }
 
     return {
       backgroundColor: legendBackgroundColor,
       textColor,
+      series: buildLegendSeriesModel(chartData, chartStyle),
       seriesVisibility,
       seriesGroupKeys: seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey),
       onSeriesVisibilityChange,
@@ -55,7 +83,7 @@ export const useChartLegendProps = ({
     };
   }, [
     chartOnly,
-    data,
+    chartStyle,
     legendBackgroundColor,
     textColor,
     seriesVisibility,

@@ -4,13 +4,14 @@ import { useMemo } from 'react';
 
 import { Legend } from '../Legend/Legend';
 
-export type UseChartLegendSlotParams = { show: boolean } & Partial<LegendProps>;
+export type UseChartLegendSlotParams = { show: boolean } & LegendProps;
 
 export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.ReactNode => {
   const {
     show,
     backgroundColor,
     textColor,
+    series,
     seriesVisibility = [],
     seriesGroupKeys,
     onSeriesVisibilityChange,
@@ -26,6 +27,7 @@ export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.Reac
       <Legend
         backgroundColor={backgroundColor}
         textColor={textColor}
+        series={series}
         seriesVisibility={seriesVisibility}
         seriesGroupKeys={seriesGroupKeys}
         onSeriesVisibilityChange={onSeriesVisibilityChange}
@@ -36,6 +38,7 @@ export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.Reac
     show,
     backgroundColor,
     textColor,
+    series,
     seriesVisibility,
     seriesGroupKeys,
     onSeriesVisibilityChange,

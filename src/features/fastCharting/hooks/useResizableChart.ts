@@ -50,7 +50,6 @@ export const useResizableChart = ({
   const handleMouseUp = useCallback(() => {
     startRef.current = null;
     window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove]);
 
   const handleResizeMouseDown = useCallback(
@@ -63,7 +62,7 @@ export const useResizableChart = ({
         height,
       };
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mouseup', handleMouseUp, { once: true });
     },
     [width, height, handleMouseMove, handleMouseUp]
   );

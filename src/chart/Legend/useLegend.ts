@@ -23,13 +23,23 @@ export interface LegendGroup {
 }
 
 export interface UseLegendOptions {
+  series?: LegendSeriesItemModel[];
   seriesVisibility?: boolean[];
   seriesGroupKeys?: (string | undefined)[];
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void;
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void;
 }
 
+export interface LegendSeriesItemModel {
+  index: number;
+  name: string;
+  stroke: string;
+  strokeDashArray?: number[];
+  strokeThickness: number;
+}
+
 export const useLegend = ({
+  series,
   seriesVisibility,
   seriesGroupKeys,
   onSeriesVisibilityChange,
@@ -39,6 +49,17 @@ export const useLegend = ({
   const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
 
   const seriesList = useMemo<SeriesInfo[]>(() => {
+    if (series != null) {
+      return series.map((seriesItem) => ({
+        name: seriesItem.name,
+        stroke: seriesItem.stroke,
+        strokeDashArray: seriesItem.strokeDashArray,
+        strokeThickness: seriesItem.strokeThickness,
+        isVisible: seriesVisibility?.[seriesItem.index] ?? true,
+        index: seriesItem.index,
+      }));
+    }
+
     if (!surface) {
       return [];
     }
@@ -71,7 +92,7 @@ export const useLegend = ({
     }
 
     return nextSeriesList;
-  }, [surface, seriesVisibility]);
+  }, [series, seriesVisibility, surface]);
 
   const handleClick = useCallback(
     (seriesIndex: number) => {

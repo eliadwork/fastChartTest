@@ -1,13 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface UseChartSeriesVisibilityOptions {
+  /** Current number of series rendered by the chart. */
   initialSeriesCount: number;
+  /** Optional externally-controlled visibility array (index-aligned to series). */
   initialVisibility?: boolean[];
 }
 
+/** Default visibility when nothing is provided: every series is visible. */
 const buildDefaultVisibility = (seriesCount: number): boolean[] =>
   Array.from({ length: seriesCount }, () => true);
 
+/**
+ * Keeps visibility array aligned with the current series count.
+ * - Too short: pad missing entries with `true` (visible).
+ * - Too long: trim extra entries.
+ */
 const normalizeSeriesVisibility = (
   seriesVisibility: boolean[],
   seriesCount: number
@@ -26,10 +34,31 @@ const normalizeSeriesVisibility = (
   return seriesVisibility.slice(0, seriesCount);
 };
 
+/**
+ * Compares two visibility arrays by value.
+ * `left` = current/previous state snapshot.
+ * `right` = new candidate visibility (usually from props).
+ */
+const sameSeriesVisibility = (left: boolean[], right: boolean[]): boolean => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  // Index-by-index equality check; arrays must match exactly.
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const useChartSeriesVisibility = ({
   initialSeriesCount,
   initialVisibility,
 }: UseChartSeriesVisibilityOptions) => {
+  // Internal visibility state is always normalized against current series count.
   const [seriesVisibilityState, setSeriesVisibilityState] = useState<boolean[]>(() =>
     normalizeSeriesVisibility(
       initialVisibility ?? buildDefaultVisibility(initialSeriesCount),
@@ -37,11 +66,41 @@ export const useChartSeriesVisibility = ({
     )
   );
 
+  useEffect(() => {
+    // If parent does not control visibility, keep local state as-is.
+    if (initialVisibility == null) {
+      return;
+    }
+
+    // Normalize incoming visibility to avoid length mismatch with current data.
+    const normalizedInitialVisibility = normalizeSeriesVisibility(
+      initialVisibility,
+      initialSeriesCount
+    );
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSeriesVisibilityState((previousVisibility) => {
+      // `previousVisibility` is the latest committed state (safe against stale closures).
+      const normalizedPreviousVisibility = normalizeSeriesVisibility(
+        previousVisibility,
+        initialSeriesCount
+      );
+      // Update only when values actually changed to avoid unnecessary renders.
+      return sameSeriesVisibility(normalizedPreviousVisibility, normalizedInitialVisibility)
+        ? previousVisibility
+        : normalizedInitialVisibility;
+    });
+  }, [initialVisibility, initialSeriesCount]);
+
+  // Expose normalized visibility so downstream code always gets array length === series count.
   const seriesVisibility = useMemo(
     () => normalizeSeriesVisibility(seriesVisibilityState, initialSeriesCount),
     [seriesVisibilityState, initialSeriesCount]
   );
 
+  // Toggle behavior:
+  // - if all currently hidden -> show all
+  // - otherwise -> hide all
   const handleDisableAll = useCallback(() => {
     setSeriesVisibilityState((previousVisibility) => {
       const normalizedVisibility = normalizeSeriesVisibility(
@@ -53,6 +112,7 @@ export const useChartSeriesVisibility = ({
     });
   }, [initialSeriesCount]);
 
+  // Change a single series visibility by index.
   const handleSeriesVisibilityChange = useCallback(
     (seriesIndex: number, isVisible: boolean) => {
       setSeriesVisibilityState((previousVisibility) => {
@@ -60,6 +120,7 @@ export const useChartSeriesVisibility = ({
           previousVisibility,
           initialSeriesCount
         );
+        // Ignore invalid indices instead of throwing.
         if (seriesIndex < 0 || seriesIndex >= normalizedVisibility.length) {
           return normalizedVisibility;
         }
@@ -72,6 +133,7 @@ export const useChartSeriesVisibility = ({
     [initialSeriesCount]
   );
 
+  // Change visibility for a group of series indices.
   const handleSeriesVisibilityGroupChange = useCallback(
     (seriesIndices: number[], isVisible: boolean) => {
       setSeriesVisibilityState((previousVisibility) => {
@@ -93,6 +155,7 @@ export const useChartSeriesVisibility = ({
     [initialSeriesCount]
   );
 
+  // Used by toolbar to decide whether "enable all / disable all" icon should flip state.
   const allSeriesHidden =
     seriesVisibility.length > 0 && seriesVisibility.every((isVisible) => !isVisible);
 

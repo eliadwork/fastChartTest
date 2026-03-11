@@ -1,6 +1,5 @@
-import type { PointMarkColor } from '../../detectConstants';
-
 import InputLabel from '@mui/material/InputLabel';
+import type { DetectVisualIconOption } from '../../detectVisualConfig';
 
 import {
   DetectColorSwatch,
@@ -25,17 +24,18 @@ import {
   SERIES_PICKER_SECTION_COLOR_HEADER,
   SERIES_PICKER_SECTION_DATA_SERIES,
   SERIES_PICKER_SELECT_LABEL,
+  SERIES_PICKER_SELECT_LABEL_ID,
 } from './seriesPickerModalConstants';
 
 export interface SeriesPickerModalProps {
   open: boolean;
-  colorOptions: PointMarkColor[];
-  selectedColor?: PointMarkColor;
+  iconOptions: DetectVisualIconOption[];
+  selectedColor?: string;
   seriesOptions: number[];
   seriesNames: string[];
   selectedSeriesIndex: number;
   canConfirm: boolean;
-  onColorChange: (color: PointMarkColor) => void;
+  onColorChange: (color: string) => void;
   onSeriesChange: (seriesIndex: number) => void;
   onDone: () => void;
   /** Undo the last click (back to 2 clicks). */
@@ -46,7 +46,7 @@ export interface SeriesPickerModalProps {
 
 export const SeriesPickerModal = ({
   open,
-  colorOptions,
+  iconOptions,
   selectedColor,
   seriesOptions,
   seriesNames,
@@ -67,16 +67,21 @@ export const SeriesPickerModal = ({
           {SERIES_PICKER_SECTION_COLOR_HEADER}
         </SeriesPickerModalSectionLabel>
         <DetectColorSwatches>
-          {colorOptions.map((colorOption) => {
-            const isSelected = selectedColor === colorOption;
+          {iconOptions.map((iconOption) => {
+            const isSelected = selectedColor === iconOption.textRepresentation;
             return (
               <DetectColorSwatch
-                key={colorOption}
+                key={iconOption.textRepresentation}
                 $selected={isSelected}
-                $backgroundColor={colorOption}
-                onClick={() => onColorChange(colorOption)}
-                title={colorOption}
-              />
+                onClick={() => onColorChange(iconOption.textRepresentation)}
+                title={iconOption.textRepresentation}
+              >
+                <span
+                  aria-hidden
+                  // visual config is app-owned; render SVG preview exactly as provided
+                  dangerouslySetInnerHTML={{ __html: iconOption.icon }}
+                />
+              </DetectColorSwatch>
             );
           })}
         </DetectColorSwatches>
@@ -87,9 +92,9 @@ export const SeriesPickerModal = ({
           {SERIES_PICKER_SECTION_DATA_SERIES}
         </SeriesPickerModalSectionLabel>
         <DetectSeriesFormControl fullWidth size="small">
-          <InputLabel id="series-select-label">{SERIES_PICKER_SELECT_LABEL}</InputLabel>
+          <InputLabel id={SERIES_PICKER_SELECT_LABEL_ID}>{SERIES_PICKER_SELECT_LABEL}</InputLabel>
           <SeriesPickerSelect
-            labelId="series-select-label"
+            labelId={SERIES_PICKER_SELECT_LABEL_ID}
             label={SERIES_PICKER_SELECT_LABEL}
             value={
               selectedSeriesIndex >= 0 && seriesOptions.includes(selectedSeriesIndex)

@@ -1,0 +1,22 @@
+import type { ChartLineShape } from '../../chart/types';
+
+import { DEFAULT_DETECT_VISUAL_CONFIG } from './detectVisualConfig';
+
+export const EMPTY_LINE_SHAPES: ChartLineShape[] = [];
+export const DETECT_POINT_MARK_CLICK_TARGET_COUNT = 3;
+export const DETECT_POINT_MARK_LEFT_INDEX = 0;
+export const DETECT_POINT_MARK_MIDDLE_INDEX = 1;
+export const DETECT_POINT_MARK_RIGHT_INDEX = DETECT_POINT_MARK_CLICK_TARGET_COUNT - 1;
+export const DETECT_POINT_MARK_CLICK_RESTORE_COUNT = DETECT_POINT_MARK_CLICK_TARGET_COUNT - 1;
+
+export const DETECT_PENDING_LINE_DASH_INDEX = DETECT_POINT_MARK_MIDDLE_INDEX;
+export const DETECT_PENDING_LINE_DASH_STEPS = [8, 4] as const;
+export const DETECT_PENDING_LINE_COLOR = DEFAULT_DETECT_VISUAL_CONFIG.pendingLineColor;
+
+export const DETECT_MODAL_CONFIRM_KEY = 'Enter';
+export const DETECT_INVALID_SERIES_INDEX = -1;
+
+export const DETECT_POINT_MARK_ERROR_NOT_BETWEEN_SHOULDERS =
+  'Pick must be between the two shoulders.';
+export const DETECT_POINT_MARK_SAVED_MESSAGE = `Saved ${DETECT_POINT_MARK_CLICK_TARGET_COUNT} points`;
+export const DETECT_POINT_MARK_SAVED_AUTO_HIDE_DURATION = 3000;

@@ -11,20 +11,11 @@ import { SciChartReact } from 'scichart-react';
 
 import { SkeletonLoading } from '../../../shared/SkeletonLoading';
 import { ChartWrapperBox } from '../../../styled/ChartStyled';
-import {
-  CHART_DEFAULT_SERIES_COLORS,
-  CHART_FALLBACK_ROLLOVER_STROKE,
-  CHART_ROLLOVER_DASH_STEPS,
-} from '../../chartConstants';
-import { toInternalOptions } from './convert';
-import { useSciChartMergedOptions } from './hooks/useSciChartMergedOptions';
-import { useSciChartRuntimeModel } from './hooks/useSciChartRuntimeModel';
+import { CHART_DEFAULT_ICON_COLOR } from '../../defaultsChartStyles';
+import { useSciChartOptionsModel } from './hooks/useSciChartOptionsModel';
+import { useSciChartSetup } from './hooks/useSciChartRuntimeModel';
 import { useSciChartRuntimeSync } from './hooks/useSciChartRuntimeSync';
-import {
-  SCI_CHART_DEFAULT_ICON_COLOR,
-  SCI_CHART_WASM_NO_SIMD_URL,
-  SCI_CHART_WASM_URL,
-} from './sciChartWrapperConstants';
+import { SCI_CHART_WASM_NO_SIMD_URL, SCI_CHART_WASM_URL } from './sciChartWrapperConstants';
 import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled';
 
 SciChartSurface.configure({
@@ -47,27 +38,14 @@ export const SciChartWrapper = ({
   overlaySlot,
   loading = false,
 }: ChartImplementationProps) => {
-  const seriesVisibility =
-    optionsInput.seriesVisibility ?? Array.from({ length: lines.length }, () => true);
-
-  const { data: convertedData, options: convertedOptions } = toInternalOptions(
-    { chartId, lines, style, options: optionsInput },
-    seriesVisibility
-  );
-
-  const mergedTheme = {
-    defaultSeriesColors: CHART_DEFAULT_SERIES_COLORS,
-    rolloverStroke: CHART_FALLBACK_ROLLOVER_STROKE,
-    rolloverDash: { isDash: true, steps: [...CHART_ROLLOVER_DASH_STEPS] },
-  };
-
-  const mergedOptions = useSciChartMergedOptions({
-    convertedOptions,
-    chartTheme: mergedTheme,
-    opts: optionsInput,
+  const { convertedData, mergedOptions } = useSciChartOptionsModel({
+    chartId,
+    lines,
+    style,
+    optionsInput,
   });
 
-  const { initChart, lineShapes, boxes } = useSciChartRuntimeModel({
+  const { initChart, lineShapes, boxes, dataBounds, seriesConfig } = useSciChartSetup({
     data: convertedData,
     options: mergedOptions,
     zoomCallbacks,
@@ -92,8 +70,11 @@ export const SciChartWrapper = ({
           <SciChartRuntimeEffects
             zoomCallbacks={zoomCallbacks}
             icons={mergedOptions.icons ?? []}
-            defaultColor={SCI_CHART_DEFAULT_ICON_COLOR}
+            defaultColor={mergedOptions.defaultIconColor ?? CHART_DEFAULT_ICON_COLOR}
             iconSize={1}
+            dataBounds={dataBounds}
+            clipZoomToData={mergedOptions.clipZoomToData !== false}
+            seriesConfig={seriesConfig}
             seriesVisibility={mergedOptions.seriesVisibility}
             lineShapes={lineShapes}
             boxes={boxes}

@@ -1,13 +1,17 @@
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../../chart/types';
 
+import { useMemo } from 'react';
+
 import { Chart } from '../../chart/Chart';
 import { ShapesVisibilityToolbarButton } from './component/ShapesVisibilityToolbarButton';
 import { SeriesPickerModal } from './component/popupModal/SeriesPickerModal';
+import { resolveDetectVisualConfig } from './detectVisualConfig';
 import {
   useDetectChart,
   useDetectModal,
   useDetectPointMarkFlow,
 } from './hooks/useDetectPointMarkFlow';
+import type { DetectVisualConfig } from './detectVisualConfig';
 
 export interface DetectProps {
   chartId: string;
@@ -17,6 +21,7 @@ export interface DetectProps {
   options?: ChartOptions;
   shapes?: ChartShape[];
   icons?: ChartIcon[];
+  visualConfig?: Partial<DetectVisualConfig>;
   className?: string;
 }
 
@@ -28,10 +33,17 @@ export const Detect = ({
   options = {},
   shapes = [],
   icons = [],
+  visualConfig,
   className,
 }: DetectProps) => {
+  const resolvedVisualConfig = useMemo(
+    () => resolveDetectVisualConfig(visualConfig),
+    [visualConfig]
+  );
+
   const detectPointMarkFlow = useDetectPointMarkFlow({
     data,
+    visualConfig: resolvedVisualConfig,
   });
   const {
     additionalShapes,
@@ -47,18 +59,17 @@ export const Detect = ({
     options,
     baseShapes: shapes,
     baseIcons: icons,
-    additionalBindedShapes: additionalShapes,
-    additionalBindedIcons: additionalIcons,
+    additionalSeriesShapes: additionalShapes,
+    additionalSeriesIcons: additionalIcons,
     seriesVisibility,
     showShapesForHiddenSeries,
     onMiddleClick: handleMiddleClick,
     onSeriesVisibilityStateChange,
-    toggleShowShapesForHiddenSeries,
   });
 
   const {
     open,
-    colorOptions,
+    iconOptions,
     selectedColor,
     seriesOptions,
     seriesNames,
@@ -78,6 +89,7 @@ export const Detect = ({
     markedPoints: detectPointMarkFlow.markedPoints,
     setSelectedSeriesIndex: detectPointMarkFlow.setRequestedSeriesIndex,
     setMiddlePointColor: detectPointMarkFlow.setMiddlePointColor,
+    iconOptions: resolvedVisualConfig.icons,
     confirmSeries: detectPointMarkFlow.confirmSeries,
     onUndoLastClick: detectPointMarkFlow.onUndoLastClick,
     onCancelFlow: detectPointMarkFlow.onCancelFlow,
@@ -106,7 +118,7 @@ export const Detect = ({
       />
       <SeriesPickerModal
         open={open}
-        colorOptions={colorOptions}
+        iconOptions={iconOptions}
         selectedColor={selectedColor}
         seriesOptions={seriesOptions}
         seriesNames={seriesNames}

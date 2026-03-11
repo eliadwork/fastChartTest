@@ -1,17 +1,11 @@
-import type {
-  ChartData,
-  ChartIcon,
-  ChartOptions,
-  ChartShape,
-  ChartStyle,
-} from '../types';
+import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../types';
 
 import { useChartHeaderState } from './useChartHeaderState';
 import { useChartLegendProps } from './useChartLegendProps';
 import { useChartVisibility } from './useChartVisibility';
 import { useChartWrapperOptions } from './useChartWrapperOptions';
-import { useChartWrapperStyle } from './useChartWrapperStyle';
 import { useChartZoomCallbacks } from './useChartZoomCallbacks';
+import { useChartWrapperStyle } from './useDefaultChartStyle';
 
 const EMPTY_CHART_DATA: ChartData = [];
 
@@ -86,10 +80,7 @@ export const useChart = ({
     onSeriesVisibilityChange,
   });
 
-  const wrapperStyle = useChartWrapperStyle({
-    chartStyle,
-    styling: options.styling,
-  });
+  const wrapperStyle = useChartWrapperStyle({ chartStyle });
 
   const wrapperOptions = useChartWrapperOptions({
     options,
@@ -105,7 +96,7 @@ export const useChart = ({
 
   const legendProps = useChartLegendProps({
     chartData,
-    data,
+    chartStyle: wrapperStyle,
     seriesVisibility,
     seriesGroupKeys: options.seriesGroupKeys,
     textColor,

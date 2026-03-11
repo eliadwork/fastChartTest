@@ -6,6 +6,8 @@
 import type {
   ChartData,
   ChartIcon,
+  ChartOptions,
+  ChartOptionsEvents,
   ChartResamplingOption,
   ChartRolloverStyle,
   ChartShape,
@@ -24,33 +26,16 @@ export interface ChartImplementationResampling {
   precision: number;
 }
 
-export interface ChartImplementationEvents {
-  onrightclick?: (event: MouseEvent) => void;
-  onleftclick?: (event: MouseEvent) => void;
-  onshiftclick?: (event: MouseEvent) => void;
-  onctrlclick?: (event: MouseEvent) => void;
-  onaltclick?: (event: MouseEvent) => void;
-  onscroll?: (event: WheelEvent) => void;
-  ondoubleclick?: (event: MouseEvent) => void;
-  onzoom?: (event: MouseEvent) => void;
-  onzoomback?: () => void;
-  onzoomreset?: () => void;
-  onmiddleclick?: (
-    event: MouseEvent,
-    xValue: number,
-    yValue: number,
-    getSeriesVisibility?: () => boolean[]
-  ) => void;
-}
+export type ChartImplementationEvents = ChartOptionsEvents;
 
 export interface ChartImplementationOptionsOverrides {
-  note?: string;
-  stretch?: KeyTriggeredOption;
-  pan?: KeyTriggeredOption;
+  note?: ChartOptions['note'];
+  stretch?: ChartOptions['stretch'];
+  pan?: ChartOptions['pan'];
   resampling?: ChartImplementationResampling | ChartResamplingOption;
-  clipZoomToData?: boolean;
-  seriesVisibility?: boolean[];
-  seriesGroupKeys?: (string | undefined)[];
+  clipZoomToData?: ChartOptions['clipZoomToData'];
+  seriesVisibility?: ChartOptions['seriesVisibility'];
+  seriesGroupKeys?: ChartOptions['seriesGroupKeys'];
   events?: ChartImplementationEvents;
 }
 

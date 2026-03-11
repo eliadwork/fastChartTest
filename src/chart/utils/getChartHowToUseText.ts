@@ -23,7 +23,7 @@ export const getChartHowToUseText = ({
   chartOnly,
   howToUseAdditional,
 }: GetChartHowToUseTextParams): string => {
-  const parts: string[] = ['Scroll to zoom'];
+  const parts: string[] = ['Scroll to zoom', 'Double-click to reset to basic zoom'];
 
   const stretch = wrapperOptions.stretch;
   if (stretch?.enable && stretch.trigger != null) {

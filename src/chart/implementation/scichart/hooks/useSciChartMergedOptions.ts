@@ -16,34 +16,33 @@ export interface UseSciChartMergedOptionsParams {
     rolloverStroke?: string;
     rolloverDash?: { isDash: boolean; steps: number[] };
   };
-  opts: NonNullable<ChartImplementationProps['options']>;
+  optionHandlers: Pick<
+    NonNullable<ChartImplementationProps['options']>,
+    'onSeriesVisibilityChange' | 'onSeriesVisibilityGroupChange' | 'onDisableAll'
+  >;
 }
 
 export const useSciChartMergedOptions = ({
   convertedOptions,
   chartTheme,
-  opts,
+  optionHandlers,
 }: UseSciChartMergedOptionsParams): SciChartMergedOptions => {
   return useMemo(
     () => ({
       ...convertedOptions,
-      shapes: opts.shapes,
-      icons: opts.icons,
       defaultSeriesColors: convertedOptions.defaultSeriesColors ?? chartTheme.defaultSeriesColors,
       rolloverStroke: convertedOptions.rolloverStroke ?? chartTheme.rolloverStroke,
       rolloverDash: convertedOptions.rolloverDash ?? chartTheme.rolloverDash,
-      onSeriesVisibilityChange: opts.onSeriesVisibilityChange,
-      onSeriesVisibilityGroupChange: opts.onSeriesVisibilityGroupChange,
-      onDisableAll: opts.onDisableAll,
+      onSeriesVisibilityChange: optionHandlers.onSeriesVisibilityChange,
+      onSeriesVisibilityGroupChange: optionHandlers.onSeriesVisibilityGroupChange,
+      onDisableAll: optionHandlers.onDisableAll,
     }),
     [
       convertedOptions,
       chartTheme,
-      opts.shapes,
-      opts.icons,
-      opts.onSeriesVisibilityChange,
-      opts.onSeriesVisibilityGroupChange,
-      opts.onDisableAll,
+      optionHandlers.onSeriesVisibilityChange,
+      optionHandlers.onSeriesVisibilityGroupChange,
+      optionHandlers.onDisableAll,
     ]
   );
 };

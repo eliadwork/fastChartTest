@@ -9,15 +9,16 @@ import {
   DEFAULT_SHAPE_STYLE,
   DEFAULT_TEXT_COLOR,
   DEFAULT_ZERO_LINE_COLOR,
-} from '../../defaults';
-import type {
-  ChartData,
-  ChartIcon,
-  ChartLineShape,
-  ChartLineStyle,
-  ChartOptions,
-  ChartShape,
-  DashConfig,
+} from '../../defaultsChartStyles';
+import {
+  TriggerKey,
+  type ChartData,
+  type ChartIcon,
+  type ChartLineShape,
+  type ChartLineStyle,
+  type ChartOptions,
+  type ChartShape,
+  type DashConfig,
 } from '../../types';
 import type {
   ChartImplementationOptions,
@@ -155,8 +156,8 @@ export function normalizeShape(
   };
 }
 
-const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' };
-const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'shift' };
+const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: TriggerKey.rightClick };
+const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: TriggerKey.shift };
 const DEFAULT_RESAMPLING = { enable: false, precision: 0 };
 
 function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
@@ -184,6 +185,7 @@ export type SciChartConvertedOptions = ChartOptions & {
   legendBackgroundColor?: string;
   defaultSeriesColors?: string[];
   defaultStrokeThickness?: number;
+  defaultIconColor?: string;
   rolloverStroke?: string;
   rolloverDash?: DashConfig;
   rolloverShow?: boolean;
@@ -195,12 +197,27 @@ export const toInternalOptions = (
 ): { data: ConvertedData; options: SciChartConvertedOptions } => {
   const { lines: chartData, style, options: opts = {} } = props;
   const opt: ChartImplementationOptions = {
-    stretch: DEFAULT_STRETCH,
-    pan: DEFAULT_PAN,
-    resampling: DEFAULT_RESAMPLING,
-    clipZoomToData: true,
-    ...opts,
+    shapes: opts.shapes,
+    icons: opts.icons,
+    note: opts.note,
+    stretch: {
+      enable: opts.stretch?.enable !== false,
+      trigger: opts.stretch?.trigger ?? DEFAULT_STRETCH.trigger,
+    },
+    pan: {
+      enable: opts.pan?.enable !== false,
+      trigger: opts.pan?.trigger ?? DEFAULT_PAN.trigger,
+    },
+    resampling: opts.resampling
+      ? {
+          enable: opts.resampling.enable,
+          precision: opts.resampling.precision,
+        }
+      : DEFAULT_RESAMPLING,
+    clipZoomToData: opts.clipZoomToData !== false,
     seriesVisibility,
+    seriesGroupKeys: opts.seriesGroupKeys,
+    events: opts.events,
   };
 
   const shapesWithDefaults = applyShapeDefaults(opt.shapes);
@@ -220,10 +237,9 @@ export const toInternalOptions = (
     textColor: style.textColor ?? DEFAULT_TEXT_COLOR,
     zeroLineColor: style.zeroLineColor ?? DEFAULT_ZERO_LINE_COLOR,
     legendBackgroundColor: style.legendBackgroundColor ?? DEFAULT_LEGEND_BACKGROUND_COLOR,
-    defaultSeriesColors: style.defaultChartLineStyles?.color
-      ? [style.defaultChartLineStyles.color]
-      : undefined,
-    defaultStrokeThickness: style.defaultChartLineStyles?.thickness,
+    defaultSeriesColors: style.defaults?.seriesColors,
+    defaultStrokeThickness: style.defaults?.strokeThickness,
+    defaultIconColor: style.defaults?.iconColor,
     rolloverStroke: style.rollover.show ? style.rollover.color : undefined,
     rolloverDash: style.rollover.show ? style.rollover.dash : undefined,
     rolloverShow: style.rollover.show,

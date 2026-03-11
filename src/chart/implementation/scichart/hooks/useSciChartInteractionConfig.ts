@@ -1,4 +1,4 @@
-import type { ModifierKey } from '../../../types'
+import type { TriggerKey } from '../../../types'
 import type { SciChartMergedOptions } from './useSciChartMergedOptions'
 
 import { useMemo } from 'react'
@@ -9,15 +9,6 @@ import {
   SCI_CHART_DEFAULT_ROLLOVER_STROKE,
   SCI_CHART_MODIFIER_KEY_MAP,
 } from '../sciChartWrapperConstants'
-
-const toModifierKey = (trigger: string): ModifierKey =>
-  trigger === 'shift'
-    ? 'Shift'
-    : trigger === 'ctrl'
-      ? 'Ctrl'
-      : trigger === 'alt'
-        ? 'Alt'
-        : (trigger as ModifierKey)
 
 export interface SciChartInteractionConfig {
   stretchEnable: boolean
@@ -30,12 +21,7 @@ export interface SciChartInteractionConfig {
   rolloverShow: boolean
   rolloverStroke: string
   rolloverDash: number[]
-  onMiddleClick?: (
-    event: MouseEvent,
-    xValue: number,
-    yValue: number,
-    getSeriesVisibility?: () => boolean[]
-  ) => void
+  onMiddleClick?: (event: MouseEvent) => void
 }
 
 export const useSciChartInteractionConfig = (
@@ -47,7 +33,7 @@ export const useSciChartInteractionConfig = (
     const stretchOnRightClick = stretchTrigger === 'rightClick'
     const stretchKey = stretchOnRightClick
       ? undefined
-      : SCI_CHART_MODIFIER_KEY_MAP[toModifierKey(stretchTrigger)]
+      : SCI_CHART_MODIFIER_KEY_MAP[stretchTrigger as TriggerKey]
 
     const panEnable = options.pan?.enable !== false
     const panTrigger = options.pan?.trigger ?? 'shift'
@@ -55,7 +41,7 @@ export const useSciChartInteractionConfig = (
     const panOnShift = panTrigger === 'shift'
     const panKey = panOnLeftClick
       ? undefined
-      : SCI_CHART_MODIFIER_KEY_MAP[toModifierKey(panTrigger)]
+      : SCI_CHART_MODIFIER_KEY_MAP[panTrigger as TriggerKey]
 
     return {
       stretchEnable,

@@ -1,7 +1,10 @@
 import type { ChartIcon } from '../../../types'
 import type { ChartZoomCallbacks } from '../../implementationProps'
 import type { ConvertedBox, ConvertedData, ConvertedShape } from '../convert'
+import type { SciChartDataBounds } from './useSciChartDataBounds'
+import type { SciChartSeriesConfig } from './useSciChartSeriesConfig'
 
+import { useDataSeriesSync } from './useDataSeriesSync'
 import { useIconsSync } from './useIconsSync'
 import { useSeriesVisibilitySync } from './useSeriesVisibilitySync'
 import { useShapesSync } from './useShapesSync'
@@ -12,6 +15,9 @@ export interface UseSciChartRuntimeSyncOptions {
   icons: ChartIcon[]
   defaultColor: string
   iconSize: number
+  dataBounds: SciChartDataBounds
+  clipZoomToData: boolean
+  seriesConfig: SciChartSeriesConfig
   seriesVisibility?: boolean[]
   lineShapes: ConvertedShape[]
   boxes: ConvertedBox[]
@@ -23,12 +29,22 @@ export const useSciChartRuntimeSync = ({
   icons,
   defaultColor,
   iconSize,
+  dataBounds,
+  clipZoomToData,
+  seriesConfig,
   seriesVisibility,
   lineShapes,
   boxes,
   data,
 }: UseSciChartRuntimeSyncOptions) => {
   useZoomResetSync(zoomCallbacks)
+  useDataSeriesSync({
+    data,
+    dataBounds,
+    clipZoomToData,
+    seriesConfig,
+    seriesVisibility,
+  })
   useIconsSync({
     icons,
     defaultColor,

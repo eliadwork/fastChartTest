@@ -23,7 +23,14 @@ export interface ChartStyle {
   backgroundColor: string;
   rollover: ChartRolloverStyle;
   textColor: string;
-  defaultChartLineStyles?: ChartLineStyle;
+  defaults?: {
+    /** Default colors for auto-styled series. */
+    seriesColors?: string[];
+    /** Default stroke thickness for auto-styled series. */
+    strokeThickness?: number;
+    /** Fallback icon color when icon.color is omitted. */
+    iconColor?: string;
+  };
   legendBackgroundColor?: string;
   zeroLineColor?: string;
   /** When true, only the chart is visible – no header, legend, or buttons. */
@@ -80,11 +87,15 @@ export interface ChartMarkerShape {
   color?: string;
 }
 
-export type TriggerKey = 'rightClick' | 'leftClick' | 'shift' | 'ctrl' | 'alt';
+export const TriggerKey = {
+  rightClick: 'rightClick',
+  leftClick: 'leftClick',
+  shift: 'shift',
+  ctrl: 'ctrl',
+  alt: 'alt',
+} as const;
 
-export type ModifierKey = 'Shift' | 'Ctrl' | 'Alt' | 'rightClick' | 'leftClick';
-
-export type StretchTrigger = ModifierKey | 'rightClick' | 'leftClick';
+export type TriggerKey = (typeof TriggerKey)[keyof typeof TriggerKey];
 
 export interface KeyTriggeredOption {
   enable: boolean;
@@ -94,21 +105,6 @@ export interface KeyTriggeredOption {
 export interface ChartResamplingOption {
   enable: boolean;
   precision: number;
-}
-
-export interface ChartStyling {
-  chartOnly?: boolean;
-  backgroundColor?: string;
-  textColor?: string;
-  zeroLineColor?: string;
-  legendBackgroundColor?: string;
-  defaultSeriesColors?: string[];
-  defaultStrokeThickness?: number;
-  rollover?: {
-    show?: boolean;
-    color?: string;
-    dash?: DashConfig;
-  };
 }
 
 export interface ChartOptionsEvents {
@@ -122,12 +118,7 @@ export interface ChartOptionsEvents {
   onzoom?: (event: MouseEvent) => void;
   onzoomback?: () => void;
   onzoomreset?: () => void;
-  onmiddleclick?: (
-    event: MouseEvent,
-    xValue: number,
-    yValue: number,
-    getSeriesVisibility?: () => boolean[]
-  ) => void;
+  onmiddleclick?: (event: MouseEvent) => void;
 }
 
 export interface ChartIcon {
@@ -152,5 +143,4 @@ export interface ChartOptions {
   seriesGroupKeys?: (string | undefined)[];
   events?: ChartOptionsEvents;
   clipZoomToData?: boolean;
-  styling?: ChartStyling;
 }

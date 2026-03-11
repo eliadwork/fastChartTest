@@ -33,24 +33,41 @@ export const DetectColorSwatches = styled('div')(({ theme }) => ({
 
 export const DetectColorSwatch = styled('button')<{
   $selected?: boolean;
-  $backgroundColor?: string;
-}>(({ theme, $selected, $backgroundColor }) => ({
-  width: 36,
-  height: 36,
-  borderRadius: '50%',
-  backgroundColor: $backgroundColor ?? 'transparent',
-  border: $selected ? `3px solid ${theme.palette.primary.main}` : '2px solid transparent',
-  padding: 0,
+}>(({ theme, $selected }) => ({
+  width: 'auto',
+  height: 'auto',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: 'none',
+  backgroundColor: 'transparent',
+  padding: theme.spacing(0.25),
+  lineHeight: 0,
   cursor: 'pointer',
-  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-  boxShadow: $selected ? `0 0 0 2px ${theme.palette.background.paper}` : 'none',
+  transition: 'transform 0.15s ease',
   '&:hover': {
-    transform: 'scale(1.08)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    transform: 'scale(1.04)',
   },
   '&:focus-visible': {
     outline: `2px solid ${theme.palette.primary.main}`,
     outlineOffset: 2,
+  },
+  '& > span': {
+    width: 24,
+    height: 24,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease',
+    opacity: $selected ? 1 : 0.82,
+    filter: $selected
+      ? `drop-shadow(0 0 2px ${theme.palette.primary.main}) drop-shadow(0 0 6px ${theme.palette.primary.main})`
+      : 'none',
+    transform: $selected ? 'scale(1.12)' : 'scale(1)',
+  },
+  '& > span > svg': {
+    width: '100%',
+    height: '100%',
   },
 }));
 

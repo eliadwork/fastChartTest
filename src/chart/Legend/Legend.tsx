@@ -1,4 +1,4 @@
-import type { SeriesInfo } from './useLegend';
+import type { LegendSeriesItemModel, SeriesInfo } from './useLegend';
 import { useLegend } from './useLegend';
 import {
   LegendRoot,
@@ -28,7 +28,9 @@ import {
 export interface LegendProps {
   backgroundColor?: string;
   textColor?: string;
-  /** When provided, triggers re-render after SeriesVisibilitySync (e.g. "disable all") updates the chart. */
+  /** Optional React-driven legend model. When provided, legend does not read SciChart surface series. */
+  series?: LegendSeriesItemModel[];
+  /** Visibility state aligned by series index. */
   seriesVisibility?: boolean[];
   /** Group key per series (parallel to series). Same key = grouped together, toggle on/off as one. */
   seriesGroupKeys?: (string | undefined)[];
@@ -90,12 +92,14 @@ const LegendSeriesItem = ({ series, onClick, indent }: LegendSeriesItemProps) =>
 export const Legend = ({
   backgroundColor,
   textColor,
+  series,
   seriesVisibility,
   seriesGroupKeys,
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
 }: LegendProps) => {
   const { seriesList, groups, ungrouped, handleClick, handleGroupClick } = useLegend({
+    series,
     seriesVisibility,
     seriesGroupKeys,
     onSeriesVisibilityChange,

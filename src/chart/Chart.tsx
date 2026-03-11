@@ -28,7 +28,6 @@ import { ChartToolbarButton } from './ChartToolbarButton';
 import { defaultChartImplementation } from './defaultChartImplementation';
 import { useChart } from './hooks/useChart';
 import { useChartLegendSlot } from './hooks/useChartLegendSlot';
-import { useDefaultChartStyle } from './hooks/useDefaultChartStyle';
 import { getChartHowToUseText } from './utils/getChartHowToUseText';
 
 export interface ChartProps {
@@ -143,14 +142,11 @@ const ChartComponent = ({
   style,
   shapes,
   icons,
-  chartStyle: chartStyleProp,
+  chartStyle,
   onSeriesVisibilityChange,
   toolbarSlot,
   implementationComponent = defaultChartImplementation,
 }: ChartProps) => {
-  const defaultChartStyle = useDefaultChartStyle();
-  const chartStyle = chartStyleProp ?? defaultChartStyle;
-
   const {
     loading,
     options: resolvedOptions,
@@ -170,7 +166,11 @@ const ChartComponent = ({
   });
 
   const legendSlot = useChartLegendSlot({
-    show: !!legendProps,
+    show:
+      !!legendProps &&
+      legendProps.series != null &&
+      legendProps.series.length > 0 &&
+      (chartStyle?.chartOnly ?? true),
     ...(legendProps ?? {}),
   });
 

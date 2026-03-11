@@ -3,6 +3,8 @@ import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import { styled } from '@mui/material/styles';
 
+import { SERIES_PICKER_SELECT_FALLBACK_NAME_PREFIX } from './seriesPickerModalConstants';
+
 const SeriesPickerSelectMenu = styled(Paper)(({ theme }) => ({
   borderRadius: theme.spacing(1.5),
   marginTop: theme.spacing(1),
@@ -42,7 +44,8 @@ export const SeriesPickerSelect = ({
   >
     {seriesOptions.map((seriesIndex) => (
       <MenuItem key={seriesIndex} value={seriesIndex}>
-        {seriesNames[seriesIndex] ?? `Series ${seriesIndex}`}
+        {seriesNames[seriesIndex] ??
+          `${SERIES_PICKER_SELECT_FALLBACK_NAME_PREFIX} ${seriesIndex}`}
       </MenuItem>
     ))}
   </Select>

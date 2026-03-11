@@ -10,27 +10,19 @@ const CLICK_THRESHOLD_PX = 5;
 const MIDDLE_MOUSE_BUTTON = 1;
 
 export interface IPointMarkModifierOptions {
-  onMiddleClick?: (
-    event: MouseEvent,
-    xValue: number,
-    yValue: number,
-    getSeriesVisibility?: () => boolean[]
-  ) => void;
+  onMiddleClick?: (event: MouseEvent) => void;
 }
 
 /**
  * Point mark modifier: fires on middle-click (scroll wheel click, not box drag).
- * Calls optional handler with MouseEvent augmented with chart coordinates (xValue, yValue, getSeriesVisibility).
+ * Calls optional handler with MouseEvent only.
+ * Chart coordinates are attached on the event object as:
+ * chartXValue, chartYValue, getSeriesVisibility.
  * No annotations added – shapes come from options.shapes.
  */
 export class PointMarkModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom;
-  private onMiddleClick?: (
-    event: MouseEvent,
-    xValue: number,
-    yValue: number,
-    getSeriesVisibility?: () => boolean[]
-  ) => void;
+  private onMiddleClick?: (event: MouseEvent) => void;
   private mouseDownPoint: Point | undefined;
 
   constructor(options?: IPointMarkModifierOptions) {
@@ -91,6 +83,13 @@ export class PointMarkModifier extends ChartModifierBase2D {
       this.parentSurface.renderableSeries
         .asArray()
         .map((rs) => (rs as { isVisible: boolean }).isVisible);
-    this.onMiddleClick(mouseEvent, xValue, yValue, getSeriesVisibility);
+
+    const middleClickEvent = Object.assign(mouseEvent, {
+      chartXValue: xValue,
+      chartYValue: yValue,
+      getSeriesVisibility,
+    });
+
+    this.onMiddleClick(middleClickEvent);
   }
 }

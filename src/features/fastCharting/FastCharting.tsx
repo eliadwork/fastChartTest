@@ -1,5 +1,6 @@
 import type {
   ChartData,
+  ChartIcon,
   ChartOptions,
   ChartShape,
   ChartStyle,
@@ -20,7 +21,7 @@ export interface FastChartingProps {
   style?: ChartStyle;
   options?: ChartOptions;
   shapes?: ChartShape[];
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  icons?: ChartIcon[];
   /** When true, fills container (100% width/height). When false, uses draggable resize. */
   fill?: boolean;
   /** Forwarded to root element for styled(FastCharting). */

@@ -14,8 +14,12 @@ import {
 } from 'scichart';
 import { SciChartSurfaceContext } from 'scichart-react';
 
+import { toSvgString } from '../../../utils/iconUtils';
+
 const ICON_PX_BASE = 24;
 const FONT_SIZE_BASE = 20;
+const ICON_URL_PATTERN = /^https?:\/\//;
+const ICON_FILE_PATTERN = /\.(png|jpg|jpeg|svg|gif|webp)(\?|$)/i;
 
 export interface ChartIconInput {
   iconImage: string;
@@ -27,21 +31,6 @@ export interface UseIconsSyncOptions {
   icons: ChartIconInput[];
   defaultColor: string;
   iconSize: number;
-}
-
-function toSvgString(iconImage: string, sizePx: number, color: string): string {
-  if (iconImage.startsWith('<')) {
-    let svg = iconImage.replace(/\{\{color\}\}/g, color);
-    if (!/ viewBox=/i.test(svg)) {
-      svg = svg.replace(/^<svg/, '<svg viewBox="0 0 24 24"');
-    }
-    svg = svg
-      .replace(/ width="[^"]*"/i, '')
-      .replace(/ height="[^"]*"/i, '')
-      .replace(/^<svg/, `<svg width="${sizePx}" height="${sizePx}"`);
-    return svg;
-  }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sizePx}" height="${sizePx}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="${color}"/></svg>`;
 }
 
 export const useIconsSync = ({
@@ -70,8 +59,11 @@ export const useIconsSync = ({
     for (const icon of iconsToRender) {
       const { x, y } = icon.location;
       const color = icon.color ?? defaultColor;
-      const isSvg = icon.iconImage.startsWith('<');
-      const annotation = isSvg
+      const isSvgOrImage =
+        icon.iconImage.startsWith('<') ||
+        ICON_URL_PATTERN.test(icon.iconImage) ||
+        ICON_FILE_PATTERN.test(icon.iconImage);
+      const annotation = isSvgOrImage
         ? new CustomAnnotation({
             x1: x,
             y1: y,

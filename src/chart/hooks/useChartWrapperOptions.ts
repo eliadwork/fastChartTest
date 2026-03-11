@@ -8,12 +8,12 @@ import type {
   ChartImplementationOptions,
   ChartImplementationOptionsWithHandlers,
 } from '../implementation/implementationProps';
-import type { ChartOptions, ChartShape } from '../types';
+import type { ChartIcon, ChartOptions, ChartShape } from '../types';
 
 export interface UseChartWrapperOptionsParams {
   options: ChartOptions;
   shapes?: ChartShape[];
-  icons?: Array<{ iconImage: string; location: { x: number; y: number }; color?: string }>;
+  icons?: ChartIcon[];
   seriesVisibility: boolean[];
   handleSeriesVisibilityChange: (seriesIndex: number, isVisible: boolean) => void;
   handleSeriesVisibilityGroupChange: (seriesIndices: number[], isVisible: boolean) => void;
