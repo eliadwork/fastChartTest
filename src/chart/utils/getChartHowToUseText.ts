@@ -1,4 +1,4 @@
-import type { ChartImplementationOptionsWithHandlers } from '../implementation/implementationProps';
+import type { ChartImplementationOptionsWithHandlers } from '../chartImplementationContracts';
 import type { TriggerKey } from '../types';
 
 const TRIGGER_LABEL: Record<TriggerKey, string> = {
@@ -26,13 +26,13 @@ export const getChartHowToUseText = ({
   const parts: string[] = ['Scroll to zoom', 'Double-click to reset to basic zoom'];
 
   const stretch = wrapperOptions.stretch;
-  if (stretch?.enable && stretch.trigger != null) {
+  if (stretch.enable) {
     const label = TRIGGER_LABEL[stretch.trigger];
     parts.push(isKeyTrigger(stretch.trigger) ? `Hold ${label} to stretch` : `${label} to stretch`);
   }
 
   const pan = wrapperOptions.pan;
-  if (pan?.enable && pan.trigger != null) {
+  if (pan.enable) {
     const label = TRIGGER_LABEL[pan.trigger];
     parts.push(`${label}+drag to pan`);
   }

@@ -20,16 +20,10 @@ interface SciChartSeriesLike {
 }
 
 const toStrokeColor = (
-  line: ConvertedSeries,
-  index: number,
-  seriesConfig: SciChartSeriesConfig
-) => line.style.color ?? seriesConfig.seriesColors[index % seriesConfig.seriesColors.length]
+  line: ConvertedSeries
+) => line.style.color
 
-const toStrokeThickness = (line: ConvertedSeries, seriesConfig: SciChartSeriesConfig) =>
-  line.style.thickness ?? seriesConfig.strokeThickness
-
-const toSeriesVisibility = (seriesVisibility: boolean[] | undefined, index: number) =>
-  seriesVisibility?.[index] ?? true
+const toStrokeThickness = (line: ConvertedSeries) => line.style.thickness
 
 const getPaddedLimit = (value: number) =>
   value === 0 ? 1 : Math.abs(value) * SCI_CHART_VISIBLE_RANGE_PAD_FACTOR
@@ -81,7 +75,7 @@ export interface UseDataSeriesSyncOptions {
   dataBounds: SciChartDataBounds
   clipZoomToData: boolean
   seriesConfig: SciChartSeriesConfig
-  seriesVisibility?: boolean[]
+  seriesVisibility: boolean[]
 }
 
 export const useDataSeriesSync = ({
@@ -121,12 +115,12 @@ export const useDataSeriesSync = ({
 
       const renderableSeries = new FastLineRenderableSeries(wasmContext, {
         dataSeries,
-        stroke: toStrokeColor(line, index, seriesConfig),
-        strokeThickness: toStrokeThickness(line, seriesConfig),
+        stroke: toStrokeColor(line),
+        strokeThickness: toStrokeThickness(line),
         strokeDashArray: dashToStrokeArray(line.style.dash),
         resamplingMode: seriesConfig.resamplingMode as EResamplingMode,
         resamplingPrecision: seriesConfig.resamplingPrecision,
-        isVisible: toSeriesVisibility(seriesVisibility, index),
+        isVisible: seriesVisibility[index],
       })
 
       surface.renderableSeries.add(renderableSeries)

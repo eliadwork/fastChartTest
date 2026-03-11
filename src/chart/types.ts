@@ -121,6 +121,16 @@ export interface ChartOptionsEvents {
   onmiddleclick?: (event: MouseEvent) => void;
 }
 
+export interface ChartFeatureToggleOption {
+  enabled?: boolean;
+}
+
+export interface ChartFeaturesOptions {
+  legend?: ChartFeatureToggleOption;
+  toolbar?: ChartFeatureToggleOption;
+  [featureName: string]: ChartFeatureToggleOption | undefined;
+}
+
 export interface ChartIcon {
   /** SVG string (preferred, use {{color}} for fill), image URL, or legacy character. */
   iconImage: string;
@@ -131,6 +141,7 @@ export interface ChartIcon {
 export interface ChartOptions {
   howToUseAdditional?: string;
   note?: string;
+  features?: ChartFeaturesOptions;
   /** Default when omitted: { enable: true, trigger: 'rightClick' }. Omit trigger to use default. */
   stretch?: { enable: boolean; trigger?: TriggerKey };
   /** Default when omitted: { enable: true, trigger: 'shift' }. Omit trigger to use default. */

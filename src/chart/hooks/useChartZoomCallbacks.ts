@@ -1,4 +1,4 @@
-import type { ChartZoomCallbacks } from '../implementation/implementationProps';
+import type { ChartZoomCallbacks } from '../chartImplementationContracts';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 

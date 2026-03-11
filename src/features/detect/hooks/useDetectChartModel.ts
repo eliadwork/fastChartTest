@@ -1,8 +1,8 @@
-import type { ChartData, ChartIcon, ChartOptions, ChartShape } from '../../../chart/types';
+import type { ChartData, ChartIcon, ChartOptions, ChartShape } from '../../../chart';
 
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import { DETECT_HOW_TO_USE_ADDITIONAL } from '../detectConstants';
+import { resolveDetectChartOptions } from '../resolveDetectChartOptions';
 import type { DetectChartModelParams, SeriesBoundIcon, SeriesBoundShape } from './detectPointMarkFlowTypes';
 
 interface UseDetectShapesParams {
@@ -116,30 +116,19 @@ export const useDetectChart = ({
   });
 
   const chartOptions: ChartOptions = useMemo(
-    () => ({
-      ...options,
-      howToUseAdditional: options.howToUseAdditional ?? DETECT_HOW_TO_USE_ADDITIONAL,
-      events: data
-        ? {
-            ...options.events,
-            onmiddleclick: (event: MouseEvent) => onMiddleClick(event),
-          }
-        : options.events,
-    }),
+    () =>
+      resolveDetectChartOptions({
+        options,
+        hasData: data != null,
+        onMiddleClick,
+      }),
     [data, onMiddleClick, options]
-  );
-
-  const onSeriesVisibilityChange = useCallback(
-    (visibility: boolean[]) => {
-      onSeriesVisibilityStateChange(visibility);
-    },
-    [onSeriesVisibilityStateChange]
   );
 
   return {
     chartOptions,
     finalShapes,
     finalIcons,
-    onSeriesVisibilityChange,
+    onSeriesVisibilityChange: onSeriesVisibilityStateChange,
   };
 };

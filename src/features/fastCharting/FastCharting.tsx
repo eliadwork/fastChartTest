@@ -1,12 +1,14 @@
 import type {
   ChartData,
   ChartIcon,
+  ChartImplementationProps,
   ChartOptions,
   ChartShape,
   ChartStyle,
-} from '../../chart/types';
+} from '../../chart';
 
-import { Chart } from '../../chart/Chart';
+import { Chart } from '../../chart';
+import { resolveFastChartingInputs } from './resolveFastChartingInputs';
 import { useResizableChart } from './hooks/useResizableChart';
 import {
   FastChartingChartWrapper,
@@ -22,6 +24,7 @@ export interface FastChartingProps {
   options?: ChartOptions;
   shapes?: ChartShape[];
   icons?: ChartIcon[];
+  implementationComponent: React.ComponentType<ChartImplementationProps>;
   /** When true, fills container (100% width/height). When false, uses draggable resize. */
   fill?: boolean;
   /** Forwarded to root element for styled(FastCharting). */
@@ -33,28 +36,34 @@ export const FastCharting = ({
   data,
   title,
   style,
-  options = {},
-  shapes = [],
-  icons = [],
+  options,
+  shapes,
+  icons,
+  implementationComponent,
   fill = false,
   className,
 }: FastChartingProps) => {
+  const resolvedInputs = resolveFastChartingInputs({ options, shapes, icons });
   const { width, height, resizeHandleProps } = useResizableChart();
+  const resizedChartDimensions = fill ? undefined : { width, height };
 
   return (
     <FastChartingRoot
       className={className}
-      style={fill ? { width: '100%', height: '100%' } : { width, height }}
+      $fill={fill}
+      $resizedWidth={resizedChartDimensions?.width}
+      $resizedHeight={resizedChartDimensions?.height}
     >
       <FastChartingChartWrapper>
         <Chart
           chartId={chartId}
           data={data}
           title={title}
-          options={options}
-          shapes={shapes}
-          icons={icons}
+          options={resolvedInputs.options}
+          shapes={resolvedInputs.shapes}
+          icons={resolvedInputs.icons}
           chartStyle={style}
+          implementationComponent={implementationComponent}
         />
       </FastChartingChartWrapper>
       {!fill && <FastChartingResizeHandle {...resizeHandleProps} />}

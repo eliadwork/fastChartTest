@@ -15,7 +15,17 @@ import {
 
 export type FastChartingPanelProps = Omit<FastChartingProps, 'fill'>;
 
-export const FastChartingPanel = (props: FastChartingPanelProps) => {
+export const FastChartingPanel = ({
+  chartId,
+  data,
+  title,
+  style,
+  options,
+  shapes,
+  icons,
+  implementationComponent,
+  className,
+}: FastChartingPanelProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -30,7 +40,18 @@ export const FastChartingPanel = (props: FastChartingPanelProps) => {
             <ChevronRightIcon />
           </FastChartingToggleButton>
           <FastChartingPaneChartSlot>
-            <FastCharting {...props} fill />
+            <FastCharting
+              chartId={chartId}
+              data={data}
+              title={title}
+              style={style}
+              options={options}
+              shapes={shapes}
+              icons={icons}
+              implementationComponent={implementationComponent}
+              className={className}
+              fill
+            />
           </FastChartingPaneChartSlot>
         </>
       ) : (

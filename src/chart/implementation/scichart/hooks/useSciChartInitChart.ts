@@ -28,8 +28,6 @@ import { PointMarkModifier } from '../modifiers/PointMarkModifier'
 import { ShiftLeftClickZoomPanModifier } from '../modifiers/ShiftLeftClickZoomPanModifier'
 import { ZoomHistoryModifier } from '../modifiers/ZoomHistoryModifier'
 import {
-  SCI_CHART_DEFAULT_AXIS_LABEL_COLOR,
-  SCI_CHART_DEFAULT_ZERO_LINE_COLOR,
   SCI_CHART_STRETCH_SENSITIVITY,
   SCI_CHART_VISIBLE_RANGE_PAD_FACTOR,
   SCI_CHART_ZERO_LINE_STROKE_THICKNESS,
@@ -72,23 +70,19 @@ export const useSciChartInitChart = ({
         const element = resolveRootElement(rootElement)
         if (!element) throw new Error('SciChart root element not found')
 
-        const createOptions =
-          options.backgroundColor != null
-            ? { background: options.backgroundColor }
-            : undefined
         const { sciChartSurface, wasmContext } = await SciChartSurface.create(
           element,
-          createOptions
+          { background: options.backgroundColor }
         )
 
-        const axisLabelColor = options.textColor ?? SCI_CHART_DEFAULT_AXIS_LABEL_COLOR
+        const axisLabelColor = options.textColor
         const axisOptions = { labelStyle: { color: axisLabelColor } }
         const xAxis = new NumericAxis(wasmContext, axisOptions)
         const yAxis = new NumericAxis(wasmContext, axisOptions)
         sciChartSurface.xAxes.add(xAxis)
         sciChartSurface.yAxes.add(yAxis)
 
-        if (options.clipZoomToData !== false && Number.isFinite(dataBounds.xMin)) {
+        if (options.clipZoomToData && Number.isFinite(dataBounds.xMin)) {
           xAxis.visibleRangeLimit = new NumberRange(
             dataBounds.xMin - getPaddedLimit(dataBounds.xMin),
             dataBounds.xMax + getPaddedLimit(dataBounds.xMax)
@@ -112,15 +106,12 @@ export const useSciChartInitChart = ({
           })
 
           const lineStyle = line.style
-          const isVisible = data.seriesVisibility?.[index] ?? true
-          const strokeColor =
-            lineStyle.color ??
-            seriesConfig.seriesColors[index % seriesConfig.seriesColors.length]
+          const isVisible = data.seriesVisibility[index]
           const strokeDashArray = dashToStrokeArray(lineStyle.dash)
           const series = new FastLineRenderableSeries(wasmContext, {
             dataSeries,
-            stroke: strokeColor,
-            strokeThickness: lineStyle.thickness ?? seriesConfig.strokeThickness,
+            stroke: lineStyle.color,
+            strokeThickness: lineStyle.thickness,
             strokeDashArray,
             resamplingMode: seriesConfig.resamplingMode,
             resamplingPrecision: seriesConfig.resamplingPrecision,
@@ -130,7 +121,7 @@ export const useSciChartInitChart = ({
           sciChartSurface.renderableSeries.add(series)
         }
 
-        const zeroLineColor = options.zeroLineColor ?? SCI_CHART_DEFAULT_ZERO_LINE_COLOR
+        const zeroLineColor = options.zeroLineColor
         sciChartSurface.annotations.add(
           new VerticalLineAnnotation({
             x1: 0,
@@ -148,7 +139,7 @@ export const useSciChartInitChart = ({
 
         const modifiers: InstanceType<typeof import('scichart').ChartModifierBase2D>[] = [
           new PointMarkModifier({
-            onMiddleClick: interactionConfig.onMiddleClick ?? undefined,
+            onMiddleClick: interactionConfig.onMiddleClick,
           }),
           new ZoomHistoryModifier({
             callbacks: zoomCallbacks

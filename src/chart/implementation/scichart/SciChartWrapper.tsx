@@ -11,9 +11,8 @@ import { SciChartReact } from 'scichart-react';
 
 import { SkeletonLoading } from '../../../shared/SkeletonLoading';
 import { ChartWrapperBox } from '../../../styled/ChartStyled';
-import { CHART_DEFAULT_ICON_COLOR } from '../../defaultsChartStyles';
 import { useSciChartOptionsModel } from './hooks/useSciChartOptionsModel';
-import { useSciChartSetup } from './hooks/useSciChartRuntimeModel';
+import { useSciChartRuntimeModel } from './hooks/useSciChartRuntimeModel';
 import { useSciChartRuntimeSync } from './hooks/useSciChartRuntimeSync';
 import { SCI_CHART_WASM_NO_SIMD_URL, SCI_CHART_WASM_URL } from './sciChartWrapperConstants';
 import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled';
@@ -29,23 +28,21 @@ const SciChartRuntimeEffects = (params: UseSciChartRuntimeSyncOptions) => {
 };
 
 export const SciChartWrapper = ({
-  chartId,
   lines,
   style,
-  options: optionsInput = {},
+  options: optionsInput,
   zoomCallbacks,
   containerStyle,
   overlaySlot,
   loading = false,
 }: ChartImplementationProps) => {
   const { convertedData, mergedOptions } = useSciChartOptionsModel({
-    chartId,
     lines,
     style,
     optionsInput,
   });
 
-  const { initChart, lineShapes, boxes, dataBounds, seriesConfig } = useSciChartSetup({
+  const { initChart, lineShapes, boxes, dataBounds, seriesConfig } = useSciChartRuntimeModel({
     data: convertedData,
     options: mergedOptions,
     zoomCallbacks,
@@ -69,11 +66,11 @@ export const SciChartWrapper = ({
         >
           <SciChartRuntimeEffects
             zoomCallbacks={zoomCallbacks}
-            icons={mergedOptions.icons ?? []}
-            defaultColor={mergedOptions.defaultIconColor ?? CHART_DEFAULT_ICON_COLOR}
+            icons={mergedOptions.icons}
+            defaultColor={mergedOptions.defaultIconColor}
             iconSize={1}
             dataBounds={dataBounds}
-            clipZoomToData={mergedOptions.clipZoomToData !== false}
+            clipZoomToData={mergedOptions.clipZoomToData}
             seriesConfig={seriesConfig}
             seriesVisibility={mergedOptions.seriesVisibility}
             lineShapes={lineShapes}

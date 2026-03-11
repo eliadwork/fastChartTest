@@ -1,5 +1,5 @@
 import type { ChartHeaderModel, ChartToolbarModel } from './hooks/useChart';
-import type { ChartImplementationProps } from './implementation/implementationProps';
+import type { ChartImplementationProps } from './chartImplementationContracts';
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from './types';
 
 import { memo, useMemo } from 'react';
@@ -25,7 +25,6 @@ import {
 } from './chartConstants';
 import { ChartHeaderContent, ChartHeaderTextContent, ChartToolbar } from './ChartStyled';
 import { ChartToolbarButton } from './ChartToolbarButton';
-import { defaultChartImplementation } from './defaultChartImplementation';
 import { useChart } from './hooks/useChart';
 import { useChartLegendSlot } from './hooks/useChartLegendSlot';
 import { getChartHowToUseText } from './utils/getChartHowToUseText';
@@ -41,7 +40,7 @@ export interface ChartProps {
   chartStyle?: ChartStyle;
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
   toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
-  implementationComponent?: React.ComponentType<ChartImplementationProps>;
+  implementationComponent: React.ComponentType<ChartImplementationProps>;
 }
 
 export interface ChartHeaderSectionProps {
@@ -63,7 +62,7 @@ const ChartToolbarSection = ({
   toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
   toolbarModel: ChartToolbarModel;
 }) => {
-  if (loading) {
+  if (loading || !toolbarModel.showToolbar) {
     return null;
   }
 
@@ -138,14 +137,14 @@ const ChartComponent = ({
   data,
   chartId,
   title,
-  options = {},
+  options,
   style,
   shapes,
   icons,
   chartStyle,
   onSeriesVisibilityChange,
   toolbarSlot,
-  implementationComponent = defaultChartImplementation,
+  implementationComponent,
 }: ChartProps) => {
   const {
     loading,
@@ -166,24 +165,22 @@ const ChartComponent = ({
   });
 
   const legendSlot = useChartLegendSlot({
-    show:
-      !!legendProps &&
-      legendProps.series != null &&
-      legendProps.series.length > 0 &&
-      (chartStyle?.chartOnly ?? true),
-    ...(legendProps ?? {}),
+    legendProps,
   });
 
   const howToUseText = useMemo(
     () =>
       getChartHowToUseText({
         wrapperOptions: implementationModel.wrapperOptions,
-        chartOnly: implementationModel.wrapperStyle.chartOnly,
+        chartOnly:
+          implementationModel.wrapperStyle.chartOnly ||
+          !resolvedOptions.features.legend.enabled,
         howToUseAdditional: resolvedOptions.howToUseAdditional,
       }),
     [
       implementationModel.wrapperOptions,
       implementationModel.wrapperStyle.chartOnly,
+      resolvedOptions.features.legend.enabled,
       resolvedOptions.howToUseAdditional,
     ]
   );

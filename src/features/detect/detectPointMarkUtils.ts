@@ -1,4 +1,4 @@
-import type { ChartLineShape } from '../../chart/types';
+import type { ChartLineShape } from '../../chart';
 
 import {
   DETECT_PENDING_LINE_COLOR,

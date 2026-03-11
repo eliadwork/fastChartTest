@@ -14,7 +14,7 @@ export interface UseSciChartRuntimeModelOptions {
   zoomCallbacks?: ChartZoomCallbacks;
 }
 
-export const useSciChartSetup = ({
+export const useSciChartRuntimeModel = ({
   data,
   options,
   zoomCallbacks,

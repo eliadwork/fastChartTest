@@ -49,6 +49,9 @@ export const CHART_DEFAULT_SERIES_COLORS = [
   '#7f7f7f',
 ];
 
+/** Default series stroke thickness when unspecified. */
+export const CHART_DEFAULT_STROKE_THICKNESS = 2;
+
 /** Default rollover dash steps. */
 export const CHART_ROLLOVER_DASH_STEPS = [8, 4] as const;
 

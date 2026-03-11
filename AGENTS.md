@@ -106,8 +106,8 @@ Naming, constants, logging, formatting, change scope.
 
 More specific rules live in:
 
-- `src/chart/AGENTS.md`
-- `src/features/AGENTS.md`
+- `src/chart/AGENTES.md`
+- `src/features/AGENTES.md`
 - `backend/AGENTS.md`
 
 When editing code in those directories, follow the more specific file.

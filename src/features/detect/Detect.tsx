@@ -1,11 +1,19 @@
-import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../../chart/types';
+import type {
+  ChartData,
+  ChartIcon,
+  ChartImplementationProps,
+  ChartOptions,
+  ChartShape,
+  ChartStyle,
+} from '../../chart';
 
 import { useMemo } from 'react';
 
-import { Chart } from '../../chart/Chart';
+import { Chart } from '../../chart';
 import { ShapesVisibilityToolbarButton } from './component/ShapesVisibilityToolbarButton';
 import { SeriesPickerModal } from './component/popupModal/SeriesPickerModal';
 import { resolveDetectVisualConfig } from './detectVisualConfig';
+import { resolveDetectInputs } from './resolveDetectInputs';
 import {
   useDetectChart,
   useDetectModal,
@@ -22,6 +30,7 @@ export interface DetectProps {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   visualConfig?: Partial<DetectVisualConfig>;
+  implementationComponent: React.ComponentType<ChartImplementationProps>;
   className?: string;
 }
 
@@ -30,12 +39,14 @@ export const Detect = ({
   data,
   title,
   style,
-  options = {},
-  shapes = [],
-  icons = [],
+  options,
+  shapes,
+  icons,
   visualConfig,
+  implementationComponent,
   className,
 }: DetectProps) => {
+  const resolvedInputs = resolveDetectInputs({ options, shapes, icons });
   const resolvedVisualConfig = useMemo(
     () => resolveDetectVisualConfig(visualConfig),
     [visualConfig]
@@ -56,9 +67,9 @@ export const Detect = ({
   } = detectPointMarkFlow;
   const { chartOptions, finalShapes, finalIcons, onSeriesVisibilityChange } = useDetectChart({
     data,
-    options,
-    baseShapes: shapes,
-    baseIcons: icons,
+    options: resolvedInputs.options,
+    baseShapes: resolvedInputs.shapes,
+    baseIcons: resolvedInputs.icons,
     additionalSeriesShapes: additionalShapes,
     additionalSeriesIcons: additionalIcons,
     seriesVisibility,
@@ -115,6 +126,7 @@ export const Detect = ({
         chartStyle={style}
         onSeriesVisibilityChange={onSeriesVisibilityChange}
         toolbarSlot={shapesVisibilityToolbar}
+        implementationComponent={implementationComponent}
       />
       <SeriesPickerModal
         open={open}

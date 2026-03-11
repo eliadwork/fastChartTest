@@ -18,7 +18,7 @@ export interface UseSciChartRuntimeSyncOptions {
   dataBounds: SciChartDataBounds
   clipZoomToData: boolean
   seriesConfig: SciChartSeriesConfig
-  seriesVisibility?: boolean[]
+  seriesVisibility: boolean[]
   lineShapes: ConvertedShape[]
   boxes: ConvertedBox[]
   data: ConvertedData

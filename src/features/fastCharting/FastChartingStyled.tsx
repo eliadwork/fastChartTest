@@ -46,7 +46,11 @@ export const FastChartingToggleButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-export const FastChartingRoot = styled('div')(({ theme }) => ({
+export const FastChartingRoot = styled('div')<{
+  $fill: boolean;
+  $resizedWidth?: number;
+  $resizedHeight?: number;
+}>(({ theme, $fill, $resizedWidth, $resizedHeight }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
@@ -55,6 +59,8 @@ export const FastChartingRoot = styled('div')(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   overflow: 'hidden',
   minHeight: 0,
+  width: $fill ? '100%' : $resizedWidth,
+  height: $fill ? '100%' : $resizedHeight,
 }));
 
 export const FastChartingChartWrapper = styled('div')({

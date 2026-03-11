@@ -1,42 +1,18 @@
-import type { ChartData, ChartDataSeries, ChartShape } from './chart/types';
+import type { ChartShape } from './chart';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
-import { useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_CHART_ICONS } from './chart/defaultsChartStyles';
+import { SciChartWrapper } from './chart/implementation/scichart/SciChartWrapper';
+import { useChartDataFlow } from './features/chartData';
 import { Detect } from './features/detect/Detect';
 import { FastChartingPanel } from './features/fastCharting/FastChartingPanel';
 import { ChartComparison, ChartComparisonGrid, ChartPanel } from './styled/ChartStyled';
 
 const App = () => {
-  const [chartData, setChartData] = useState<ChartData | null>(null);
-  const addedLineCounterRef = useRef(1);
-  useDataSetting(setChartData);
-
-  const handleAddLine = () => {
-    setChartData((previousData) => {
-      if (previousData == null || previousData.length === 0) {
-        return previousData;
-      }
-
-      const sourceLine = previousData[0];
-      const nextCopyIndex = addedLineCounterRef.current;
-      addedLineCounterRef.current += 1;
-      const yOffset = nextCopyIndex * 500;
-      const copiedY = Array.from(sourceLine.y, (value) => value + yOffset);
-
-      const copiedLine: ChartDataSeries = {
-        ...sourceLine,
-        name: `Demo-Copy-${nextCopyIndex}`,
-        lineGroupKey: `Demo-Copy-${nextCopyIndex}`,
-        y: copiedY,
-      };
-
-      return [...previousData, copiedLine];
-    });
-  };
+  const { chartData, canAddLine, addLine } = useChartDataFlow();
 
   return (
     <ChartComparison>
@@ -44,8 +20,8 @@ const App = () => {
         <Button
           variant="contained"
           size="small"
-          onClick={handleAddLine}
-          disabled={chartData == null || chartData.length === 0}
+          onClick={addLine}
+          disabled={!canAddLine}
         >
           Add Line
         </Button>
@@ -63,6 +39,7 @@ const App = () => {
                 resampling: { enable: true, precision: 1 },
               }}
               icons={DEFAULT_CHART_ICONS}
+              implementationComponent={SciChartWrapper}
             />
           </ChartPanel>
           <ChartPanel>
@@ -74,6 +51,7 @@ const App = () => {
               options={{
                 note: 'this is the chart example',
               }}
+              implementationComponent={SciChartWrapper}
             />
           </ChartPanel>
         </ChartComparisonGrid>
@@ -87,6 +65,7 @@ const App = () => {
             clipZoomToData: true,
           }}
           icons={DEFAULT_CHART_ICONS}
+          implementationComponent={SciChartWrapper}
         />
       </Box>
     </ChartComparison>
@@ -124,69 +103,3 @@ const exampleShapes: ChartShape[] = [
     coordinates: { x1: 350000, x2: 450000 },
   },
 ];
-
-const useDataSetting = (setChartData: (data: ChartData) => void) => {
-  useEffect(() => {
-    const worker = new Worker(new URL('./dataWorker.js', import.meta.url), {
-      type: 'module',
-    });
-
-    worker.onerror = (errorEvent) => {
-      console.error(
-        '[dataWorker] Error:',
-        errorEvent.message,
-        errorEvent.filename,
-        errorEvent.lineno
-      );
-
-      const sampleX = new Float64Array([0, 100_000, 200_000, 300_000, 400_000, 500_000]);
-      const sampleY = new Float64Array([0, 1000, -500, 2000, -1000, 0]);
-
-      setChartData([
-        {
-          x: sampleX,
-          y: sampleY,
-          name: 'Fallback-S0',
-          lineGroupKey: 'Fallback',
-          style: { bindable: true },
-        },
-      ]);
-
-      worker.terminate();
-    };
-
-    worker.onmessage = ({
-      data: { lines },
-    }: {
-      data: {
-        lines: Array<{
-          x: ArrayBuffer;
-          y: ArrayBuffer;
-          name: string;
-          lineGroupKey?: string;
-          style: ChartDataSeries['style'];
-        }>;
-      };
-    }) => {
-      if (!lines?.length) {
-        console.warn('[dataWorker] Received empty lines');
-        return;
-      }
-
-      setChartData(
-        lines.map((line) => ({
-          x: new Float64Array(line.x),
-          y: new Float64Array(line.y),
-          name: line.name,
-          lineGroupKey: line.lineGroupKey,
-          style: line.style ?? { bindable: true },
-        }))
-      );
-
-      worker.terminate();
-    };
-
-    worker.postMessage({});
-    return () => worker.terminate();
-  }, [setChartData]);
-};

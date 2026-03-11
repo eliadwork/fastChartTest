@@ -1,39 +1,17 @@
-import type { LegendProps } from '../Legend/Legend';
-import type { ChartData, ChartStyle, DashConfig } from '../types';
+import type { ChartData, ChartStyle } from '../types';
 
 import { useTheme } from '@mui/material/styles';
 import { useMemo } from 'react';
 
 import { withOpacity } from '../../utils/colorUtils';
 import {
-  CHART_DEFAULT_SERIES_COLORS,
   CHART_LEGEND_BACKGROUND_OPACITY,
   DEFAULT_LEGEND_BACKGROUND_COLOR,
 } from '../defaultsChartStyles';
-import { LEGEND_DEFAULT_STROKE, LEGEND_DEFAULT_STROKE_THICKNESS } from '../Legend/legendConstants';
-
-const dashToStrokeDashArray = (dash?: DashConfig): number[] | undefined =>
-  dash?.isDash && dash.steps.length > 0 ? dash.steps : undefined;
-
-const buildLegendSeriesModel = (
-  chartData: ChartData,
-  chartStyle: ChartStyle
-): NonNullable<LegendProps['series']> => {
-  const defaultSeriesColors = chartStyle.defaults?.seriesColors ?? CHART_DEFAULT_SERIES_COLORS;
-  const defaultStrokeThickness =
-    chartStyle.defaults?.strokeThickness ?? LEGEND_DEFAULT_STROKE_THICKNESS;
-
-  return chartData.map((line, index) => ({
-    index,
-    name: line.name,
-    stroke:
-      line.style.color ??
-      defaultSeriesColors[index % defaultSeriesColors.length] ??
-      LEGEND_DEFAULT_STROKE,
-    strokeDashArray: dashToStrokeDashArray(line.style.dash),
-    strokeThickness: line.style.thickness ?? defaultStrokeThickness,
-  }));
-};
+import {
+  resolveChartLegendProps,
+  type ResolvedLegendProps,
+} from '../resolvers/resolveChartLegendProps';
 
 export interface UseChartLegendPropsOptions {
   chartData: ChartData;
@@ -55,7 +33,7 @@ export const useChartLegendProps = ({
   chartOnly,
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
-}: UseChartLegendPropsOptions): LegendProps | null => {
+}: UseChartLegendPropsOptions): ResolvedLegendProps | null => {
   const theme = useTheme();
 
   const legendBackgroundColor = useMemo(() => {
@@ -72,15 +50,16 @@ export const useChartLegendProps = ({
       return null;
     }
 
-    return {
+    return resolveChartLegendProps({
+      chartData,
+      chartStyle,
       backgroundColor: legendBackgroundColor,
       textColor,
-      series: buildLegendSeriesModel(chartData, chartStyle),
       seriesVisibility,
-      seriesGroupKeys: seriesGroupKeys ?? chartData.map((series) => series.lineGroupKey),
+      seriesGroupKeys,
       onSeriesVisibilityChange,
       onSeriesVisibilityGroupChange,
-    };
+    });
   }, [
     chartOnly,
     chartStyle,

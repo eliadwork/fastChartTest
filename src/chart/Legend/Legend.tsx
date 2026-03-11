@@ -8,8 +8,6 @@ import {
   LegendLineSvg,
 } from './LegendStyled';
 import {
-  LEGEND_DEFAULT_BACKGROUND,
-  LEGEND_DEFAULT_TEXT_COLOR,
   LEGEND_LINE_HEIGHT,
   LEGEND_LINE_VIEWBOX,
   LEGEND_LINE_WIDTH,
@@ -24,11 +22,12 @@ import {
   LEGEND_ITEM_INDENT,
   STROKE_DASHARRAY_NONE,
 } from './legendConstants';
+import { resolveLegendProps } from '../resolvers/resolveLegendProps';
 
 export interface LegendProps {
   backgroundColor?: string;
   textColor?: string;
-  /** Optional React-driven legend model. When provided, legend does not read SciChart surface series. */
+  /** React-driven legend model. When omitted, legend renders no series. */
   series?: LegendSeriesItemModel[];
   /** Visibility state aligned by series index. */
   seriesVisibility?: boolean[];
@@ -98,7 +97,9 @@ export const Legend = ({
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
 }: LegendProps) => {
-  const { seriesList, groups, ungrouped, handleClick, handleGroupClick } = useLegend({
+  const resolvedLegendProps = resolveLegendProps({
+    backgroundColor,
+    textColor,
     series,
     seriesVisibility,
     seriesGroupKeys,
@@ -106,13 +107,21 @@ export const Legend = ({
     onSeriesVisibilityGroupChange,
   });
 
+  const { seriesList, groups, ungrouped, handleClick, handleGroupClick } = useLegend({
+    series: resolvedLegendProps.series,
+    seriesVisibility: resolvedLegendProps.seriesVisibility,
+    seriesGroupKeys: resolvedLegendProps.seriesGroupKeys,
+    onSeriesVisibilityChange: resolvedLegendProps.onSeriesVisibilityChange,
+    onSeriesVisibilityGroupChange: resolvedLegendProps.onSeriesVisibilityGroupChange,
+  });
+
   if (seriesList.length === 0) return null;
 
   return (
     <LegendRoot
       sx={{
-        backgroundColor: backgroundColor ?? LEGEND_DEFAULT_BACKGROUND,
-        color: textColor ?? LEGEND_DEFAULT_TEXT_COLOR,
+        backgroundColor: resolvedLegendProps.backgroundColor,
+        color: resolvedLegendProps.textColor,
       }}
     >
       {groups.map((group) => {

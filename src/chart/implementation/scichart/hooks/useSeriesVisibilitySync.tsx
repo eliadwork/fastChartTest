@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react';
 import { SciChartSurface } from 'scichart';
 import { SciChartSurfaceContext } from 'scichart-react';
 
-export function useSeriesVisibilitySync(seriesVisibility?: boolean[]) {
+export function useSeriesVisibilitySync(seriesVisibility: boolean[]) {
   const initResult = useContext(SciChartSurfaceContext);
 
   useEffect(() => {
@@ -10,8 +10,7 @@ export function useSeriesVisibilitySync(seriesVisibility?: boolean[]) {
     if (!surface) return;
     const series = surface.renderableSeries.asArray();
     for (let index = 0; index < series.length; index++) {
-      const visible = seriesVisibility ? (seriesVisibility[index] ?? true) : true;
-      (series[index] as { isVisible: boolean }).isVisible = visible;
+      (series[index] as { isVisible: boolean }).isVisible = seriesVisibility[index];
     }
     surface.invalidateElement();
   }, [initResult, seriesVisibility]);

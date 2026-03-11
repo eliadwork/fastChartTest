@@ -5,26 +5,16 @@
 
 import { withOpacity } from '../../../utils/colorUtils';
 import {
-  DEFAULT_LEGEND_BACKGROUND_COLOR,
-  DEFAULT_SHAPE_STYLE,
-  DEFAULT_TEXT_COLOR,
-  DEFAULT_ZERO_LINE_COLOR,
-} from '../../defaultsChartStyles';
-import {
-  TriggerKey,
   type ChartData,
   type ChartIcon,
-  type ChartLineShape,
   type ChartLineStyle,
-  type ChartOptions,
+  type ChartOptionsEvents,
+  type ChartResamplingOption,
   type ChartShape,
   type DashConfig,
+  type KeyTriggeredOption,
 } from '../../types';
-import type {
-  ChartImplementationOptions,
-  ChartImplementationProps,
-  KeyTriggeredOption,
-} from '../implementationProps';
+import type { ChartImplementationProps } from '../implementationProps';
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
 export const dashToStrokeArray = (dash?: DashConfig): number[] | undefined =>
@@ -40,7 +30,7 @@ export interface ConvertedSeries {
 
 export interface ConvertedData {
   series: ConvertedSeries[];
-  seriesVisibility?: boolean[];
+  seriesVisibility: boolean[];
 }
 
 export interface ConvertedShape {
@@ -63,7 +53,7 @@ export function toFloat64Array(arr: ArrayLike<number> | number[]): Float64Array 
 
 export function convertData(
   data: ChartData,
-  options?: Pick<ChartOptions, 'seriesVisibility'>
+  options: { seriesVisibility: boolean[] }
 ): ConvertedData {
   const series: ConvertedSeries[] = data.map((line) => ({
     x: toFloat64Array(line.x),
@@ -74,7 +64,7 @@ export function convertData(
   }));
   return {
     series,
-    seriesVisibility: options?.seriesVisibility,
+    seriesVisibility: options.seriesVisibility,
   };
 }
 
@@ -89,7 +79,7 @@ export interface ConvertedBox {
   strokeDashArray?: number[];
 }
 
-export function convertShapes(shapes: ChartShape[] = []): {
+export function convertShapes(shapes: ChartShape[]): {
   lines: ConvertedShape[];
   boxes: ConvertedBox[];
 } {
@@ -108,147 +98,93 @@ export function convertShapes(shapes: ChartShape[] = []): {
         strokeDashArray: dashToStrokeArray(shape.dash),
       });
     } else if (shape.shape === 'line' || ('axis' in shape && 'value' in shape)) {
-      const line = shape as ChartLineShape;
+      if (shape.color == null) {
+        throw new Error('Line shape color must be resolved before SciChart conversion.');
+      }
       lines.push({
-        color: line.color ?? '#ff0000',
-        lineAxis: line.axis,
-        lineValue: line.value,
-        strokeDashArray: dashToStrokeArray(line.dash),
+        color: shape.color,
+        lineAxis: shape.axis,
+        lineValue: shape.value,
+        strokeDashArray: dashToStrokeArray(shape.dash),
       });
     }
   }
   return { lines, boxes };
 }
 
-export function normalizeShape(
-  shape:
-    | ChartLineShape
-    | {
-        color: string;
-        lineAxis: 'x' | 'y';
-        lineValue: number;
-        dash?: DashConfig;
-        strokeDashArray?: number[];
-      }
-): ConvertedShape {
-  const toStroke = (d?: DashConfig, arr?: number[]) => dashToStrokeArray(d) ?? arr;
-  if ('lineAxis' in shape && 'lineValue' in shape) {
-    const x = shape as {
-      color: string;
-      lineAxis: 'x' | 'y';
-      lineValue: number;
-      dash?: DashConfig;
-      strokeDashArray?: number[];
-    };
-    return {
-      color: x.color,
-      lineAxis: x.lineAxis,
-      lineValue: x.lineValue,
-      strokeDashArray: toStroke(x.dash, x.strokeDashArray),
-    };
-  }
-  const line = shape as ChartLineShape;
-  return {
-    color: line.color ?? '#ff0000',
-    lineAxis: line.axis,
-    lineValue: line.value,
-    strokeDashArray: dashToStrokeArray(line.dash),
-  };
+/** Internal options with style and interaction contracts already resolved by facade resolvers. */
+export interface SciChartConvertedOptions {
+  note?: string;
+  shapes: ChartShape[];
+  icons: ChartIcon[];
+  stretch: KeyTriggeredOption;
+  pan: KeyTriggeredOption;
+  clipZoomToData: boolean;
+  resampling: ChartResamplingOption;
+  seriesVisibility: boolean[];
+  seriesGroupKeys: (string | undefined)[];
+  events?: ChartOptionsEvents;
+  chartOnly: boolean;
+  backgroundColor: string;
+  textColor: string;
+  zeroLineColor: string;
+  legendBackgroundColor: string;
+  defaultSeriesColors: string[];
+  defaultStrokeThickness: number;
+  defaultIconColor: string;
+  rolloverStroke: string;
+  rolloverDash: DashConfig;
+  rolloverShow: boolean;
 }
 
-const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: TriggerKey.rightClick };
-const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: TriggerKey.shift };
-const DEFAULT_RESAMPLING = { enable: false, precision: 0 };
-
-function applyShapeDefaults(shapes: ChartShape[] = []): ChartShape[] {
-  return shapes.map((shape) => {
-    if (shape.shape === 'box') return shape;
-    const line = shape as ChartLineShape;
-    return {
-      ...line,
-      color: line.color ?? DEFAULT_SHAPE_STYLE.color,
-      dash: line.dash ?? DEFAULT_SHAPE_STYLE.dash,
-    };
+export const toInternalOptions = ({
+  lines: chartData,
+  style,
+  options: resolvedOptions,
+}: Pick<ChartImplementationProps, 'lines' | 'style' | 'options'>): {
+  data: ConvertedData;
+  options: SciChartConvertedOptions;
+} => {
+  const convertedData = convertData(chartData, {
+    seriesVisibility: resolvedOptions.seriesVisibility,
   });
-}
+  const backgroundColor = withOpacity(style.backgroundColor, 0.2);
+  const styleDefaults = style.defaults;
 
-/** Internal options with shapes/icons and style-derived options for SciChart. */
-export type SciChartConvertedOptions = ChartOptions & {
-  shapes?: ChartShape[];
-  icons?: ChartIcon[];
-  seriesVisibility?: boolean[];
-  seriesGroupKeys?: (string | undefined)[];
-  chartOnly?: boolean;
-  backgroundColor?: string;
-  textColor?: string;
-  zeroLineColor?: string;
-  legendBackgroundColor?: string;
-  defaultSeriesColors?: string[];
-  defaultStrokeThickness?: number;
-  defaultIconColor?: string;
-  rolloverStroke?: string;
-  rolloverDash?: DashConfig;
-  rolloverShow?: boolean;
-};
+  if (style.zeroLineColor == null || style.legendBackgroundColor == null || styleDefaults == null) {
+    throw new Error('Chart style must be resolved before SciChart conversion.');
+  }
+  if (
+    styleDefaults.seriesColors == null ||
+    styleDefaults.strokeThickness == null ||
+    styleDefaults.iconColor == null
+  ) {
+    throw new Error('Chart style defaults must be resolved before SciChart conversion.');
+  }
 
-export const toInternalOptions = (
-  props: ChartImplementationProps,
-  seriesVisibility: boolean[]
-): { data: ConvertedData; options: SciChartConvertedOptions } => {
-  const { lines: chartData, style, options: opts = {} } = props;
-  const opt: ChartImplementationOptions = {
-    shapes: opts.shapes,
-    icons: opts.icons,
-    note: opts.note,
-    stretch: {
-      enable: opts.stretch?.enable !== false,
-      trigger: opts.stretch?.trigger ?? DEFAULT_STRETCH.trigger,
-    },
-    pan: {
-      enable: opts.pan?.enable !== false,
-      trigger: opts.pan?.trigger ?? DEFAULT_PAN.trigger,
-    },
-    resampling: opts.resampling
-      ? {
-          enable: opts.resampling.enable,
-          precision: opts.resampling.precision,
-        }
-      : DEFAULT_RESAMPLING,
-    clipZoomToData: opts.clipZoomToData !== false,
-    seriesVisibility,
-    seriesGroupKeys: opts.seriesGroupKeys,
-    events: opts.events,
-  };
-
-  const shapesWithDefaults = applyShapeDefaults(opt.shapes);
-  const convertedData = convertData(chartData, { seriesVisibility });
-
-  const backgroundColor =
-    style.backgroundColor != null ? withOpacity(style.backgroundColor, 0.2) : undefined;
-
-  const options: SciChartConvertedOptions = {
+  const convertedOptions: SciChartConvertedOptions = {
+    note: resolvedOptions.note,
     chartOnly: style.chartOnly,
-    shapes: shapesWithDefaults,
-    stretch: opt.stretch,
-    pan: opt.pan,
-    clipZoomToData: opt.clipZoomToData,
-    resampling: opt.resampling,
+    shapes: resolvedOptions.shapes,
+    stretch: resolvedOptions.stretch,
+    pan: resolvedOptions.pan,
+    clipZoomToData: resolvedOptions.clipZoomToData,
+    resampling: resolvedOptions.resampling,
     backgroundColor,
-    textColor: style.textColor ?? DEFAULT_TEXT_COLOR,
-    zeroLineColor: style.zeroLineColor ?? DEFAULT_ZERO_LINE_COLOR,
-    legendBackgroundColor: style.legendBackgroundColor ?? DEFAULT_LEGEND_BACKGROUND_COLOR,
-    defaultSeriesColors: style.defaults?.seriesColors,
-    defaultStrokeThickness: style.defaults?.strokeThickness,
-    defaultIconColor: style.defaults?.iconColor,
-    rolloverStroke: style.rollover.show ? style.rollover.color : undefined,
-    rolloverDash: style.rollover.show ? style.rollover.dash : undefined,
+    textColor: style.textColor,
+    zeroLineColor: style.zeroLineColor,
+    legendBackgroundColor: style.legendBackgroundColor,
+    defaultSeriesColors: styleDefaults.seriesColors,
+    defaultStrokeThickness: styleDefaults.strokeThickness,
+    defaultIconColor: styleDefaults.iconColor,
+    rolloverStroke: style.rollover.color,
+    rolloverDash: style.rollover.dash,
     rolloverShow: style.rollover.show,
-    icons: opt.icons,
-    seriesVisibility,
-    seriesGroupKeys:
-      opt.seriesGroupKeys ?? convertedData.series.map((series) => series.lineGroupKey),
-    events: opt.events,
+    icons: resolvedOptions.icons,
+    seriesVisibility: resolvedOptions.seriesVisibility,
+    seriesGroupKeys: resolvedOptions.seriesGroupKeys,
+    events: resolvedOptions.events,
   };
 
-  return { data: convertedData, options };
+  return { data: convertedData, options: convertedOptions };
 };

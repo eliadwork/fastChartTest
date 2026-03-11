@@ -1,4 +1,4 @@
-import type { ChartLineShape } from '../../chart/types';
+import type { ChartLineShape } from '../../chart';
 
 import { DEFAULT_DETECT_VISUAL_CONFIG } from './detectVisualConfig';
 

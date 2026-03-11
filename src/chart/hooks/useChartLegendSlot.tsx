@@ -1,47 +1,28 @@
-import type { LegendProps } from '../Legend/Legend';
-
 import { useMemo } from 'react';
 
 import { Legend } from '../Legend/Legend';
+import type { ResolvedLegendProps } from '../resolvers/resolveLegendProps';
 
-export type UseChartLegendSlotParams = { show: boolean } & LegendProps;
+export interface UseChartLegendSlotParams {
+  legendProps: ResolvedLegendProps | null;
+}
 
-export const useChartLegendSlot = (params: UseChartLegendSlotParams): React.ReactNode => {
-  const {
-    show,
-    backgroundColor,
-    textColor,
-    series,
-    seriesVisibility = [],
-    seriesGroupKeys,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange,
-  } = params;
-
+export const useChartLegendSlot = ({ legendProps }: UseChartLegendSlotParams): React.ReactNode => {
   return useMemo(() => {
-    if (!show) {
+    if (legendProps == null) {
       return null;
     }
 
     return (
       <Legend
-        backgroundColor={backgroundColor}
-        textColor={textColor}
-        series={series}
-        seriesVisibility={seriesVisibility}
-        seriesGroupKeys={seriesGroupKeys}
-        onSeriesVisibilityChange={onSeriesVisibilityChange}
-        onSeriesVisibilityGroupChange={onSeriesVisibilityGroupChange}
+        backgroundColor={legendProps.backgroundColor}
+        textColor={legendProps.textColor}
+        series={legendProps.series}
+        seriesVisibility={legendProps.seriesVisibility}
+        seriesGroupKeys={legendProps.seriesGroupKeys}
+        onSeriesVisibilityChange={legendProps.onSeriesVisibilityChange}
+        onSeriesVisibilityGroupChange={legendProps.onSeriesVisibilityGroupChange}
       />
     );
-  }, [
-    show,
-    backgroundColor,
-    textColor,
-    series,
-    seriesVisibility,
-    seriesGroupKeys,
-    onSeriesVisibilityChange,
-    onSeriesVisibilityGroupChange,
-  ]);
+  }, [legendProps]);
 };

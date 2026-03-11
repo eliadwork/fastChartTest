@@ -1,12 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
-import { SciChartSurface } from 'scichart';
-import { SciChartSurfaceContext } from 'scichart-react';
-
-import {
-  LEGEND_DEFAULT_STROKE,
-  LEGEND_DEFAULT_STROKE_THICKNESS,
-  LEGEND_SERIES_NAME_PREFIX,
-} from './legendConstants';
+import { useCallback, useMemo } from 'react';
 
 export interface SeriesInfo {
   name: string;
@@ -23,9 +15,9 @@ export interface LegendGroup {
 }
 
 export interface UseLegendOptions {
-  series?: LegendSeriesItemModel[];
-  seriesVisibility?: boolean[];
-  seriesGroupKeys?: (string | undefined)[];
+  series: LegendSeriesItemModel[];
+  seriesVisibility: boolean[];
+  seriesGroupKeys: (string | undefined)[];
   onSeriesVisibilityChange?: (index: number, visible: boolean) => void;
   onSeriesVisibilityGroupChange?: (indices: number[], visible: boolean) => void;
 }
@@ -45,58 +37,20 @@ export const useLegend = ({
   onSeriesVisibilityChange,
   onSeriesVisibilityGroupChange,
 }: UseLegendOptions) => {
-  const initResult = useContext(SciChartSurfaceContext);
-  const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
-
   const seriesList = useMemo<SeriesInfo[]>(() => {
-    if (series != null) {
-      return series.map((seriesItem) => ({
-        name: seriesItem.name,
-        stroke: seriesItem.stroke,
-        strokeDashArray: seriesItem.strokeDashArray,
-        strokeThickness: seriesItem.strokeThickness,
-        isVisible: seriesVisibility?.[seriesItem.index] ?? true,
-        index: seriesItem.index,
-      }));
-    }
-
-    if (!surface) {
-      return [];
-    }
-
-    const renderableSeries = surface.renderableSeries.asArray();
-    const nextSeriesList: SeriesInfo[] = [];
-
-    for (let seriesIndex = 0; seriesIndex < renderableSeries.length; seriesIndex += 1) {
-      const renderableSeriesItem = renderableSeries[seriesIndex] as {
-        stroke: string;
-        strokeThickness?: number;
-        strokeDashArray?: number[];
-        isVisible: boolean;
-        dataSeries?: { dataSeriesName?: string };
-      };
-
-      const name =
-        renderableSeriesItem.dataSeries?.dataSeriesName ??
-        `${LEGEND_SERIES_NAME_PREFIX} ${seriesIndex}`;
-
-      nextSeriesList.push({
-        name,
-        stroke: renderableSeriesItem.stroke ?? LEGEND_DEFAULT_STROKE,
-        strokeDashArray: renderableSeriesItem.strokeDashArray,
-        strokeThickness:
-          renderableSeriesItem.strokeThickness ?? LEGEND_DEFAULT_STROKE_THICKNESS,
-        isVisible: seriesVisibility?.[seriesIndex] ?? renderableSeriesItem.isVisible,
-        index: seriesIndex,
-      });
-    }
-
-    return nextSeriesList;
-  }, [series, seriesVisibility, surface]);
+    return series.map((seriesItem) => ({
+      name: seriesItem.name,
+      stroke: seriesItem.stroke,
+      strokeDashArray: seriesItem.strokeDashArray,
+      strokeThickness: seriesItem.strokeThickness,
+      isVisible: seriesVisibility[seriesItem.index],
+      index: seriesItem.index,
+    }));
+  }, [series, seriesVisibility]);
 
   const handleClick = useCallback(
     (seriesIndex: number) => {
-      const isVisible = seriesVisibility?.[seriesIndex] ?? true;
+      const isVisible = seriesVisibility[seriesIndex];
       onSeriesVisibilityChange?.(seriesIndex, !isVisible);
     },
     [seriesVisibility, onSeriesVisibilityChange]
@@ -104,9 +58,7 @@ export const useLegend = ({
 
   const handleGroupClick = useCallback(
     (seriesIndices: number[]) => {
-      const anyVisible = seriesIndices.some(
-        (seriesIndex) => seriesVisibility?.[seriesIndex] ?? true
-      );
+      const anyVisible = seriesIndices.some((seriesIndex) => seriesVisibility[seriesIndex]);
       onSeriesVisibilityGroupChange?.(seriesIndices, !anyVisible);
     },
     [seriesVisibility, onSeriesVisibilityGroupChange]

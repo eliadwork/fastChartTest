@@ -2,12 +2,15 @@ import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from 
 
 import { useChartHeaderState } from './useChartHeaderState';
 import { useChartLegendProps } from './useChartLegendProps';
+import {
+  resolveChartData,
+  resolveChartOptions,
+  type ResolvedChartOptions,
+} from '../resolvers/resolveChartOptions';
 import { useChartVisibility } from './useChartVisibility';
 import { useChartWrapperOptions } from './useChartWrapperOptions';
 import { useChartZoomCallbacks } from './useChartZoomCallbacks';
 import { useChartWrapperStyle } from './useDefaultChartStyle';
-
-const EMPTY_CHART_DATA: ChartData = [];
 
 export interface UseChartParams {
   data: ChartData | null;
@@ -32,6 +35,7 @@ export interface ChartToolbarModel {
   zoomBackRef: React.MutableRefObject<(() => void) | null>;
   zoomResetRef: React.MutableRefObject<(() => void) | null>;
   canZoomBack: boolean;
+  showToolbar: boolean;
   allSeriesHidden: boolean;
   handleToggleAllSeriesVisibility: () => void;
 }
@@ -46,7 +50,7 @@ export interface ChartImplementationModel {
 
 export interface UseChartResult {
   loading: boolean;
-  options: ChartOptions;
+  options: ResolvedChartOptions;
   legendProps: ReturnType<typeof useChartLegendProps>;
   headerModel: ChartHeaderModel;
   toolbarModel: ChartToolbarModel;
@@ -57,14 +61,18 @@ export const useChart = ({
   data,
   chartId,
   title,
-  options = {},
+  options,
   shapes,
   icons,
   chartStyle,
   onSeriesVisibilityChange,
 }: UseChartParams): UseChartResult => {
-  const chartData = data ?? EMPTY_CHART_DATA;
+  const resolvedOptions = resolveChartOptions(options);
+  const legendEnabled = resolvedOptions.features.legend.enabled;
+  const toolbarEnabled = resolvedOptions.features.toolbar.enabled;
   const loading = data == null;
+  const wrapperStyle = useChartWrapperStyle({ chartStyle });
+  const chartData = resolveChartData(data, wrapperStyle);
 
   const { zoomCallbacks, zoomBackRef, zoomResetRef, canZoomBack } = useChartZoomCallbacks();
 
@@ -76,14 +84,13 @@ export const useChart = ({
     allSeriesHidden,
   } = useChartVisibility({
     seriesCount: chartData.length,
-    initialVisibility: options.seriesVisibility,
+    initialVisibility: resolvedOptions.seriesVisibility,
     onSeriesVisibilityChange,
   });
 
-  const wrapperStyle = useChartWrapperStyle({ chartStyle });
-
   const wrapperOptions = useChartWrapperOptions({
-    options,
+    data: chartData,
+    options: resolvedOptions,
     shapes,
     icons,
     seriesVisibility,
@@ -98,16 +105,16 @@ export const useChart = ({
     chartData,
     chartStyle: wrapperStyle,
     seriesVisibility,
-    seriesGroupKeys: options.seriesGroupKeys,
+    seriesGroupKeys: resolvedOptions.seriesGroupKeys,
     textColor,
-    chartOnly: wrapperStyle.chartOnly,
+    chartOnly: wrapperStyle.chartOnly || !legendEnabled,
     onSeriesVisibilityChange: handleSeriesVisibilityChange,
     onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
   });
 
   const { showHeader, headerSx } = useChartHeaderState({
     title,
-    note: options.note,
+    note: resolvedOptions.note,
     textColor,
     chartOnly: wrapperStyle.chartOnly,
     loading,
@@ -115,19 +122,20 @@ export const useChart = ({
 
   return {
     loading,
-    options,
+    options: resolvedOptions,
     legendProps,
     headerModel: {
       showHeader,
       headerSx,
       textColor,
       title,
-      note: options.note,
+      note: resolvedOptions.note,
     },
     toolbarModel: {
       zoomBackRef,
       zoomResetRef,
       canZoomBack,
+      showToolbar: toolbarEnabled,
       allSeriesHidden,
       handleToggleAllSeriesVisibility,
     },
