@@ -38,6 +38,8 @@ export interface ChartProps {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
+  /** Fallback line color for series without explicit style.color. */
+  defaultLineColor?: string;
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
   toolbarSlot?: React.ReactNode | ((props: { textColor: string }) => React.ReactNode);
   implementationComponent: React.ComponentType<ChartImplementationProps>;
@@ -142,6 +144,7 @@ const ChartComponent = ({
   shapes,
   icons,
   chartStyle,
+  defaultLineColor,
   onSeriesVisibilityChange,
   toolbarSlot,
   implementationComponent,
@@ -161,6 +164,7 @@ const ChartComponent = ({
     shapes,
     icons,
     chartStyle,
+    defaultLineColor,
     onSeriesVisibilityChange,
   });
 
@@ -185,6 +189,14 @@ const ChartComponent = ({
     ]
   );
 
+  const implementationOptions = useMemo(
+    () => ({
+      ...implementationModel.wrapperOptions,
+      events: resolvedOptions.events,
+    }),
+    [implementationModel.wrapperOptions, resolvedOptions.events]
+  );
+
   const ImplementationComponent = implementationComponent;
 
   return (
@@ -200,7 +212,7 @@ const ChartComponent = ({
         chartId={implementationModel.chartId}
         lines={implementationModel.chartData}
         style={implementationModel.wrapperStyle}
-        options={implementationModel.wrapperOptions}
+        options={implementationOptions}
         zoomCallbacks={implementationModel.zoomCallbacks}
         containerStyle={style}
         overlaySlot={legendSlot}

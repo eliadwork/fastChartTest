@@ -1,5 +1,5 @@
 import type { TriggerKey } from '../../../types'
-import type { SciChartMergedOptions } from './useSciChartMergedOptions'
+import type { ResolvedSciChartOptions } from '../scichartOptions'
 
 import { useMemo } from 'react'
 
@@ -23,20 +23,21 @@ export interface SciChartInteractionConfig {
 }
 
 export const useSciChartInteractionConfig = (
-  options: SciChartMergedOptions
+  options: ResolvedSciChartOptions
 ): SciChartInteractionConfig => {
   return useMemo(() => {
-    const rolloverDash = dashToStrokeArray(options.rolloverDash)
+    const rolloverConfig = options.features.rollover
+    const rolloverDash = rolloverConfig.show ? dashToStrokeArray(rolloverConfig.dash) : undefined
 
-    const stretchEnable = options.stretch.enable
-    const stretchTrigger = options.stretch.trigger
+    const stretchEnable = options.features.stretch.enable
+    const stretchTrigger = options.features.stretch.trigger ?? 'rightClick'
     const stretchOnRightClick = stretchTrigger === 'rightClick'
     const stretchKey = stretchOnRightClick
       ? undefined
       : SCI_CHART_MODIFIER_KEY_MAP[stretchTrigger as TriggerKey]
 
-    const panEnable = options.pan.enable
-    const panTrigger = options.pan.trigger
+    const panEnable = options.features.pan.enable
+    const panTrigger = options.features.pan.trigger ?? 'shift'
     const panOnLeftClick = panTrigger === 'leftClick'
     const panOnShift = panTrigger === 'shift'
     const panKey = panOnLeftClick
@@ -51,10 +52,10 @@ export const useSciChartInteractionConfig = (
       panOnLeftClick,
       panOnShift,
       panKey,
-      rolloverShow: options.rolloverShow,
-      rolloverStroke: options.rolloverStroke,
+      rolloverShow: rolloverConfig.show,
+      rolloverStroke: rolloverConfig.show ? rolloverConfig.color : '',
       rolloverDash: rolloverDash == null ? [] : rolloverDash,
-      onMiddleClick: options.events?.onmiddleclick,
+      onMiddleClick: options.events?.clicks?.middle,
     }
   }, [options])
 }

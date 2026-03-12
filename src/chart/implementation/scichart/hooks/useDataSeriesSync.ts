@@ -1,132 +1,51 @@
-import { useContext, useEffect } from 'react'
-import {
-  FastLineRenderableSeries,
-  NumberRange,
-  SciChartSurface,
-  type EResamplingMode,
-  XyDataSeries,
-} from 'scichart'
-import { SciChartSurfaceContext } from 'scichart-react'
+import { useEffect } from 'react';
+import { SciChartSurface } from 'scichart';
 
-import type { ConvertedData, ConvertedSeries } from '../convert'
-import { dashToStrokeArray } from '../convert'
-import type { SciChartDataBounds } from './useSciChartDataBounds'
-import type { SciChartSeriesConfig } from './useSciChartSeriesConfig'
-import { SCI_CHART_VISIBLE_RANGE_PAD_FACTOR } from '../sciChartWrapperConstants'
-
-interface SciChartSeriesLike {
-  dataSeries?: { delete?: () => void }
-  delete?: () => void
-}
-
-const toStrokeColor = (
-  line: ConvertedSeries
-) => line.style.color
-
-const toStrokeThickness = (line: ConvertedSeries) => line.style.thickness
-
-const getPaddedLimit = (value: number) =>
-  value === 0 ? 1 : Math.abs(value) * SCI_CHART_VISIBLE_RANGE_PAD_FACTOR
-
-const disposeRenderableSeries = (series: SciChartSeriesLike) => {
-  series.dataSeries?.delete?.()
-  series.delete?.()
-}
-
-const clearRenderableSeries = (surface: SciChartSurface) => {
-  const previousSeries = surface.renderableSeries.asArray() as SciChartSeriesLike[]
-  for (const series of previousSeries) {
-    disposeRenderableSeries(series)
-  }
-  surface.renderableSeries.clear()
-}
-
-interface AxisWithVisibleRangeLimit {
-  visibleRangeLimit?: NumberRange
-}
-
-const applyVisibleRangeLimits = (
-  surface: SciChartSurface,
-  dataBounds: SciChartDataBounds,
-  clipZoomToData: boolean
-) => {
-  const xAxis = surface.xAxes.asArray()[0] as AxisWithVisibleRangeLimit | undefined
-  const yAxis = surface.yAxes.asArray()[0] as AxisWithVisibleRangeLimit | undefined
-  if (!xAxis || !yAxis) return
-
-  if (!clipZoomToData || !dataBounds.hasValidBounds) {
-    xAxis.visibleRangeLimit = undefined
-    yAxis.visibleRangeLimit = undefined
-    return
-  }
-
-  xAxis.visibleRangeLimit = new NumberRange(
-    dataBounds.xMin - getPaddedLimit(dataBounds.xMin),
-    dataBounds.xMax + getPaddedLimit(dataBounds.xMax)
-  )
-  yAxis.visibleRangeLimit = new NumberRange(
-    dataBounds.yMin - getPaddedLimit(dataBounds.yMin),
-    dataBounds.yMax + getPaddedLimit(dataBounds.yMax)
-  )
-}
+import type {
+  ResolvedSciChartData,
+  ResolvedSciChartResamplingOption,
+  SciChartDataBounds,
+} from '../scichartOptions';
+import { applyVisibleRangeLimits } from './internal/sciChartRangeLimits';
+import { clearRenderableSeries, rebuildRenderableSeries } from './internal/sciChartSeriesRuntime';
 
 export interface UseDataSeriesSyncOptions {
-  data: ConvertedData
-  dataBounds: SciChartDataBounds
-  clipZoomToData: boolean
-  seriesConfig: SciChartSeriesConfig
-  seriesVisibility: boolean[]
+  surface?: SciChartSurface;
+  data: ResolvedSciChartData;
+  dataBounds: SciChartDataBounds;
+  clipZoomToData: boolean;
+  seriesConfig: ResolvedSciChartResamplingOption;
+  seriesVisibility: boolean[];
 }
 
 export const useDataSeriesSync = ({
+  surface,
   data,
   dataBounds,
   clipZoomToData,
   seriesConfig,
   seriesVisibility,
 }: UseDataSeriesSyncOptions) => {
-  const initResult = useContext(SciChartSurfaceContext)
-
   useEffect(() => {
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined
-    if (!surface) return
+    if (!surface) return;
 
     // Keep runtime sync deterministic: on any series-shape change, rebuild renderable series
     // from current converted data while preserving the existing surface/axes/viewport.
     if (data.series.length === 0) {
-      clearRenderableSeries(surface)
-      applyVisibleRangeLimits(surface, dataBounds, clipZoomToData)
-      surface.invalidateElement()
-      return
+      clearRenderableSeries(surface);
+      applyVisibleRangeLimits(surface, dataBounds, clipZoomToData);
+      surface.invalidateElement();
+      return;
     }
 
-    clearRenderableSeries(surface)
+    rebuildRenderableSeries({
+      surface,
+      data,
+      seriesVisibility,
+      seriesConfig,
+    });
 
-    const wasmContext = surface.webAssemblyContext2D
-    for (let index = 0; index < data.series.length; index += 1) {
-      const line = data.series[index]
-      const dataSeries = new XyDataSeries(wasmContext, {
-        xValues: line.x,
-        yValues: line.y,
-        isSorted: true,
-        containsNaN: false,
-        dataSeriesName: line.name,
-      })
-
-      const renderableSeries = new FastLineRenderableSeries(wasmContext, {
-        dataSeries,
-        stroke: toStrokeColor(line),
-        strokeThickness: toStrokeThickness(line),
-        strokeDashArray: dashToStrokeArray(line.style.dash),
-        resamplingMode: seriesConfig.resamplingMode as EResamplingMode,
-        resamplingPrecision: seriesConfig.resamplingPrecision,
-        isVisible: seriesVisibility[index],
-      })
-
-      surface.renderableSeries.add(renderableSeries)
-    }
-
-    applyVisibleRangeLimits(surface, dataBounds, clipZoomToData)
-    surface.invalidateElement()
-  }, [initResult, data, dataBounds, clipZoomToData, seriesConfig, seriesVisibility])
-}
+    applyVisibleRangeLimits(surface, dataBounds, clipZoomToData);
+    surface.invalidateElement();
+  }, [surface, data, dataBounds, clipZoomToData, seriesConfig, seriesVisibility]);
+};

@@ -7,12 +7,12 @@ import type {
   ChartData,
   ChartIcon,
   ChartOptions,
-  ChartOptionsEvents,
+  ResolvedChartOptionsEvents,
   ChartResamplingOption,
   ChartRolloverStyle,
-  ChartShape,
   ChartStyle,
   KeyTriggeredOption,
+  ResolvedChartShape,
   TriggerKey,
 } from './types';
 
@@ -26,7 +26,7 @@ export interface ChartImplementationResampling {
   precision: number;
 }
 
-export type ChartImplementationEvents = ChartOptionsEvents;
+export type ChartImplementationEvents = ResolvedChartOptionsEvents;
 
 export interface ChartImplementationOptionsOverrides {
   note?: ChartOptions['note'];
@@ -41,7 +41,7 @@ export interface ChartImplementationOptionsOverrides {
 
 /** Full options after defaults are applied. Used internally by implementations. */
 export interface ChartImplementationOptions {
-  shapes: ChartShape[];
+  shapes: ResolvedChartShape[];
   icons: ChartIcon[];
   note?: string;
   stretch: KeyTriggeredOption;

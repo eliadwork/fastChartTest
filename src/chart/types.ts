@@ -74,6 +74,14 @@ export interface ChartBoxShape {
 
 export type ChartShape = ChartLineShape | ChartBoxShape;
 
+export interface ResolvedChartLineShape extends Omit<ChartLineShape, 'shape' | 'color' | 'dash'> {
+  shape: 'line';
+  color: string;
+  dash: DashConfig;
+}
+
+export type ResolvedChartShape = ResolvedChartLineShape | ChartBoxShape;
+
 /** Unified dash config: isDash enables dashed line, steps is the pattern (e.g. [8, 4]). */
 export interface DashConfig {
   isDash: boolean;
@@ -119,6 +127,25 @@ export interface ChartOptionsEvents {
   onzoomback?: () => void;
   onzoomreset?: () => void;
   onmiddleclick?: (event: MouseEvent) => void;
+}
+
+export interface ChartOptionsClickEvents {
+  right?: (event: MouseEvent) => void;
+  left?: (event: MouseEvent) => void;
+  double?: (event: MouseEvent) => void;
+  middle?: (event: MouseEvent) => void;
+}
+
+export interface ChartOptionsKeyEvents {
+  shift?: (event: MouseEvent) => void;
+  ctrl?: (event: MouseEvent) => void;
+  alt?: (event: MouseEvent) => void;
+}
+
+export interface ResolvedChartOptionsEvents {
+  clicks?: ChartOptionsClickEvents;
+  keys?: ChartOptionsKeyEvents;
+  scroll?: (event: WheelEvent) => void;
 }
 
 export interface ChartFeatureToggleOption {

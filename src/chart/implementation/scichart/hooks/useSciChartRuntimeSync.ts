@@ -1,59 +1,46 @@
-import type { ChartIcon } from '../../../types'
-import type { ChartZoomCallbacks } from '../../implementationProps'
-import type { ConvertedBox, ConvertedData, ConvertedShape } from '../convert'
-import type { SciChartDataBounds } from './useSciChartDataBounds'
-import type { SciChartSeriesConfig } from './useSciChartSeriesConfig'
+import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../scichartOptions';
 
-import { useDataSeriesSync } from './useDataSeriesSync'
-import { useIconsSync } from './useIconsSync'
-import { useSeriesVisibilitySync } from './useSeriesVisibilitySync'
-import { useShapesSync } from './useShapesSync'
-import { useZoomResetSync } from './useZoomResetSync'
+import { useDataSeriesSync } from './useDataSeriesSync';
+import { useIconsSync } from './useIconsSync';
+import { useSciChartSurfaceContext } from './useSciChartSurfaceContext';
+import { useSeriesVisibilitySync } from './useSeriesVisibilitySync';
+import { useShapesSync } from './useShapesSync';
+import { useZoomResetSync } from './useZoomResetSync';
+
+const DEFAULT_ICON_SIZE = 1;
 
 export interface UseSciChartRuntimeSyncOptions {
-  zoomCallbacks?: ChartZoomCallbacks
-  icons: ChartIcon[]
-  defaultColor: string
-  iconSize: number
-  dataBounds: SciChartDataBounds
-  clipZoomToData: boolean
-  seriesConfig: SciChartSeriesConfig
-  seriesVisibility: boolean[]
-  lineShapes: ConvertedShape[]
-  boxes: ConvertedBox[]
-  data: ConvertedData
+  definition: ResolvedSciChartDefinition;
+  dataBounds: SciChartDataBounds;
 }
 
 export const useSciChartRuntimeSync = ({
-  zoomCallbacks,
-  icons,
-  defaultColor,
-  iconSize,
+  definition,
   dataBounds,
-  clipZoomToData,
-  seriesConfig,
-  seriesVisibility,
-  lineShapes,
-  boxes,
-  data,
 }: UseSciChartRuntimeSyncOptions) => {
-  useZoomResetSync(zoomCallbacks)
+  const { sciChartSurface } = useSciChartSurfaceContext();
+
+  const zoomCallbacks = definition.options.events?.zoom;
+
+  useZoomResetSync(sciChartSurface, zoomCallbacks);
   useDataSeriesSync({
-    data,
+    surface: sciChartSurface,
+    data: definition.data,
     dataBounds,
-    clipZoomToData,
-    seriesConfig,
-    seriesVisibility,
-  })
+    clipZoomToData: definition.options.clipZoomToData,
+    seriesConfig: definition.options.resampling,
+    seriesVisibility: definition.data.seriesVisibility,
+  });
   useIconsSync({
-    icons,
-    defaultColor,
-    iconSize,
-  })
-  useSeriesVisibilitySync(seriesVisibility)
+    surface: sciChartSurface,
+    icons: definition.icons,
+    defaultColor: definition.styles.defaultStyles.iconColor,
+    iconSize: DEFAULT_ICON_SIZE,
+  });
+  useSeriesVisibilitySync(sciChartSurface, definition.data.seriesVisibility);
   useShapesSync({
-    lineShapes,
-    boxes,
-    data,
-  })
-}
+    surface: sciChartSurface,
+    shapes: definition.shapes,
+    dataBounds,
+  });
+};

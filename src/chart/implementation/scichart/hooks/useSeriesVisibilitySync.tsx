@@ -1,17 +1,16 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { SciChartSurface } from 'scichart';
-import { SciChartSurfaceContext } from 'scichart-react';
 
-export function useSeriesVisibilitySync(seriesVisibility: boolean[]) {
-  const initResult = useContext(SciChartSurfaceContext);
-
+export function useSeriesVisibilitySync(
+  surface: SciChartSurface | undefined,
+  seriesVisibility: boolean[]
+) {
   useEffect(() => {
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
     if (!surface) return;
     const series = surface.renderableSeries.asArray();
     for (let index = 0; index < series.length; index++) {
       (series[index] as { isVisible: boolean }).isVisible = seriesVisibility[index];
     }
     surface.invalidateElement();
-  }, [initResult, seriesVisibility]);
+  }, [surface, seriesVisibility]);
 }

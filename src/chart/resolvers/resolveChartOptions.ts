@@ -13,7 +13,11 @@ import type {
   ChartFeaturesOptions,
   ChartIcon,
   ChartOptions,
+  ChartOptionsEvents,
   ChartResamplingOption,
+  DashConfig,
+  ResolvedChartOptionsEvents,
+  ResolvedChartShape,
   ChartShape,
   ChartStyle,
   KeyTriggeredOption,
@@ -22,7 +26,7 @@ import { resolveChartDataSeriesStyle } from './resolveChartDataSeriesStyle';
 
 const EMPTY_CHART_DATA: ChartData = [];
 const EMPTY_CHART_OPTIONS: ChartOptions = {};
-const EMPTY_CHART_SHAPES: ChartShape[] = [];
+const EMPTY_CHART_SHAPES: ResolvedChartShape[] = [];
 const EMPTY_CHART_ICONS: ChartIcon[] = [];
 
 const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' };
@@ -31,6 +35,7 @@ const DEFAULT_RESAMPLING: ChartResamplingOption = {
   enable: false,
   precision: CHART_RESAMPLING_PRECISION_OFF,
 };
+const createSolidDashConfig = (): DashConfig => ({ isDash: false, steps: [] });
 
 export interface ResolvedChartFeatureToggleOption extends ChartFeatureToggleOption {
   enabled: boolean;
@@ -42,12 +47,16 @@ export type ResolvedChartFeaturesOptions = Omit<ChartFeaturesOptions, 'legend' |
 };
 
 export interface ResolvedChartOptions
-  extends Omit<ChartOptions, 'features' | 'stretch' | 'pan' | 'resampling' | 'clipZoomToData'> {
+  extends Omit<
+    ChartOptions,
+    'features' | 'stretch' | 'pan' | 'resampling' | 'clipZoomToData' | 'events'
+  > {
   features: ResolvedChartFeaturesOptions;
   stretch: KeyTriggeredOption;
   pan: KeyTriggeredOption;
   resampling: ChartResamplingOption;
   clipZoomToData: boolean;
+  events?: ResolvedChartOptionsEvents;
 }
 
 export interface ResolveChartImplementationOptionsParams {
@@ -67,7 +76,46 @@ const resolveFeatureToggle = (
   enabled: option?.enabled !== false,
 });
 
-const resolveChartShapes = (shapes?: ChartShape[]): ChartShape[] => {
+const resolveChartEvents = (events?: ChartOptionsEvents): ResolvedChartOptionsEvents | undefined => {
+  if (events == null) {
+    return undefined;
+  }
+
+  const clicks =
+    events.onrightclick != null ||
+    events.onleftclick != null ||
+    events.ondoubleclick != null ||
+    events.onmiddleclick != null
+      ? {
+          right: events.onrightclick,
+          left: events.onleftclick,
+          double: events.ondoubleclick,
+          middle: events.onmiddleclick,
+        }
+      : undefined;
+
+  const keys =
+    events.onshiftclick != null || events.onctrlclick != null || events.onaltclick != null
+      ? {
+          shift: events.onshiftclick,
+          ctrl: events.onctrlclick,
+          alt: events.onaltclick,
+        }
+      : undefined;
+
+  const scroll = events.onscroll;
+  if (clicks == null && keys == null && scroll == null) {
+    return undefined;
+  }
+
+  return {
+    clicks,
+    keys,
+    scroll,
+  };
+};
+
+const resolveChartShapes = (shapes?: ChartShape[]): ResolvedChartShape[] => {
   if (shapes == null || shapes.length === 0) {
     return EMPTY_CHART_SHAPES;
   }
@@ -79,13 +127,18 @@ const resolveChartShapes = (shapes?: ChartShape[]): ChartShape[] => {
 
     return {
       ...shape,
-      color: shape.color ?? DEFAULT_SHAPE_STYLE.color,
-      dash: shape.dash ?? DEFAULT_SHAPE_STYLE.dash,
+      shape: 'line',
+      color: shape.color ?? DEFAULT_SHAPE_STYLE.color ?? '#ff0000',
+      dash: shape.dash ?? createSolidDashConfig(),
     };
   });
 };
 
-export const resolveChartData = (data: ChartData | null, chartStyle: ChartStyle): ChartData => {
+export const resolveChartData = (
+  data: ChartData | null,
+  chartStyle: ChartStyle,
+  defaultLineColor?: string
+): ChartData => {
   const chartData = data ?? EMPTY_CHART_DATA;
   if (chartData.length === 0) {
     return EMPTY_CHART_DATA;
@@ -93,15 +146,21 @@ export const resolveChartData = (data: ChartData | null, chartStyle: ChartStyle)
 
   const seriesColors = chartStyle.defaults?.seriesColors ?? [];
   const defaultStrokeThickness = chartStyle.defaults?.strokeThickness ?? 0;
+  const fallbackLineColor = DEFAULT_SHAPE_STYLE.color;
 
-  return chartData.map((line, index) => ({
-    ...line,
-    style: resolveChartDataSeriesStyle({
-      style: line.style,
-      defaultColor: seriesColors[index % seriesColors.length] ?? DEFAULT_SHAPE_STYLE.color,
-      defaultThickness: defaultStrokeThickness,
-    }),
-  }));
+  return chartData.map((line, index) => {
+    const fallbackSeriesColor = seriesColors[index % seriesColors.length];
+    const resolvedDefaultColor = defaultLineColor ?? fallbackSeriesColor ?? fallbackLineColor;
+
+    return {
+      ...line,
+      style: resolveChartDataSeriesStyle({
+        style: line.style,
+        defaultColor: resolvedDefaultColor,
+        defaultThickness: defaultStrokeThickness,
+      }),
+    };
+  });
 };
 
 export const resolveChartOptions = (options?: ChartOptions): ResolvedChartOptions => {
@@ -141,6 +200,7 @@ export const resolveChartOptions = (options?: ChartOptions): ResolvedChartOption
           }
         : DEFAULT_RESAMPLING,
     clipZoomToData: chartOptions.clipZoomToData ?? true,
+    events: resolveChartEvents(chartOptions.events),
   };
 };
 

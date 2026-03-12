@@ -20,6 +20,7 @@ export interface UseChartParams {
   shapes?: ChartShape[];
   icons?: ChartIcon[];
   chartStyle?: ChartStyle;
+  defaultLineColor?: string;
   onSeriesVisibilityChange?: (visibility: boolean[]) => void;
 }
 
@@ -65,6 +66,7 @@ export const useChart = ({
   shapes,
   icons,
   chartStyle,
+  defaultLineColor,
   onSeriesVisibilityChange,
 }: UseChartParams): UseChartResult => {
   const resolvedOptions = resolveChartOptions(options);
@@ -72,7 +74,7 @@ export const useChart = ({
   const toolbarEnabled = resolvedOptions.features.toolbar.enabled;
   const loading = data == null;
   const wrapperStyle = useChartWrapperStyle({ chartStyle });
-  const chartData = resolveChartData(data, wrapperStyle);
+  const chartData = resolveChartData(data, wrapperStyle, defaultLineColor);
 
   const { zoomCallbacks, zoomBackRef, zoomResetRef, canZoomBack } = useChartZoomCallbacks();
 

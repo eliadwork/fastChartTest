@@ -1,9 +1,9 @@
 /**
  * Syncs chart icons to SciChart annotations.
- * Closed hook: imports only from react, scichart, scichart-react.
+ * Closed hook: imports only from react and scichart.
  */
 
-import { useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   CustomAnnotation,
   ECoordinateMode,
@@ -12,7 +12,6 @@ import {
   NativeTextAnnotation,
   SciChartSurface,
 } from 'scichart';
-import { SciChartSurfaceContext } from 'scichart-react';
 
 import { toSvgString } from '../../../utils/iconUtils';
 
@@ -28,28 +27,26 @@ export interface ChartIconInput {
 }
 
 export interface UseIconsSyncOptions {
+  surface?: SciChartSurface;
   icons: ChartIconInput[];
   defaultColor: string;
   iconSize: number;
 }
 
 export const useIconsSync = ({
+  surface,
   icons,
   defaultColor,
   iconSize,
 }: UseIconsSyncOptions) => {
-  const initResult = useContext(SciChartSurfaceContext);
   const annotationRefs = useRef<(CustomAnnotation | NativeTextAnnotation)[]>([]);
 
   useEffect(() => {
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
     if (!surface) return;
-
-    const chartSurface = surface as SciChartSurface;
     const iconsToRender = [...icons];
 
     for (const annotationRef of annotationRefs.current) {
-      chartSurface.annotations.remove(annotationRef);
+      surface.annotations.remove(annotationRef);
       annotationRef.delete();
     }
     annotationRefs.current = [];
@@ -84,18 +81,18 @@ export const useIconsSync = ({
             horizontalAnchorPoint: EHorizontalAnchorPoint.Center,
             verticalAnchorPoint: EVerticalAnchorPoint.Center,
           });
-      chartSurface.annotations.add(annotation);
+      surface.annotations.add(annotation);
       annotationRefs.current.push(annotation);
     }
 
-    chartSurface.invalidateElement();
+    surface.invalidateElement();
 
     return () => {
       for (const annotationRef of annotationRefs.current) {
-        chartSurface.annotations.remove(annotationRef);
+        surface.annotations.remove(annotationRef);
         annotationRef.delete();
       }
       annotationRefs.current = [];
     };
-  }, [initResult, icons, defaultColor, iconSize]);
+  }, [surface, icons, defaultColor, iconSize]);
 };

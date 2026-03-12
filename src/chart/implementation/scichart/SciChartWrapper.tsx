@@ -6,6 +6,7 @@
 import type { ChartImplementationProps } from '../implementationProps';
 import type { UseSciChartRuntimeSyncOptions } from './hooks/useSciChartRuntimeSync';
 
+import { useMemo } from 'react';
 import { SciChartSurface } from 'scichart';
 import { SciChartReact } from 'scichart-react';
 
@@ -30,22 +31,36 @@ const SciChartRuntimeEffects = (params: UseSciChartRuntimeSyncOptions) => {
 export const SciChartWrapper = ({
   lines,
   style,
-  options: optionsInput,
+  options,
   zoomCallbacks,
   containerStyle,
   overlaySlot,
   loading = false,
 }: ChartImplementationProps) => {
-  const { convertedData, mergedOptions } = useSciChartOptionsModel({
+  const definition = useSciChartOptionsModel({
     lines,
     style,
-    optionsInput,
+    options,
   });
 
-  const { initChart, lineShapes, boxes, dataBounds, seriesConfig } = useSciChartRuntimeModel({
-    data: convertedData,
-    options: mergedOptions,
-    zoomCallbacks,
+  const runtimeDefinition = useMemo(() => {
+    if (!zoomCallbacks) {
+      return definition;
+    }
+
+    return {
+      ...definition,
+      options: {
+        ...definition.options,
+        events: definition.options.events
+          ? { ...definition.options.events, zoom: zoomCallbacks }
+          : { zoom: zoomCallbacks },
+      },
+    };
+  }, [definition, zoomCallbacks]);
+
+  const { initChart, dataBounds } = useSciChartRuntimeModel({
+    definition: runtimeDefinition,
   });
 
   if (loading) {
@@ -65,19 +80,10 @@ export const SciChartWrapper = ({
           initChart={initChart}
         >
           <SciChartRuntimeEffects
-            zoomCallbacks={zoomCallbacks}
-            icons={mergedOptions.icons}
-            defaultColor={mergedOptions.defaultIconColor}
-            iconSize={1}
+            definition={runtimeDefinition}
             dataBounds={dataBounds}
-            clipZoomToData={mergedOptions.clipZoomToData}
-            seriesConfig={seriesConfig}
-            seriesVisibility={mergedOptions.seriesVisibility}
-            lineShapes={lineShapes}
-            boxes={boxes}
-            data={convertedData}
           />
-          {!mergedOptions.chartOnly && overlaySlot}
+          {!definition.styles.chartOnly && overlaySlot}
         </SciChartReact>
       </SciChartContainer>
     </ChartWrapperBox>

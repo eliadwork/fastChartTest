@@ -1,25 +1,18 @@
 import { useMemo } from 'react';
 import type { ChartImplementationProps } from '../../implementationProps';
-import { toInternalOptions } from '../convert';
+import { toSciChartDefinition } from '../convert';
+import type { ResolvedSciChartDefinition } from '../scichartOptions';
 
 export interface UseSciChartOptionsModelOptions {
   lines: ChartImplementationProps['lines'];
   style: ChartImplementationProps['style'];
-  optionsInput: ChartImplementationProps['options'];
+  options: ChartImplementationProps['options'];
 }
 
 export const useSciChartOptionsModel = ({
   lines,
   style,
-  optionsInput,
-}: UseSciChartOptionsModelOptions) => {
-  const { data: convertedData, options: convertedOptions } = useMemo(
-    () => toInternalOptions({ lines, style, options: optionsInput }),
-    [lines, optionsInput, style]
-  );
-
-  return {
-    convertedData,
-    mergedOptions: convertedOptions,
-  };
+  options,
+}: UseSciChartOptionsModelOptions): ResolvedSciChartDefinition => {
+  return useMemo(() => toSciChartDefinition({ lines, style, options }), [lines, options, style]);
 };
