@@ -1,9 +1,9 @@
 /**
  * Syncs chart icons to SciChart annotations.
- * Closed hook: imports only from react, scichart, scichart-react.
+ * Closed hook: reacts to icon model changes and syncs annotation runtime state.
  */
 
-import { useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   CustomAnnotation,
   ECoordinateMode,
@@ -12,7 +12,6 @@ import {
   NativeTextAnnotation,
   SciChartSurface,
 } from 'scichart';
-import { SciChartSurfaceContext } from 'scichart-react';
 
 const ICON_PX_BASE = 24;
 const FONT_SIZE_BASE = 20;
@@ -24,6 +23,7 @@ export interface ChartIconInput {
 }
 
 export interface UseIconsSyncOptions {
+  surface?: SciChartSurface;
   icons: ChartIconInput[];
   defaultColor: string;
   iconSize: number;
@@ -45,15 +45,14 @@ function toSvgString(iconImage: string, sizePx: number, color: string): string {
 }
 
 export const useIconsSync = ({
+  surface,
   icons,
   defaultColor,
   iconSize,
 }: UseIconsSyncOptions) => {
-  const initResult = useContext(SciChartSurfaceContext);
   const annotationRefs = useRef<(CustomAnnotation | NativeTextAnnotation)[]>([]);
 
   useEffect(() => {
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
     if (!surface) return;
 
     const chartSurface = surface as SciChartSurface;
@@ -105,5 +104,5 @@ export const useIconsSync = ({
       }
       annotationRefs.current = [];
     };
-  }, [initResult, icons, defaultColor, iconSize]);
+  }, [surface, icons, defaultColor, iconSize]);
 };

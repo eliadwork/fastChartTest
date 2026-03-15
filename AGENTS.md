@@ -41,6 +41,32 @@ no {...props} spreading across architecture boundaries
 
 If any rule would be violated → redesign the solution.
 
+React Context Rule (required context)
+
+When a hook or component requires context, do not call useContext directly there.
+
+Rules:
+
+- if the project creates the context, create it with undefined default
+- consume required contexts through a strict custom hook
+- strict custom hooks must throw render-time errors when provider is missing
+- avoid fake default values that hide integration mistakes
+- keep provider scope as low as possible so component instances stay isolated
+
+Required pattern:
+
+const SomeContext = createContext<SomeContextValue | undefined>(undefined)
+
+export function useSomeContext() {
+  const value = useContext(SomeContext)
+  if (value === undefined) {
+    throw new Error('useSomeContext must be used within SomeContextProvider')
+  }
+  return value
+}
+
+For third-party contexts, wrap them in a local strict hook and throw if provider value is missing.
+
 AI High-Pass Filter Checklist
 
 Before writing code verify:

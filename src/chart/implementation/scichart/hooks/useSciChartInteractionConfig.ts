@@ -1,5 +1,5 @@
 import type { ModifierKey } from '../../../types'
-import type { SciChartMergedOptions } from './useSciChartMergedOptions'
+import type { scichartFullDefinition } from '../scichartOptions'
 
 import { useMemo } from 'react'
 
@@ -39,18 +39,18 @@ export interface SciChartInteractionConfig {
 }
 
 export const useSciChartInteractionConfig = (
-  options: SciChartMergedOptions
+  definition: scichartFullDefinition
 ): SciChartInteractionConfig => {
   return useMemo(() => {
-    const stretchEnable = options.stretch?.enable !== false
-    const stretchTrigger = options.stretch?.trigger ?? 'rightClick'
+    const stretchEnable = definition.options.features.stretch.enable !== false
+    const stretchTrigger = definition.options.features.stretch.trigger
     const stretchOnRightClick = stretchTrigger === 'rightClick'
     const stretchKey = stretchOnRightClick
       ? undefined
       : SCI_CHART_MODIFIER_KEY_MAP[toModifierKey(stretchTrigger)]
 
-    const panEnable = options.pan?.enable !== false
-    const panTrigger = options.pan?.trigger ?? 'shift'
+    const panEnable = definition.options.features.pan.enable !== false
+    const panTrigger = definition.options.features.pan.trigger
     const panOnLeftClick = panTrigger === 'leftClick'
     const panOnShift = panTrigger === 'shift'
     const panKey = panOnLeftClick
@@ -65,11 +65,13 @@ export const useSciChartInteractionConfig = (
       panOnLeftClick,
       panOnShift,
       panKey,
-      rolloverShow: options.rolloverShow !== false,
-      rolloverStroke: options.rolloverStroke ?? SCI_CHART_DEFAULT_ROLLOVER_STROKE,
+      rolloverShow: definition.options.features.rollover.show !== false,
+      rolloverStroke:
+        definition.options.features.rollover.color ?? SCI_CHART_DEFAULT_ROLLOVER_STROKE,
       rolloverDash:
-        dashToStrokeArray(options.rolloverDash) ?? SCI_CHART_DEFAULT_ROLLOVER_DASH,
-      onMiddleClick: options.events?.onmiddleclick,
+        dashToStrokeArray(definition.options.features.rollover.dash) ??
+        SCI_CHART_DEFAULT_ROLLOVER_DASH,
+      onMiddleClick: definition.options.events?.clicks.middle,
     }
-  }, [options])
+  }, [definition])
 }

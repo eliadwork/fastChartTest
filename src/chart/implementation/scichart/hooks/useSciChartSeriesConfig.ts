@@ -1,47 +1,34 @@
-import type { SciChartMergedOptions } from './useSciChartMergedOptions'
+import type { scichartFullDefinition } from '../scichartOptions'
 
 import { useMemo } from 'react'
-import { EResamplingMode } from 'scichart'
 
 import {
   SCI_CHART_DEFAULT_SERIES_COLORS,
   SCI_CHART_DEFAULT_STROKE_THICKNESS,
-  SCI_CHART_RESAMPLING_PRECISION_DEFAULT,
-  SCI_CHART_RESAMPLING_PRECISION_OFF,
 } from '../sciChartWrapperConstants'
 
 export interface SciChartSeriesConfig {
   seriesColors: string[]
   strokeThickness: number
-  resamplingMode: EResamplingMode
+  resamplingMode: scichartFullDefinition['options']['resampling']['resamplingMode']
   resamplingPrecision: number
 }
 
 export const useSciChartSeriesConfig = (
-  options: SciChartMergedOptions
+  definition: scichartFullDefinition
 ): SciChartSeriesConfig => {
   const seriesColors = useMemo(
-    () => options.defaultSeriesColors ?? [...SCI_CHART_DEFAULT_SERIES_COLORS],
-    [options.defaultSeriesColors]
+    () => definition.styles.defaultStyles.seriesColors ?? [...SCI_CHART_DEFAULT_SERIES_COLORS],
+    [definition.styles.defaultStyles.seriesColors]
   )
 
   const strokeThickness =
-    options.defaultStrokeThickness ?? SCI_CHART_DEFAULT_STROKE_THICKNESS
-
-  const resamplingEnabled = options.resampling?.enable !== false
-  const resamplingMode = resamplingEnabled
-    ? EResamplingMode.Auto
-    : EResamplingMode.None
-  const resamplingPrecision =
-    options.resampling?.precision ??
-    (resamplingEnabled
-      ? SCI_CHART_RESAMPLING_PRECISION_DEFAULT
-      : SCI_CHART_RESAMPLING_PRECISION_OFF)
+    definition.styles.defaultStyles.strokeThickness ?? SCI_CHART_DEFAULT_STROKE_THICKNESS
 
   return {
     seriesColors,
     strokeThickness,
-    resamplingMode,
-    resamplingPrecision,
+    resamplingMode: definition.options.resampling.resamplingMode,
+    resamplingPrecision: definition.options.resampling.resamplingPrecision,
   }
 }

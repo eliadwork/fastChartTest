@@ -1,9 +1,4 @@
-import type { ChartZoomCallbacks } from '../../implementationProps'
-import type { ConvertedData } from '../convert'
-import type { SciChartDataBounds } from './useSciChartDataBounds'
-import type { SciChartInteractionConfig } from './useSciChartInteractionConfig'
-import type { SciChartMergedOptions } from './useSciChartMergedOptions'
-import type { SciChartSeriesConfig } from './useSciChartSeriesConfig'
+import type { SciChartDataBounds, scichartFullDefinition } from '../scichartOptions'
 
 import { useMemo } from 'react'
 import {
@@ -35,6 +30,8 @@ import {
   SCI_CHART_ZERO_LINE_STROKE_THICKNESS,
 } from '../sciChartWrapperConstants'
 import { dashToStrokeArray } from '../convert'
+import { useSciChartInteractionConfig } from './useSciChartInteractionConfig'
+import { useSciChartSeriesConfig } from './useSciChartSeriesConfig'
 
 const ROLLOVER_TOOLTIP_SERIES_LABEL = (seriesName: string) => `${seriesName}:`
 const ROLLOVER_TOOLTIP_X_LABEL = (formattedX: string) => `X: ${formattedX}`
@@ -50,22 +47,17 @@ const resolveRootElement = (rootElement: HTMLDivElement | string) => {
 }
 
 export interface UseSciChartInitChartOptions {
-  data: ConvertedData
-  options: SciChartMergedOptions
-  zoomCallbacks?: ChartZoomCallbacks
+  definition: scichartFullDefinition
   dataBounds: SciChartDataBounds
-  seriesConfig: SciChartSeriesConfig
-  interactionConfig: SciChartInteractionConfig
 }
 
 export const useSciChartInitChart = ({
-  data,
-  options,
-  zoomCallbacks,
+  definition,
   dataBounds,
-  seriesConfig,
-  interactionConfig,
 }: UseSciChartInitChartOptions) => {
+  const seriesConfig = useSciChartSeriesConfig(definition)
+  const interactionConfig = useSciChartInteractionConfig(definition)
+
   return useMemo(
     () =>
       async (rootElement: HTMLDivElement | string) => {
@@ -73,22 +65,23 @@ export const useSciChartInitChart = ({
         if (!element) throw new Error('SciChart root element not found')
 
         const createOptions =
-          options.backgroundColor != null
-            ? { background: options.backgroundColor }
+          definition.styles.backgroundColor != null
+            ? { background: definition.styles.backgroundColor }
             : undefined
         const { sciChartSurface, wasmContext } = await SciChartSurface.create(
           element,
           createOptions
         )
 
-        const axisLabelColor = options.textColor ?? SCI_CHART_DEFAULT_AXIS_LABEL_COLOR
+        const axisLabelColor =
+          definition.styles.textColor ?? SCI_CHART_DEFAULT_AXIS_LABEL_COLOR
         const axisOptions = { labelStyle: { color: axisLabelColor } }
         const xAxis = new NumericAxis(wasmContext, axisOptions)
         const yAxis = new NumericAxis(wasmContext, axisOptions)
         sciChartSurface.xAxes.add(xAxis)
         sciChartSurface.yAxes.add(yAxis)
 
-        if (options.clipZoomToData !== false && Number.isFinite(dataBounds.xMin)) {
+        if (definition.options.clipZoomToData !== false && Number.isFinite(dataBounds.xMin)) {
           xAxis.visibleRangeLimit = new NumberRange(
             dataBounds.xMin - getPaddedLimit(dataBounds.xMin),
             dataBounds.xMax + getPaddedLimit(dataBounds.xMax)
@@ -101,8 +94,8 @@ export const useSciChartInitChart = ({
           }
         }
 
-        for (let index = 0; index < data.series.length; index++) {
-          const line = data.series[index]
+        for (let index = 0; index < definition.data.series.length; index++) {
+          const line = definition.data.series[index]
           const dataSeries = new XyDataSeries(wasmContext, {
             xValues: line.x,
             yValues: line.y,
@@ -112,7 +105,7 @@ export const useSciChartInitChart = ({
           })
 
           const lineStyle = line.style
-          const isVisible = data.seriesVisibility?.[index] ?? true
+          const isVisible = definition.data.seriesVisibility[index] ?? true
           const strokeColor =
             lineStyle.color ??
             seriesConfig.seriesColors[index % seriesConfig.seriesColors.length]
@@ -130,7 +123,8 @@ export const useSciChartInitChart = ({
           sciChartSurface.renderableSeries.add(series)
         }
 
-        const zeroLineColor = options.zeroLineColor ?? SCI_CHART_DEFAULT_ZERO_LINE_COLOR
+        const zeroLineColor =
+          definition.styles.zeroLineColor ?? SCI_CHART_DEFAULT_ZERO_LINE_COLOR
         sciChartSurface.annotations.add(
           new VerticalLineAnnotation({
             x1: 0,
@@ -151,11 +145,11 @@ export const useSciChartInitChart = ({
             onMiddleClick: interactionConfig.onMiddleClick ?? undefined,
           }),
           new ZoomHistoryModifier({
-            callbacks: zoomCallbacks
+            callbacks: definition.options.events?.zoom
               ? {
-                  setZoomBack: zoomCallbacks.setZoomBack,
-                  setPushBeforeReset: zoomCallbacks.setPushBeforeReset,
-                  setCanZoomBack: zoomCallbacks.setCanZoomBack,
+                  setZoomBack: definition.options.events.zoom.setZoomBack,
+                  setPushBeforeReset: definition.options.events.zoom.setPushBeforeReset,
+                  setCanZoomBack: definition.options.events.zoom.setCanZoomBack,
                 }
               : undefined,
           }),
@@ -219,9 +213,7 @@ export const useSciChartInitChart = ({
         return { sciChartSurface }
       },
     [
-      data,
-      options,
-      zoomCallbacks,
+      definition,
       dataBounds,
       seriesConfig,
       interactionConfig,

@@ -1,14 +1,13 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { SciChartSurface } from 'scichart';
-import { SciChartSurfaceContext } from 'scichart-react';
-import type { ChartZoomCallbacks } from '../../implementationProps';
+import type { sciChartZoomCallbacks } from '../scichartOptions';
 
-export const useZoomResetSync = (zoomCallbacks: ChartZoomCallbacks | undefined) => {
-  const initResult = useContext(SciChartSurfaceContext);
-
+export const useZoomResetSync = (
+  zoomCallbacks: sciChartZoomCallbacks | undefined,
+  surface: SciChartSurface | undefined
+) => {
   useEffect(() => {
     if (!zoomCallbacks) return;
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined;
     if (!surface) return;
 
     zoomCallbacks.setZoomReset(() => {
@@ -18,5 +17,5 @@ export const useZoomResetSync = (zoomCallbacks: ChartZoomCallbacks | undefined) 
     return () => {
       zoomCallbacks.setZoomReset(() => {});
     };
-  }, [zoomCallbacks, initResult?.sciChartSurface]);
+  }, [zoomCallbacks, surface]);
 };

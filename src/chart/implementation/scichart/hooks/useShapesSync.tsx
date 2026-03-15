@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   BoxAnnotation,
   ECoordinateMode,
@@ -8,9 +8,9 @@ import {
   SciChartSurface,
   VerticalLineAnnotation,
 } from 'scichart'
-import { SciChartSurfaceContext } from 'scichart-react'
 
-import type { ConvertedBox, ConvertedData, ConvertedShape } from '../convert'
+import { convertShapes } from '../convert'
+import type { SciChartDataBounds, sciChartShape } from '../scichartOptions'
 import {
   SCI_CHART_BOX_DEFAULT_X1,
   SCI_CHART_BOX_DEFAULT_X2,
@@ -22,48 +22,22 @@ import {
 } from '../sciChartWrapperConstants'
 
 export interface UseShapesSyncOptions {
-  lineShapes: ConvertedShape[]
-  boxes: ConvertedBox[]
-  data: ConvertedData
+  surface?: SciChartSurface
+  shapes: sciChartShape[]
+  dataBounds: SciChartDataBounds
 }
 
-function computeDataBounds(data: ConvertedData): {
-  xMin: number
-  xMax: number
-  yMin: number
-  yMax: number
-} {
-  let xMin = Infinity
-  let xMax = -Infinity
-  let yMin = Infinity
-  let yMax = -Infinity
-  for (const series of data.series) {
-    for (let index = 0; index < series.x.length; index++) {
-      const value = series.x[index]
-      if (Number.isFinite(value)) {
-        if (value < xMin) xMin = value
-        if (value > xMax) xMax = value
-      }
-    }
-    for (let index = 0; index < series.y.length; index++) {
-      const value = series.y[index]
-      if (Number.isFinite(value)) {
-        if (value < yMin) yMin = value
-        if (value > yMax) yMax = value
-      }
-    }
-  }
-  return { xMin, xMax, yMin, yMax }
-}
-
-export const useShapesSync = ({ lineShapes, boxes, data }: UseShapesSyncOptions) => {
-  const initResult = useContext(SciChartSurfaceContext)
+export const useShapesSync = ({
+  surface,
+  shapes,
+  dataBounds,
+}: UseShapesSyncOptions) => {
   const annotationRefs = useRef<
     (VerticalLineAnnotation | HorizontalLineAnnotation | BoxAnnotation | NativeTextAnnotation)[]
   >([])
+  const { lines: lineShapes, boxes } = useMemo(() => convertShapes(shapes), [shapes])
 
   useEffect(() => {
-    const surface = initResult?.sciChartSurface as SciChartSurface | undefined
     if (!surface) return
 
     const chartSurface = surface as SciChartSurface
@@ -74,8 +48,8 @@ export const useShapesSync = ({ lineShapes, boxes, data }: UseShapesSyncOptions)
     }
     annotationRefs.current = []
 
-    const { xMin, xMax, yMin, yMax } = computeDataBounds(data)
-    const hasDataBounds = Number.isFinite(xMin) && Number.isFinite(yMin)
+    const { xMin, xMax, yMin, yMax, hasValidBounds } = dataBounds
+    const hasDataBounds = hasValidBounds
 
     for (const shape of lineShapes) {
       const annotation =
@@ -143,5 +117,5 @@ export const useShapesSync = ({ lineShapes, boxes, data }: UseShapesSyncOptions)
       }
       annotationRefs.current = []
     }
-  }, [initResult, lineShapes, boxes, data])
+  }, [surface, lineShapes, boxes, dataBounds])
 }

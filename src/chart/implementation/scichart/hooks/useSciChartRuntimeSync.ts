@@ -1,43 +1,36 @@
-import type { ChartIcon } from '../../../types'
-import type { ChartZoomCallbacks } from '../../implementationProps'
-import type { ConvertedBox, ConvertedData, ConvertedShape } from '../convert'
+import type { SciChartDataBounds, scichartFullDefinition } from '../scichartOptions'
+import type { sciChartShape } from '../scichartOptions'
 
 import { useIconsSync } from './useIconsSync'
 import { useSeriesVisibilitySync } from './useSeriesVisibilitySync'
 import { useShapesSync } from './useShapesSync'
+import { useSciChartSurfaceContext } from './useSciChartSurfaceContext'
 import { useZoomResetSync } from './useZoomResetSync'
 
 export interface UseSciChartRuntimeSyncOptions {
-  zoomCallbacks?: ChartZoomCallbacks
-  icons: ChartIcon[]
-  defaultColor: string
-  iconSize: number
-  seriesVisibility?: boolean[]
-  lineShapes: ConvertedShape[]
-  boxes: ConvertedBox[]
-  data: ConvertedData
+  definition: scichartFullDefinition
+  shapes: sciChartShape[]
+  dataBounds: SciChartDataBounds
 }
 
 export const useSciChartRuntimeSync = ({
-  zoomCallbacks,
-  icons,
-  defaultColor,
-  iconSize,
-  seriesVisibility,
-  lineShapes,
-  boxes,
-  data,
+  definition,
+  shapes,
+  dataBounds,
 }: UseSciChartRuntimeSyncOptions) => {
-  useZoomResetSync(zoomCallbacks)
+  const surface = useSciChartSurfaceContext()
+
+  useZoomResetSync(definition.options.events?.zoom, surface)
   useIconsSync({
-    icons,
-    defaultColor,
-    iconSize,
+    surface,
+    icons: definition.icons,
+    defaultColor: definition.styles.defaultStyles.iconColor,
+    iconSize: 1,
   })
-  useSeriesVisibilitySync(seriesVisibility)
+  useSeriesVisibilitySync(definition.data.seriesVisibility, surface)
   useShapesSync({
-    lineShapes,
-    boxes,
-    data,
+    surface,
+    shapes,
+    dataBounds,
   })
 }
