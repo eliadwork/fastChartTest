@@ -1,12 +1,11 @@
 /**
  * SciChartWrapper – single SciChart implementation component.
- * Converts options/data, creates initChart, runs runtime sync hooks, and renders SciChartReact.
+ * Resolves SciChart runtime definition, creates initChart, runs sync hooks, and renders SciChartReact.
  */
 
 import type { ChartImplementationProps } from '../implementationProps';
 import type { UseSciChartRuntimeSyncFlowOptions } from './hooks/flow/useSciChartRuntimeSyncFlow';
 
-import { useMemo } from 'react';
 import { SciChartSurface } from 'scichart';
 import { SciChartReact } from 'scichart-react';
 
@@ -29,38 +28,17 @@ const SciChartRuntimeEffects = (params: UseSciChartRuntimeSyncFlowOptions) => {
 };
 
 export const SciChartWrapper = ({
-  lines,
-  style,
-  options,
-  zoomCallbacks,
+  definition,
   containerStyle,
   overlaySlot,
   loading = false,
 }: ChartImplementationProps) => {
-  const definition = useSciChartOptionsModel({
-    lines,
-    style,
-    options,
+  const sciChartDefinition = useSciChartOptionsModel({
+    definition,
   });
 
-  const runtimeDefinition = useMemo(() => {
-    if (!zoomCallbacks) {
-      return definition;
-    }
-
-    return {
-      ...definition,
-      options: {
-        ...definition.options,
-        events: definition.options.events
-          ? { ...definition.options.events, zoom: zoomCallbacks }
-          : { zoom: zoomCallbacks },
-      },
-    };
-  }, [definition, zoomCallbacks]);
-
   const { initChart, dataBounds } = useSciChartRuntimeFlow({
-    definition: runtimeDefinition,
+    definition: sciChartDefinition,
   });
 
   if (loading) {
@@ -80,10 +58,10 @@ export const SciChartWrapper = ({
           initChart={initChart}
         >
           <SciChartRuntimeEffects
-            definition={runtimeDefinition}
+            definition={sciChartDefinition}
             dataBounds={dataBounds}
           />
-          {!definition.styles.chartOnly && overlaySlot}
+          {!sciChartDefinition.styles.chartOnly && overlaySlot}
         </SciChartReact>
       </SciChartContainer>
     </ChartWrapperBox>

@@ -6,7 +6,6 @@ import {
   ZoomPanModifier,
 } from 'scichart';
 
-import type { ChartZoomCallbacks } from '../../../implementationProps';
 import { dashToStrokeArray } from '../../convert';
 import { AxisStretchModifier } from '../../modifiers/AxisStretchModifier';
 import { MiddleClickModifier } from '../../modifiers/MiddleClickModifier';
@@ -21,7 +20,6 @@ const ROLLOVER_TOOLTIP_Y_LABEL = (formattedY: string) => `Y: ${formattedY}`;
 
 export interface CreateSciChartModifiersOptions {
   interactionOptions: Pick<ResolvedSciChartOptions, 'features' | 'events'>;
-  zoomCallbacks?: ChartZoomCallbacks;
 }
 
 export const createSciChartModifiers = ({

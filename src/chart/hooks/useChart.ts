@@ -1,14 +1,15 @@
 import type { ChartData, ChartIcon, ChartOptions, ChartShape, ChartStyle } from '../types';
 
+import { useMemo } from 'react';
 import { useChartHeaderState } from './useChartHeaderState';
 import { useChartLegendProps } from './useChartLegendProps';
 import {
+  resolveChartDefinition,
   resolveChartData,
   resolveChartOptions,
   type ResolvedChartOptions,
 } from '../resolvers/resolveChartOptions';
 import { useChartVisibility } from './useChartVisibility';
-import { useChartWrapperOptions } from './useChartWrapperOptions';
 import { useChartZoomCallbacks } from './useChartZoomCallbacks';
 import { useChartWrapperStyle } from './useDefaultChartStyle';
 
@@ -43,10 +44,7 @@ export interface ChartToolbarModel {
 
 export interface ChartImplementationModel {
   chartId?: string;
-  chartData: ChartData;
-  wrapperStyle: ChartStyle;
-  wrapperOptions: ReturnType<typeof useChartWrapperOptions>;
-  zoomCallbacks: ReturnType<typeof useChartZoomCallbacks>['zoomCallbacks'];
+  definition: ReturnType<typeof resolveChartDefinition>;
 }
 
 export interface UseChartResult {
@@ -90,16 +88,30 @@ export const useChart = ({
     onSeriesVisibilityChange,
   });
 
-  const wrapperOptions = useChartWrapperOptions({
-    data: chartData,
-    options: resolvedOptions,
-    shapes,
-    icons,
-    seriesVisibility,
-    handleSeriesVisibilityChange,
-    handleSeriesVisibilityGroupChange,
-    handleToggleAllSeriesVisibility,
-  });
+  const definition = useMemo(
+    () =>
+      resolveChartDefinition({
+        data: chartData,
+        options: resolvedOptions,
+        style: wrapperStyle,
+        shapes,
+        icons,
+        seriesVisibility,
+      }),
+    [chartData, resolvedOptions, wrapperStyle, shapes, icons, seriesVisibility]
+  );
+  const definitionWithZoomCallbacks = useMemo(
+    () => ({
+      ...definition,
+      options: {
+        ...definition.options,
+        events: definition.options.events
+          ? { ...definition.options.events, zoom: zoomCallbacks }
+          : { zoom: zoomCallbacks },
+      },
+    }),
+    [definition, zoomCallbacks]
+  );
 
   const textColor = wrapperStyle.textColor;
 
@@ -143,10 +155,7 @@ export const useChart = ({
     },
     implementationModel: {
       chartId,
-      chartData,
-      wrapperStyle,
-      wrapperOptions,
-      zoomCallbacks,
+      definition: definitionWithZoomCallbacks,
     },
   };
 };

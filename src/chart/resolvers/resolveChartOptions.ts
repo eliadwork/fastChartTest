@@ -6,9 +6,17 @@ import { DEFAULT_SHAPE_STYLE } from '../defaultsChartStyles';
 import type {
   ChartImplementationOptions,
   ChartImplementationOptionsWithHandlers,
+  ResolvedChartDefinition,
+  ResolvedChartDefinitionData,
+  ResolvedChartDefinitionDataSeries,
+  ResolvedChartDefinitionDashConfig,
+  ResolvedChartDefinitionIcon,
+  ResolvedChartDefinitionLineStyle,
+  ResolvedChartDefinitionShape,
 } from '../chartImplementationContracts';
 import type {
   ChartData,
+  ChartDataSeries,
   ChartFeatureToggleOption,
   ChartFeaturesOptions,
   ChartIcon,
@@ -28,6 +36,9 @@ const EMPTY_CHART_DATA: ChartData = [];
 const EMPTY_CHART_OPTIONS: ChartOptions = {};
 const EMPTY_CHART_SHAPES: ResolvedChartShape[] = [];
 const EMPTY_CHART_ICONS: ChartIcon[] = [];
+const DEFAULT_ICON_SIZE = 1;
+const DEFAULT_ICON_COLOR = '#3388ff';
+const DEFAULT_ZERO_LINE_COLOR = '#ffffff';
 
 const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' };
 const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'shift' };
@@ -36,6 +47,10 @@ const DEFAULT_RESAMPLING: ChartResamplingOption = {
   precision: CHART_RESAMPLING_PRECISION_OFF,
 };
 const createSolidDashConfig = (): DashConfig => ({ isDash: false, steps: [] });
+const resolveDashConfig = (dash?: DashConfig): ResolvedChartDefinitionDashConfig => ({
+  isDash: dash?.isDash ?? false,
+  steps: dash?.steps == null ? [] : [...dash.steps],
+});
 
 export interface ResolvedChartFeatureToggleOption extends ChartFeatureToggleOption {
   enabled: boolean;
@@ -68,6 +83,15 @@ export interface ResolveChartImplementationOptionsParams {
   handleSeriesVisibilityChange: (seriesIndex: number, isVisible: boolean) => void;
   handleSeriesVisibilityGroupChange: (seriesIndices: number[], isVisible: boolean) => void;
   handleToggleAllSeriesVisibility: () => void;
+}
+
+export interface ResolveChartDefinitionParams {
+  data: ChartData;
+  options: ResolvedChartOptions;
+  style: ChartStyle;
+  shapes?: ChartShape[];
+  icons?: ChartIcon[];
+  seriesVisibility: boolean[];
 }
 
 const resolveFeatureToggle = (
@@ -132,6 +156,60 @@ const resolveChartShapes = (shapes?: ChartShape[]): ResolvedChartShape[] => {
       dash: shape.dash ?? createSolidDashConfig(),
     };
   });
+};
+
+const resolveChartIcons = (
+  icons: ChartIcon[] | undefined,
+  defaultColor: string
+): ResolvedChartDefinitionIcon[] => {
+  if (icons == null || icons.length === 0) {
+    return [];
+  }
+
+  return icons.map((icon) => ({
+    iconImage: icon.iconImage,
+    location: icon.location,
+    color: icon.color ?? defaultColor,
+    size: icon.size ?? DEFAULT_ICON_SIZE,
+  }));
+};
+
+const resolveChartDefaultLineStyle = (style: ChartStyle): ResolvedChartDefinitionLineStyle => ({
+  bindable: true,
+  color: style.defaults?.seriesColors?.[0] ?? DEFAULT_SHAPE_STYLE.color ?? '#ff0000',
+  thickness: style.defaults?.strokeThickness ?? 0,
+  dash: resolveDashConfig(),
+});
+
+const resolveChartDefinitionSeriesStyle = (
+  style: ChartDataSeries['style'],
+  defaultLineStyle: ResolvedChartDefinitionLineStyle
+): ResolvedChartDefinitionLineStyle => ({
+  bindable: style.bindable ?? defaultLineStyle.bindable,
+  color: style.color ?? defaultLineStyle.color,
+  thickness: style.thickness ?? defaultLineStyle.thickness,
+  dash: resolveDashConfig(style.dash ?? defaultLineStyle.dash),
+});
+
+const resolveChartDefinitionData = (
+  data: ChartData,
+  seriesVisibility: boolean[],
+  style: ChartStyle
+): ResolvedChartDefinitionData => {
+  const defaultLineStyle = resolveChartDefaultLineStyle(style);
+
+  const series: ResolvedChartDefinitionDataSeries[] = data.map((line) => ({
+    x: line.x,
+    y: line.y,
+    name: line.name,
+    lineGroupKey: line.lineGroupKey,
+    style: resolveChartDefinitionSeriesStyle(line.style, defaultLineStyle),
+  }));
+
+  return {
+    series,
+    seriesVisibility: series.map((_, index) => seriesVisibility[index] ?? true),
+  };
 };
 
 export const resolveChartData = (
@@ -233,5 +311,56 @@ export const resolveChartImplementationOptions = ({
     onSeriesVisibilityGroupChange: handleSeriesVisibilityGroupChange,
     onDisableAll: handleToggleAllSeriesVisibility,
     events: options.events,
+  };
+};
+
+export const resolveChartDefinition = ({
+  data,
+  options,
+  style,
+  shapes,
+  icons,
+  seriesVisibility,
+}: ResolveChartDefinitionParams): ResolvedChartDefinition => {
+  const defaultLineStyle = resolveChartDefaultLineStyle(style);
+  const rollover = style.rollover.show
+    ? {
+        show: true as const,
+        color: style.rollover.color,
+        dash: resolveDashConfig(style.rollover.dash),
+      }
+    : { show: false as const };
+
+  const resolvedShapes: ResolvedChartDefinitionShape[] = resolveChartShapes(shapes);
+  const resolvedData = resolveChartDefinitionData(data, seriesVisibility, style);
+
+  return {
+    data: resolvedData,
+    shapes: resolvedShapes,
+    icons: resolveChartIcons(icons, style.defaults?.iconColor ?? DEFAULT_ICON_COLOR),
+    note: options.note,
+    options: {
+      features: {
+        stretch: options.stretch.enable
+          ? { enable: true, trigger: options.stretch.trigger }
+          : { enable: false },
+        pan: options.pan.enable ? { enable: true, trigger: options.pan.trigger } : { enable: false },
+        rollover,
+      },
+      resampling: options.resampling,
+      events: options.events,
+      clipZoomToData: options.clipZoomToData,
+    },
+    styles: {
+      chartOnly: style.chartOnly,
+      backgroundColor: style.backgroundColor,
+      textColor: style.textColor,
+      zeroLineColor: style.zeroLineColor ?? DEFAULT_ZERO_LINE_COLOR,
+      defaultStyles: {
+        seriesColors: style.defaults?.seriesColors != null ? [...style.defaults.seriesColors] : [],
+        lineStyles: defaultLineStyle,
+        iconColor: style.defaults?.iconColor ?? DEFAULT_ICON_COLOR,
+      },
+    },
   };
 };

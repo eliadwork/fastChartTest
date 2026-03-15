@@ -175,26 +175,17 @@ const ChartComponent = ({
   const howToUseText = useMemo(
     () =>
       getChartHowToUseText({
-        wrapperOptions: implementationModel.wrapperOptions,
+        definition: implementationModel.definition,
         chartOnly:
-          implementationModel.wrapperStyle.chartOnly ||
+          implementationModel.definition.styles.chartOnly ||
           !resolvedOptions.features.legend.enabled,
         howToUseAdditional: resolvedOptions.howToUseAdditional,
       }),
     [
-      implementationModel.wrapperOptions,
-      implementationModel.wrapperStyle.chartOnly,
+      implementationModel.definition,
       resolvedOptions.features.legend.enabled,
       resolvedOptions.howToUseAdditional,
     ]
-  );
-
-  const implementationOptions = useMemo(
-    () => ({
-      ...implementationModel.wrapperOptions,
-      events: resolvedOptions.events,
-    }),
-    [implementationModel.wrapperOptions, resolvedOptions.events]
   );
 
   const ImplementationComponent = implementationComponent;
@@ -210,10 +201,7 @@ const ChartComponent = ({
       />
       <ImplementationComponent
         chartId={implementationModel.chartId}
-        lines={implementationModel.chartData}
-        style={implementationModel.wrapperStyle}
-        options={implementationOptions}
-        zoomCallbacks={implementationModel.zoomCallbacks}
+        definition={implementationModel.definition}
         containerStyle={style}
         overlaySlot={legendSlot}
         loading={loading}

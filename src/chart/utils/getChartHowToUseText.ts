@@ -1,4 +1,4 @@
-import type { ChartImplementationOptionsWithHandlers } from '../chartImplementationContracts';
+import type { ResolvedChartDefinition } from '../chartImplementationContracts';
 import type { TriggerKey } from '../types';
 
 const TRIGGER_LABEL: Record<TriggerKey, string> = {
@@ -13,25 +13,25 @@ const isKeyTrigger = (trigger: TriggerKey): boolean =>
   trigger === 'shift' || trigger === 'ctrl' || trigger === 'alt';
 
 export interface GetChartHowToUseTextParams {
-  wrapperOptions: ChartImplementationOptionsWithHandlers;
+  definition: ResolvedChartDefinition;
   chartOnly: boolean;
   howToUseAdditional?: string;
 }
 
 export const getChartHowToUseText = ({
-  wrapperOptions,
+  definition,
   chartOnly,
   howToUseAdditional,
 }: GetChartHowToUseTextParams): string => {
   const parts: string[] = ['Scroll to zoom', 'Double-click to reset to basic zoom'];
 
-  const stretch = wrapperOptions.stretch;
+  const stretch = definition.options.features.stretch;
   if (stretch.enable) {
     const label = TRIGGER_LABEL[stretch.trigger];
     parts.push(isKeyTrigger(stretch.trigger) ? `Hold ${label} to stretch` : `${label} to stretch`);
   }
 
-  const pan = wrapperOptions.pan;
+  const pan = definition.options.features.pan;
   if (pan.enable) {
     const label = TRIGGER_LABEL[pan.trigger];
     parts.push(`${label}+drag to pan`);
