@@ -1,19 +1,17 @@
 import {
   ChartModifierBase2D,
   EChart2DModifierType,
-  EModifierMouseArgKey,
   ModifierMouseArgs,
   Point,
   translateFromCanvasToSeriesViewRect,
 } from 'scichart';
 
+import type { SciChartModifierExecuteCondition } from './modifierExecuteCondition';
+
 const DEFAULT_SENSITIVITY = 0.002;
-const RIGHT_MOUSE_BUTTON = 2;
 
 export interface IAxisStretchModifierOptions {
-  executeCondition?: { key: EModifierMouseArgKey };
-  /** When true, only activate on right-click (button 2). Overrides executeCondition key check. */
-  executeOnRightClick?: boolean;
+  executeCondition?: SciChartModifierExecuteCondition;
   sensitivity?: number;
 }
 
@@ -21,22 +19,17 @@ export class AxisStretchModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom;
   private pointFrom: Point | undefined;
   private sensitivity: number;
-  private executeOnRightClick: boolean;
 
   constructor(options?: IAxisStretchModifierOptions) {
-    const { executeOnRightClick, executeCondition, sensitivity, ...rest } = options ?? {};
+    const { executeCondition, sensitivity, ...rest } = options ?? {};
     super({
       ...rest,
-      executeCondition: executeOnRightClick
-        ? { key: EModifierMouseArgKey.None }
-        : (executeCondition ?? { key: EModifierMouseArgKey.Shift }),
+      executeCondition,
     });
     this.sensitivity = sensitivity ?? DEFAULT_SENSITIVITY;
-    this.executeOnRightClick = executeOnRightClick === true;
   }
 
   private isActive(args: ModifierMouseArgs): boolean {
-    if (this.executeOnRightClick) return args.button === RIGHT_MOUSE_BUTTON;
     return this.checkExecuteConditions(args).isPrimary ?? false;
   }
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { SciChartSurface } from 'scichart';
-import type { ChartZoomCallbacks } from '../../implementationProps';
+import type { ChartZoomCallbacks } from '../../../implementationProps';
 
 export const useZoomResetSync = (
   surface: SciChartSurface | undefined,

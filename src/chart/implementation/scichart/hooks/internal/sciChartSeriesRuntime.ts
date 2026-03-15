@@ -31,14 +31,12 @@ export const clearRenderableSeries = (surface: SciChartSurface) => {
 export interface RebuildRenderableSeriesOptions {
   surface: SciChartSurface;
   data: ResolvedSciChartData;
-  seriesVisibility: boolean[];
   seriesConfig: ResolvedSciChartResamplingOption;
 }
 
 export const rebuildRenderableSeries = ({
   surface,
   data,
-  seriesVisibility,
   seriesConfig,
 }: RebuildRenderableSeriesOptions) => {
   clearRenderableSeries(surface);
@@ -61,7 +59,7 @@ export const rebuildRenderableSeries = ({
       strokeDashArray: dashToStrokeArray(line.style.dash),
       resamplingMode: seriesConfig.resamplingMode,
       resamplingPrecision: seriesConfig.resamplingPrecision,
-      isVisible: seriesVisibility[index],
+      isVisible: data.seriesVisibility[index],
     });
 
     surface.renderableSeries.add(renderableSeries);

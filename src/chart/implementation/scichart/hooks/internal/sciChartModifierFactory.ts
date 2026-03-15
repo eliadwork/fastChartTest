@@ -1,81 +1,78 @@
-import { EModifierMouseArgKey, MouseWheelZoomModifier, RolloverModifier, ZoomExtentsModifier, ZoomPanModifier } from 'scichart';
+import {
+  MouseWheelZoomModifier,
+  RolloverModifier,
+  RubberBandXyZoomModifier,
+  ZoomExtentsModifier,
+  ZoomPanModifier,
+} from 'scichart';
 
 import type { ChartZoomCallbacks } from '../../../implementationProps';
+import { dashToStrokeArray } from '../../convert';
 import { AxisStretchModifier } from '../../modifiers/AxisStretchModifier';
-import { LeftClickRubberBandXyZoomModifier } from '../../modifiers/LeftClickRubberBandXyZoomModifier';
-import { LeftClickZoomPanModifier } from '../../modifiers/LeftClickZoomPanModifier';
-import { PointMarkModifier } from '../../modifiers/PointMarkModifier';
-import { ShiftLeftClickZoomPanModifier } from '../../modifiers/ShiftLeftClickZoomPanModifier';
+import { MiddleClickModifier } from '../../modifiers/MiddleClickModifier';
+import { toModifierExecuteCondition } from '../../modifiers/modifierExecuteCondition';
 import { ZoomHistoryModifier } from '../../modifiers/ZoomHistoryModifier';
+import type { ResolvedSciChartOptions } from '../../scichartOptions';
 import { SCI_CHART_STRETCH_SENSITIVITY } from '../../sciChartWrapperConstants';
-import type { SciChartInteractionConfig } from '../useSciChartInteractionConfig';
 
 const ROLLOVER_TOOLTIP_SERIES_LABEL = (seriesName: string) => `${seriesName}:`;
 const ROLLOVER_TOOLTIP_X_LABEL = (formattedX: string) => `X: ${formattedX}`;
 const ROLLOVER_TOOLTIP_Y_LABEL = (formattedY: string) => `Y: ${formattedY}`;
 
 export interface CreateSciChartModifiersOptions {
-  interactionConfig: SciChartInteractionConfig;
+  interactionOptions: Pick<ResolvedSciChartOptions, 'features' | 'events'>;
   zoomCallbacks?: ChartZoomCallbacks;
 }
 
 export const createSciChartModifiers = ({
-  interactionConfig,
-  zoomCallbacks,
-}: CreateSciChartModifiersOptions): InstanceType<typeof import('scichart').ChartModifierBase2D>[] => {
+  interactionOptions,
+}: CreateSciChartModifiersOptions): InstanceType<
+  typeof import('scichart').ChartModifierBase2D
+>[] => {
+  const stretchConfig = interactionOptions.features.stretch;
+  const panConfig = interactionOptions.features.pan;
+  const rolloverConfig = interactionOptions.features.rollover;
+
   const modifiers: InstanceType<typeof import('scichart').ChartModifierBase2D>[] = [
-    new PointMarkModifier({
-      onMiddleClick: interactionConfig.onMiddleClick,
+    new MiddleClickModifier({
+      onMiddleClick: interactionOptions.events?.clicks?.middle,
     }),
     new ZoomHistoryModifier({
-      callbacks: zoomCallbacks
+      callbacks: interactionOptions.events?.zoom
         ? {
-            setZoomBack: zoomCallbacks.setZoomBack,
-            setPushBeforeReset: zoomCallbacks.setPushBeforeReset,
-            setCanZoomBack: zoomCallbacks.setCanZoomBack,
+            setZoomBack: interactionOptions.events?.zoom?.setZoomBack,
+            setPushBeforeReset: interactionOptions.events?.zoom?.setPushBeforeReset,
+            setCanZoomBack: interactionOptions.events?.zoom?.setCanZoomBack,
           }
         : undefined,
     }),
-    new LeftClickRubberBandXyZoomModifier({
-      executeCondition: { key: EModifierMouseArgKey.None },
+    new RubberBandXyZoomModifier({
+      executeCondition: toModifierExecuteCondition('leftClick'),
     }),
   ];
 
-  if (interactionConfig.stretchEnable) {
+  if (stretchConfig.enable) {
     modifiers.push(
       new AxisStretchModifier({
-        executeOnRightClick: interactionConfig.stretchOnRightClick,
-        executeCondition:
-          interactionConfig.stretchKey != null
-            ? {
-                key: interactionConfig.stretchKey as EModifierMouseArgKey,
-              }
-            : undefined,
+        executeCondition: toModifierExecuteCondition(stretchConfig.trigger),
         sensitivity: SCI_CHART_STRETCH_SENSITIVITY,
       })
     );
   }
 
-  if (interactionConfig.panEnable) {
+  if (panConfig.enable) {
     modifiers.push(
-      new (interactionConfig.panOnShift
-        ? ShiftLeftClickZoomPanModifier
-        : interactionConfig.panOnLeftClick
-          ? LeftClickZoomPanModifier
-          : ZoomPanModifier)({
-        executeCondition: {
-          key: interactionConfig.panOnShift
-            ? EModifierMouseArgKey.Shift
-            : ((interactionConfig.panKey as EModifierMouseArgKey | undefined) ??
-              EModifierMouseArgKey.None),
-        },
+      new ZoomPanModifier({
+        executeCondition: toModifierExecuteCondition(panConfig.trigger),
       })
     );
   }
 
   modifiers.push(new MouseWheelZoomModifier(), new ZoomExtentsModifier());
 
-  if (interactionConfig.rolloverShow) {
+  if (rolloverConfig.show) {
+    const rolloverDash = dashToStrokeArray(rolloverConfig.dash);
+
     modifiers.push(
       new RolloverModifier({
         tooltipDataTemplate: (seriesInfo) => [
@@ -83,8 +80,8 @@ export const createSciChartModifiers = ({
           ROLLOVER_TOOLTIP_X_LABEL(seriesInfo.formattedXValue),
           ROLLOVER_TOOLTIP_Y_LABEL(seriesInfo.formattedYValue),
         ],
-        rolloverLineStroke: interactionConfig.rolloverStroke,
-        rolloverLineStrokeDashArray: interactionConfig.rolloverDash,
+        rolloverLineStroke: rolloverConfig.color,
+        rolloverLineStrokeDashArray: rolloverDash == null ? [] : rolloverDash,
       })
     );
   }

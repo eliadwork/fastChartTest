@@ -9,23 +9,22 @@ import {
 const CLICK_THRESHOLD_PX = 5;
 const MIDDLE_MOUSE_BUTTON = 1;
 
-export interface IPointMarkModifierOptions {
+export interface MiddleClickModifierOptions {
   onMiddleClick?: (event: MouseEvent) => void;
 }
 
 /**
- * Point mark modifier: fires on middle-click (scroll wheel click, not box drag).
- * Calls optional handler with MouseEvent only.
+ * Generic middle-click modifier (scroll wheel click, not drag).
+ * Calls the optional middle-click handler with MouseEvent.
  * Chart coordinates are attached on the event object as:
  * chartXValue, chartYValue, getSeriesVisibility.
- * No annotations added – shapes come from options.shapes.
  */
-export class PointMarkModifier extends ChartModifierBase2D {
+export class MiddleClickModifier extends ChartModifierBase2D {
   readonly type = EChart2DModifierType.Custom;
   private onMiddleClick?: (event: MouseEvent) => void;
   private mouseDownPoint: Point | undefined;
 
-  constructor(options?: IPointMarkModifierOptions) {
+  constructor(options?: MiddleClickModifierOptions) {
     super();
     this.onMiddleClick = options?.onMiddleClick;
   }

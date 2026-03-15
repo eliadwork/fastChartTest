@@ -4,7 +4,7 @@
  */
 
 import type { ChartImplementationProps } from '../implementationProps';
-import type { UseSciChartRuntimeSyncOptions } from './hooks/useSciChartRuntimeSync';
+import type { UseSciChartRuntimeSyncFlowOptions } from './hooks/flow/useSciChartRuntimeSyncFlow';
 
 import { useMemo } from 'react';
 import { SciChartSurface } from 'scichart';
@@ -12,9 +12,9 @@ import { SciChartReact } from 'scichart-react';
 
 import { SkeletonLoading } from '../../../shared/SkeletonLoading';
 import { ChartWrapperBox } from '../../../styled/ChartStyled';
-import { useSciChartOptionsModel } from './hooks/useSciChartOptionsModel';
-import { useSciChartRuntimeModel } from './hooks/useSciChartRuntimeModel';
-import { useSciChartRuntimeSync } from './hooks/useSciChartRuntimeSync';
+import { useSciChartRuntimeFlow } from './hooks/flow/useSciChartRuntimeFlow';
+import { useSciChartRuntimeSyncFlow } from './hooks/flow/useSciChartRuntimeSyncFlow';
+import { useSciChartOptionsModel } from './hooks/model/useSciChartOptionsModel';
 import { SCI_CHART_WASM_NO_SIMD_URL, SCI_CHART_WASM_URL } from './sciChartWrapperConstants';
 import { SciChartContainer, SciChartSurfaceStyle } from './SciChartWrapperStyled';
 
@@ -23,8 +23,8 @@ SciChartSurface.configure({
   wasmNoSimdUrl: SCI_CHART_WASM_NO_SIMD_URL,
 });
 
-const SciChartRuntimeEffects = (params: UseSciChartRuntimeSyncOptions) => {
-  useSciChartRuntimeSync(params);
+const SciChartRuntimeEffects = (params: UseSciChartRuntimeSyncFlowOptions) => {
+  useSciChartRuntimeSyncFlow(params);
   return null;
 };
 
@@ -59,7 +59,7 @@ export const SciChartWrapper = ({
     };
   }, [definition, zoomCallbacks]);
 
-  const { initChart, dataBounds } = useSciChartRuntimeModel({
+  const { initChart, dataBounds } = useSciChartRuntimeFlow({
     definition: runtimeDefinition,
   });
 

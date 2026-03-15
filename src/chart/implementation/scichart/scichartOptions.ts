@@ -79,7 +79,13 @@ export interface sciChartIcon {
   iconImage: string;
   location: { x: number; y: number };
   color?: string;
+  size?: number;
 }
+
+export type ResolvedSciChartIcon = Omit<sciChartIcon, 'color' | 'size'> & {
+  color: string;
+  size: number;
+};
 
 // options definition
 export interface SciChartOptions {
@@ -243,6 +249,7 @@ export type ResolvedSciChartDefinition = Required<
   Pick<scichartFullDefinition, 'note'> & {
     data: ResolvedSciChartData;
     shapes: ResolvedSciChartShape[];
+    icons: ResolvedSciChartIcon[];
     options: ResolvedSciChartOptions;
     styles: ResolvedScichartStyles;
   };

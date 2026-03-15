@@ -163,6 +163,8 @@ export interface ChartIcon {
   iconImage: string;
   location: { x: number; y: number };
   color?: string;
+  /** Scale factor for icon render size. Default: 1. */
+  size?: number;
 }
 
 export interface ChartOptions {

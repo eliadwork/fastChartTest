@@ -1,23 +1,21 @@
-import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../scichartOptions';
+import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../../scichartOptions';
 
-import { useDataSeriesSync } from './useDataSeriesSync';
-import { useIconsSync } from './useIconsSync';
-import { useSciChartSurfaceContext } from './useSciChartSurfaceContext';
-import { useSeriesVisibilitySync } from './useSeriesVisibilitySync';
-import { useShapesSync } from './useShapesSync';
-import { useZoomResetSync } from './useZoomResetSync';
+import { useSciChartSurfaceContext } from '../context/useSciChartSurfaceContext';
+import { useDataSeriesSync } from '../sync/useDataSeriesSync';
+import { useIconsSync } from '../sync/useIconsSync';
+import { useSeriesVisibilitySync } from '../sync/useSeriesVisibilitySync';
+import { useShapesSync } from '../sync/useShapesSync';
+import { useZoomResetSync } from '../sync/useZoomResetSync';
 
-const DEFAULT_ICON_SIZE = 1;
-
-export interface UseSciChartRuntimeSyncOptions {
+export interface UseSciChartRuntimeSyncFlowOptions {
   definition: ResolvedSciChartDefinition;
   dataBounds: SciChartDataBounds;
 }
 
-export const useSciChartRuntimeSync = ({
+export const useSciChartRuntimeSyncFlow = ({
   definition,
   dataBounds,
-}: UseSciChartRuntimeSyncOptions) => {
+}: UseSciChartRuntimeSyncFlowOptions) => {
   const { sciChartSurface } = useSciChartSurfaceContext();
 
   const zoomCallbacks = definition.options.events?.zoom;
@@ -34,8 +32,6 @@ export const useSciChartRuntimeSync = ({
   useIconsSync({
     surface: sciChartSurface,
     icons: definition.icons,
-    defaultColor: definition.styles.defaultStyles.iconColor,
-    iconSize: DEFAULT_ICON_SIZE,
   });
   useSeriesVisibilitySync(sciChartSurface, definition.data.seriesVisibility);
   useShapesSync({

@@ -1,6 +1,5 @@
 /**
  * Syncs chart icons to SciChart annotations.
- * Closed hook: imports only from react and scichart.
  */
 
 import { useEffect, useRef } from 'react';
@@ -13,32 +12,20 @@ import {
   SciChartSurface,
 } from 'scichart';
 
-import { toSvgString } from '../../../utils/iconUtils';
+import { toSvgString } from '../../../../utils/iconUtils';
+import type { ResolvedSciChartIcon } from '../../scichartOptions';
 
 const ICON_PX_BASE = 24;
 const FONT_SIZE_BASE = 20;
 const ICON_URL_PATTERN = /^https?:\/\//;
 const ICON_FILE_PATTERN = /\.(png|jpg|jpeg|svg|gif|webp)(\?|$)/i;
 
-export interface ChartIconInput {
-  iconImage: string;
-  location: { x: number; y: number };
-  color?: string;
-}
-
 export interface UseIconsSyncOptions {
   surface?: SciChartSurface;
-  icons: ChartIconInput[];
-  defaultColor: string;
-  iconSize: number;
+  icons: ResolvedSciChartIcon[];
 }
 
-export const useIconsSync = ({
-  surface,
-  icons,
-  defaultColor,
-  iconSize,
-}: UseIconsSyncOptions) => {
+export const useIconsSync = ({ surface, icons }: UseIconsSyncOptions) => {
   const annotationRefs = useRef<(CustomAnnotation | NativeTextAnnotation)[]>([]);
 
   useEffect(() => {
@@ -51,11 +38,11 @@ export const useIconsSync = ({
     }
     annotationRefs.current = [];
 
-    const iconPx = Math.round(ICON_PX_BASE * iconSize);
-
     for (const icon of iconsToRender) {
       const { x, y } = icon.location;
-      const color = icon.color ?? defaultColor;
+      const color = icon.color;
+      const iconSize = icon.size;
+      const iconPx = Math.round(ICON_PX_BASE * iconSize);
       const isSvgOrImage =
         icon.iconImage.startsWith('<') ||
         ICON_URL_PATTERN.test(icon.iconImage) ||
@@ -94,5 +81,5 @@ export const useIconsSync = ({
       }
       annotationRefs.current = [];
     };
-  }, [surface, icons, defaultColor, iconSize]);
+  }, [surface, icons]);
 };

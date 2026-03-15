@@ -1,8 +1,8 @@
-import type { ResolvedSciChartData, SciChartDataBounds } from '../scichartOptions'
+import type { ResolvedSciChartData, SciChartDataBounds } from '../../scichartOptions'
 
 import { useMemo } from 'react'
 
-export const useSciChartDataBounds = (data: ResolvedSciChartData): SciChartDataBounds => {
+export const useSciChartDataBoundsModel = (data: ResolvedSciChartData): SciChartDataBounds => {
   return useMemo(() => {
     let xMin = Infinity
     let xMax = -Infinity

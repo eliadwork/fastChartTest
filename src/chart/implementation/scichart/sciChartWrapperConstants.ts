@@ -1,6 +1,3 @@
-import { EModifierMouseArgKey } from 'scichart'
-import type { TriggerKey } from '../../types'
-
 /** SciChart WASM URLs. */
 export const SCI_CHART_WASM_URL = '/scichart2d.wasm'
 export const SCI_CHART_WASM_NO_SIMD_URL = '/scichart2d-nosimd.wasm'
@@ -25,6 +22,7 @@ export const SCI_CHART_DEFAULT_ROLLOVER_DASH = [8, 4] as number[]
 export const SCI_CHART_DEFAULT_AXIS_LABEL_COLOR = '#ffffff'
 export const SCI_CHART_DEFAULT_TEXT_COLOR = '#ffffff'
 export const SCI_CHART_DEFAULT_ZERO_LINE_COLOR = '#ffffff'
+export const SCI_CHART_DEFAULT_ICON_SIZE = 1
 
 /** Zero line and shape annotation stroke thickness. */
 export const SCI_CHART_ZERO_LINE_STROKE_THICKNESS = 1
@@ -56,10 +54,3 @@ export const SCI_CHART_BOX_LABEL_FONT_SIZE = 12
 
 /** Loading spinner size. */
 export const SCI_CHART_LOADING_SPINNER_SIZE = 40
-
-/** Map key triggers to SciChart EModifierMouseArgKey. rightClick/leftClick use separate handling. */
-export const SCI_CHART_MODIFIER_KEY_MAP: Partial<Record<TriggerKey, EModifierMouseArgKey>> = {
-  shift: EModifierMouseArgKey.Shift,
-  ctrl: EModifierMouseArgKey.Ctrl,
-  alt: EModifierMouseArgKey.Alt,
-}

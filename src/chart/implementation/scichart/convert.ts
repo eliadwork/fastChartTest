@@ -13,6 +13,7 @@ import type {
   ResolvedSciChartDataSeries,
   ResolvedSciChartDefinition,
   ResolvedSciChartFeaturesOptions,
+  ResolvedSciChartIcon,
   ResolvedSciChartLineStyle,
   ResolvedSciChartOptions,
   ResolvedSciChartOptionsEvents,
@@ -27,8 +28,15 @@ import {
   SCI_CHART_DEFAULT_STROKE_THICKNESS,
   SCI_CHART_DEFAULT_TEXT_COLOR,
   SCI_CHART_DEFAULT_ZERO_LINE_COLOR,
+  SCI_CHART_DEFAULT_ICON_SIZE,
   SCI_CHART_RESAMPLING_PRECISION_DEFAULT,
 } from './sciChartWrapperConstants';
+
+type SciChartConvertInput = Pick<ChartImplementationProps, 'lines' | 'style' | 'options'>;
+type SciChartConvertOptionsInput = SciChartConvertInput['options'];
+type SciChartConvertStyleInput = SciChartConvertInput['style'];
+type SciChartConvertShapesInput = SciChartConvertOptionsInput['shapes'];
+type SciChartConvertIconsInput = SciChartConvertOptionsInput['icons'];
 
 /** Convert DashConfig to SciChart strokeDashArray. Returns undefined for solid lines. */
 export const dashToStrokeArray = (dash?: DashConfig): number[] | undefined =>
@@ -49,7 +57,7 @@ const resolveDashConfig = (
 
 const resolveSeriesVisibility = (
   length: number,
-  sourceSeriesVisibility: boolean[] | undefined
+  sourceSeriesVisibility: SciChartConvertOptionsInput['seriesVisibility']
 ): boolean[] => {
   const resolvedVisibility: boolean[] = [];
   for (let index = 0; index < length; index += 1) {
@@ -58,9 +66,7 @@ const resolveSeriesVisibility = (
   return resolvedVisibility;
 };
 
-const resolveStyles = (
-  style: Pick<ChartImplementationProps, 'style'>['style']
-): ResolvedScichartStyles => {
+const resolveStyles = (style: SciChartConvertStyleInput): ResolvedScichartStyles => {
   const seriesColors =
     style.defaults?.seriesColors != null && style.defaults.seriesColors.length > 0
       ? [...style.defaults.seriesColors]
@@ -101,9 +107,23 @@ const resolveSeriesStyle = (
   };
 };
 
-const resolveShapes = (
-  shapes: Pick<ChartImplementationProps, 'options'>['options']['shapes']
-): ResolvedSciChartShape[] => {
+const resolveIcons = (
+  icons: SciChartConvertIconsInput,
+  defaultColor: string
+): ResolvedSciChartIcon[] => {
+  if (icons == null || icons.length === 0) {
+    return [];
+  }
+
+  return icons.map((icon) => ({
+    iconImage: icon.iconImage,
+    location: icon.location,
+    color: icon.color ?? defaultColor,
+    size: icon.size ?? SCI_CHART_DEFAULT_ICON_SIZE,
+  }));
+};
+
+const resolveShapes = (shapes: SciChartConvertShapesInput): ResolvedSciChartShape[] => {
   const resolvedShapes: ResolvedSciChartShape[] = [];
   for (const shape of shapes) {
     if (shape.shape === 'box') {
@@ -164,8 +184,8 @@ export function convertData(
 }
 
 const resolveFeatures = (
-  options: Pick<ChartImplementationProps, 'options'>['options'],
-  style: Pick<ChartImplementationProps, 'style'>['style']
+  options: SciChartConvertOptionsInput,
+  style: SciChartConvertStyleInput
 ): ResolvedSciChartFeaturesOptions => {
   const stretchEnabled = options?.stretch?.enable ?? true;
   const panEnabled = options?.pan?.enable ?? true;
@@ -195,9 +215,7 @@ const resolveFeatures = (
   };
 };
 
-const resolveResampling = (
-  options: Pick<ChartImplementationProps, 'options'>['options']
-): ResolvedSciChartResamplingOption => {
+const resolveResampling = (options: SciChartConvertOptionsInput): ResolvedSciChartResamplingOption => {
   const resamplingEnabled = options?.resampling?.enable ?? false;
   const precision = options?.resampling?.precision;
 
@@ -221,8 +239,8 @@ const resolveResampling = (
 };
 
 const resolveOptions = (
-  options: Pick<ChartImplementationProps, 'options'>['options'],
-  style: Pick<ChartImplementationProps, 'style'>['style']
+  options: SciChartConvertOptionsInput,
+  style: SciChartConvertStyleInput
 ): ResolvedSciChartOptions => ({
   features: resolveFeatures(options, style),
   resampling: resolveResampling(options),
@@ -234,7 +252,7 @@ export const toSciChartDefinition = ({
   lines: chartData,
   style,
   options,
-}: Pick<ChartImplementationProps, 'lines' | 'style' | 'options'>): ResolvedSciChartDefinition => {
+}: SciChartConvertInput): ResolvedSciChartDefinition => {
   const resolvedStyles = resolveStyles(style);
   const resolvedSeriesVisibility = resolveSeriesVisibility(
     chartData.length,
@@ -245,7 +263,7 @@ export const toSciChartDefinition = ({
   return {
     data: convertData(chartData, resolvedSeriesVisibility, resolvedStyles),
     shapes: resolveShapes(options.shapes),
-    icons: options.icons,
+    icons: resolveIcons(options.icons, resolvedStyles.defaultStyles.iconColor),
     note: options.note,
     options: resolvedOptions,
     styles: resolvedStyles,

@@ -1,12 +1,11 @@
-import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../scichartOptions';
+import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../../scichartOptions';
 
 import { useMemo } from 'react';
-import { createSciChartModifiers } from './internal/sciChartModifierFactory';
-import { applyVisibleRangeLimits } from './internal/sciChartRangeLimits';
-import { rebuildRenderableSeries } from './internal/sciChartSeriesRuntime';
-import { createSciChartSurfaceWithAxes } from './internal/sciChartSurfaceSetup';
-import { addZeroLineAnnotations } from './internal/sciChartZeroLines';
-import { useSciChartInteractionConfig } from './useSciChartInteractionConfig';
+import { createSciChartModifiers } from '../internal/sciChartModifierFactory';
+import { applyVisibleRangeLimits } from '../internal/sciChartRangeLimits';
+import { rebuildRenderableSeries } from '../internal/sciChartSeriesRuntime';
+import { createSciChartSurfaceWithAxes } from '../internal/sciChartSurfaceSetup';
+import { addZeroLineAnnotations } from '../internal/sciChartZeroLines';
 
 export interface UseSciChartInitChartOptions {
   definition: ResolvedSciChartDefinition;
@@ -14,8 +13,6 @@ export interface UseSciChartInitChartOptions {
 }
 
 export const useSciChartInitChart = ({ definition, dataBounds }: UseSciChartInitChartOptions) => {
-  const interactionConfig = useSciChartInteractionConfig(definition.options);
-
   return useMemo(
     () => async (rootElement: HTMLDivElement | string) => {
       const { sciChartSurface } = await createSciChartSurfaceWithAxes({
@@ -29,15 +26,13 @@ export const useSciChartInitChart = ({ definition, dataBounds }: UseSciChartInit
       rebuildRenderableSeries({
         surface: sciChartSurface,
         data: definition.data,
-        seriesVisibility: definition.data.seriesVisibility,
         seriesConfig: definition.options.resampling,
       });
 
       addZeroLineAnnotations(sciChartSurface, definition.styles.zeroLineColor);
 
       const modifiers = createSciChartModifiers({
-        interactionConfig,
-        zoomCallbacks: definition.options.events?.zoom,
+        interactionOptions: definition.options,
       });
 
       for (const modifier of modifiers) {
@@ -46,6 +41,6 @@ export const useSciChartInitChart = ({ definition, dataBounds }: UseSciChartInit
 
       return { sciChartSurface };
     },
-    [definition, dataBounds, interactionConfig]
+    [definition, dataBounds]
   );
 };

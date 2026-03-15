@@ -5,9 +5,9 @@ import type {
   ResolvedSciChartData,
   ResolvedSciChartResamplingOption,
   SciChartDataBounds,
-} from '../scichartOptions';
-import { applyVisibleRangeLimits } from './internal/sciChartRangeLimits';
-import { clearRenderableSeries, rebuildRenderableSeries } from './internal/sciChartSeriesRuntime';
+} from '../../scichartOptions';
+import { applyVisibleRangeLimits } from '../internal/sciChartRangeLimits';
+import { clearRenderableSeries, rebuildRenderableSeries } from '../internal/sciChartSeriesRuntime';
 
 export interface UseDataSeriesSyncOptions {
   surface?: SciChartSurface;
@@ -41,7 +41,6 @@ export const useDataSeriesSync = ({
     rebuildRenderableSeries({
       surface,
       data,
-      seriesVisibility,
       seriesConfig,
     });
 

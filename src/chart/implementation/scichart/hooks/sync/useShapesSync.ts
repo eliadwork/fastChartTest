@@ -9,8 +9,8 @@ import {
   VerticalLineAnnotation,
 } from 'scichart'
 
-import { dashToStrokeArray } from '../convert'
-import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../scichartOptions'
+import { dashToStrokeArray } from '../../convert'
+import type { ResolvedSciChartDefinition, SciChartDataBounds } from '../../scichartOptions'
 import {
   SCI_CHART_BOX_DEFAULT_X1,
   SCI_CHART_BOX_DEFAULT_X2,
@@ -19,7 +19,7 @@ import {
   SCI_CHART_BOX_FILL_OPACITY_SUFFIX,
   SCI_CHART_BOX_LABEL_FONT_SIZE,
   SCI_CHART_SHAPE_STROKE_THICKNESS,
-} from '../sciChartWrapperConstants'
+} from '../../sciChartWrapperConstants'
 
 export interface UseShapesSyncOptions {
   surface?: SciChartSurface

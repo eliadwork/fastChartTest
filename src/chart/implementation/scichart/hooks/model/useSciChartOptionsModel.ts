@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { ChartImplementationProps } from '../../implementationProps';
-import { toSciChartDefinition } from '../convert';
-import type { ResolvedSciChartDefinition } from '../scichartOptions';
+import type { ChartImplementationProps } from '../../../implementationProps';
+import { toSciChartDefinition } from '../../convert';
+import type { ResolvedSciChartDefinition } from '../../scichartOptions';
 
 export interface UseSciChartOptionsModelOptions {
   lines: ChartImplementationProps['lines'];
