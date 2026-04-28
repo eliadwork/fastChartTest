@@ -81,6 +81,7 @@ export interface ChartDefinitionEvents {
   keys?: ChartOptionsKeyEvents;
   zoom?: ChartZoomCallbacks;
   scroll?: (event: WheelEvent) => void;
+  hover?: (event: MouseEvent) => void;
 }
 
 export interface ChartDefinitionOptions {
@@ -188,6 +189,7 @@ export interface ResolvedChartDefinitionEvents {
   keys?: ChartOptionsKeyEvents;
   zoom?: ChartZoomCallbacks;
   scroll?: (event: WheelEvent) => void;
+  hover?: (event: MouseEvent) => void;
 }
 
 export type ResolvedChartDefinitionOptions = Required<

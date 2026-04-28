@@ -89,6 +89,7 @@ export interface ResolvedSciChartOptionsEvents {
   keys?: ResolvedSciChartKeyEvents;
   zoom?: ResolvedSciChartZoomCallbacks;
   scroll?: (event: WheelEvent) => void;
+  hover?: (event: MouseEvent) => void;
 }
 
 export type resolvedFeatureKeyEnabling = ResolvedChartDefinitionFeatureKeyEnabling;

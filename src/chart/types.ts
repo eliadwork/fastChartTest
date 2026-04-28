@@ -127,6 +127,7 @@ export interface ChartOptionsEvents {
   onzoomback?: () => void;
   onzoomreset?: () => void;
   onmiddleclick?: (event: MouseEvent) => void;
+  onhover?: (event: MouseEvent) => void;
 }
 
 export interface ChartOptionsClickEvents {
@@ -146,6 +147,7 @@ export interface ResolvedChartOptionsEvents {
   clicks?: ChartOptionsClickEvents;
   keys?: ChartOptionsKeyEvents;
   scroll?: (event: WheelEvent) => void;
+  hover?: (event: MouseEvent) => void;
 }
 
 export interface ChartFeatureToggleOption {

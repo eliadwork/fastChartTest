@@ -24,6 +24,8 @@ export type DetectMiddleClickEvent = MouseEvent & {
   getSeriesVisibility?: () => boolean[];
 };
 
+export type DetectHoverEvent = DetectMiddleClickEvent;
+
 export type SeriesBoundShape = ChartShape & { seriesIndex?: number };
 export type SeriesBoundIcon = ChartIcon & { seriesIndex?: number };
 

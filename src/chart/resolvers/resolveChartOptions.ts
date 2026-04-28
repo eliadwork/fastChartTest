@@ -130,7 +130,8 @@ const resolveChartEvents = (events?: ChartOptionsEvents): ResolvedChartOptionsEv
       : undefined;
 
   const scroll = events.onscroll;
-  if (clicks == null && keys == null && scroll == null) {
+  const hover = events.onhover;
+  if (clicks == null && keys == null && scroll == null && hover == null) {
     return undefined;
   }
 
@@ -138,6 +139,7 @@ const resolveChartEvents = (events?: ChartOptionsEvents): ResolvedChartOptionsEv
     clicks,
     keys,
     scroll,
+    hover,
   };
 };
 

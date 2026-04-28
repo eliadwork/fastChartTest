@@ -9,6 +9,7 @@ import {
 import { dashToStrokeArray } from '../../convert';
 import { AxisStretchModifier } from '../../modifiers/AxisStretchModifier';
 import { MiddleClickModifier } from '../../modifiers/MiddleClickModifier';
+import { MouseHoverModifier } from '../../modifiers/MouseHoverModifier';
 import { toModifierExecuteCondition } from '../../modifiers/modifierExecuteCondition';
 import { ZoomHistoryModifier } from '../../modifiers/ZoomHistoryModifier';
 import type { ResolvedSciChartOptions } from '../../scichartOptions';
@@ -73,6 +74,10 @@ export const createSciChartModifiers = ({
   }
 
   modifiers.push(new MouseWheelZoomModifier(), new ZoomExtentsModifier());
+
+  if (interactionOptions.events?.hover) {
+    modifiers.push(new MouseHoverModifier({ onHover: interactionOptions.events.hover }));
+  }
 
   if (rolloverConfig.show) {
     const rolloverDash = dashToStrokeArray(rolloverConfig.dash);
