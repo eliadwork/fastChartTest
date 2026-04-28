@@ -1,1 +1,0 @@
-export { SciChartWrapper } from './SciChartWrapper';
