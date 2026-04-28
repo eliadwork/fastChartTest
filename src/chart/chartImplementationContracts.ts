@@ -72,6 +72,7 @@ export interface ChartDefinitionFeatureKeyEnabling {
 export interface ChartDefinitionFeatures {
   stretch?: ChartDefinitionFeatureKeyEnabling;
   pan?: ChartDefinitionFeatureKeyEnabling;
+  zoom?: ChartDefinitionFeatureKeyEnabling;
   rollover?: ChartDefinitionRollover;
 }
 
@@ -166,10 +167,11 @@ export type ResolvedChartDefinitionFeatureKeyEnabling =
     };
 
 export type ResolvedChartDefinitionFeatures = Required<
-  Omit<ChartDefinitionFeatures, 'stretch' | 'pan' | 'rollover'>
+  Omit<ChartDefinitionFeatures, 'stretch' | 'pan' | 'zoom' | 'rollover'>
 > & {
   stretch: ResolvedChartDefinitionFeatureKeyEnabling;
   pan: ResolvedChartDefinitionFeatureKeyEnabling;
+  zoom: ResolvedChartDefinitionFeatureKeyEnabling;
   rollover:
     | (Required<Omit<ChartDefinitionRollover, 'dash'>> & {
         dash: ResolvedChartDefinitionDashConfig;
@@ -223,6 +225,7 @@ export interface ChartImplementationOptionsOverrides {
   note?: ChartOptions['note'];
   stretch?: ChartOptions['stretch'];
   pan?: ChartOptions['pan'];
+  zoom?: ChartOptions['zoom'];
   resampling?: ChartImplementationResampling | ChartResamplingOption;
   clipZoomToData?: ChartOptions['clipZoomToData'];
   seriesVisibility?: ChartOptions['seriesVisibility'];
@@ -237,6 +240,7 @@ export interface ChartImplementationOptions {
   note?: string;
   stretch: KeyTriggeredOption;
   pan: KeyTriggeredOption;
+  zoom: KeyTriggeredOption;
   resampling: ChartImplementationResampling;
   clipZoomToData: boolean;
   seriesVisibility: boolean[];

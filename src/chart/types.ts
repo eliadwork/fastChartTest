@@ -173,8 +173,10 @@ export interface ChartOptions {
   features?: ChartFeaturesOptions;
   /** Default when omitted: { enable: true, trigger: 'rightClick' }. Omit trigger to use default. */
   stretch?: { enable: boolean; trigger?: TriggerKey };
-  /** Default when omitted: { enable: true, trigger: 'shift' }. Omit trigger to use default. */
+  /** Default when omitted: { enable: true, trigger: 'leftClick' }. Omit trigger to use default. */
   pan?: { enable: boolean; trigger?: TriggerKey };
+  /** Default when omitted: { enable: true, trigger: 'shift' }. Omit trigger to use default. */
+  zoom?: { enable: boolean; trigger?: TriggerKey };
   /** Default when omitted: { enable: false, precision: 0 }. */
   resampling?: ChartResamplingOption;
   /** Default when omitted: true. */

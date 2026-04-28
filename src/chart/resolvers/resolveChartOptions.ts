@@ -41,7 +41,8 @@ const DEFAULT_ICON_COLOR = '#3388ff';
 const DEFAULT_ZERO_LINE_COLOR = '#ffffff';
 
 const DEFAULT_STRETCH: KeyTriggeredOption = { enable: true, trigger: 'rightClick' };
-const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'shift' };
+const DEFAULT_PAN: KeyTriggeredOption = { enable: true, trigger: 'leftClick' };
+const DEFAULT_ZOOM: KeyTriggeredOption = { enable: true, trigger: 'shift' };
 const DEFAULT_RESAMPLING: ChartResamplingOption = {
   enable: false,
   precision: CHART_RESAMPLING_PRECISION_OFF,
@@ -64,11 +65,12 @@ export type ResolvedChartFeaturesOptions = Omit<ChartFeaturesOptions, 'legend' |
 export interface ResolvedChartOptions
   extends Omit<
     ChartOptions,
-    'features' | 'stretch' | 'pan' | 'resampling' | 'clipZoomToData' | 'events'
+    'features' | 'stretch' | 'pan' | 'zoom' | 'resampling' | 'clipZoomToData' | 'events'
   > {
   features: ResolvedChartFeaturesOptions;
   stretch: KeyTriggeredOption;
   pan: KeyTriggeredOption;
+  zoom: KeyTriggeredOption;
   resampling: ChartResamplingOption;
   clipZoomToData: boolean;
   events?: ResolvedChartOptionsEvents;
@@ -266,6 +268,10 @@ export const resolveChartOptions = (options?: ChartOptions): ResolvedChartOption
       enable: chartOptions.pan?.enable ?? DEFAULT_PAN.enable,
       trigger: chartOptions.pan?.trigger ?? DEFAULT_PAN.trigger,
     },
+    zoom: {
+      enable: chartOptions.zoom?.enable ?? DEFAULT_ZOOM.enable,
+      trigger: chartOptions.zoom?.trigger ?? DEFAULT_ZOOM.trigger,
+    },
     resampling:
       chartOptions.resampling != null
         ? {
@@ -294,6 +300,7 @@ export const resolveChartImplementationOptions = ({
 }: ResolveChartImplementationOptionsParams): ChartImplementationOptionsWithHandlers => {
   const stretch: ChartImplementationOptions['stretch'] = options.stretch;
   const pan: ChartImplementationOptions['pan'] = options.pan;
+  const zoom: ChartImplementationOptions['zoom'] = options.zoom;
   const resampling: ChartImplementationOptions['resampling'] = options.resampling;
   const seriesGroupKeys = options.seriesGroupKeys ?? data.map((series) => series.lineGroupKey);
 
@@ -303,6 +310,7 @@ export const resolveChartImplementationOptions = ({
     note: options.note,
     stretch,
     pan,
+    zoom,
     resampling,
     clipZoomToData: options.clipZoomToData,
     seriesVisibility,
@@ -345,6 +353,7 @@ export const resolveChartDefinition = ({
           ? { enable: true, trigger: options.stretch.trigger }
           : { enable: false },
         pan: options.pan.enable ? { enable: true, trigger: options.pan.trigger } : { enable: false },
+        zoom: options.zoom.enable ? { enable: true, trigger: options.zoom.trigger } : { enable: false },
         rollover,
       },
       resampling: options.resampling,

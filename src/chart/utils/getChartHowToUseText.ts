@@ -12,6 +12,17 @@ const TRIGGER_LABEL: Record<TriggerKey, string> = {
 const isKeyTrigger = (trigger: TriggerKey): boolean =>
   trigger === 'shift' || trigger === 'ctrl' || trigger === 'alt';
 
+const getDragInstruction = (trigger: TriggerKey, action: string): string => {
+  if (trigger === 'leftClick') {
+    return `Drag to ${action}`;
+  }
+
+  const label = TRIGGER_LABEL[trigger];
+  return isKeyTrigger(trigger)
+    ? `Hold ${label}+drag to ${action}`
+    : `${label}+drag to ${action}`;
+};
+
 export interface GetChartHowToUseTextParams {
   definition: ResolvedChartDefinition;
   chartOnly: boolean;
@@ -33,8 +44,12 @@ export const getChartHowToUseText = ({
 
   const pan = definition.options.features.pan;
   if (pan.enable) {
-    const label = TRIGGER_LABEL[pan.trigger];
-    parts.push(`${label}+drag to pan`);
+    parts.push(getDragInstruction(pan.trigger, 'pan'));
+  }
+
+  const zoom = definition.options.features.zoom;
+  if (zoom.enable) {
+    parts.push(getDragInstruction(zoom.trigger, 'box zoom'));
   }
 
   if (!chartOnly) {

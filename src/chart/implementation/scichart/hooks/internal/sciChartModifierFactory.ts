@@ -29,6 +29,7 @@ export const createSciChartModifiers = ({
 >[] => {
   const stretchConfig = interactionOptions.features.stretch;
   const panConfig = interactionOptions.features.pan;
+  const zoomConfig = interactionOptions.features.zoom;
   const rolloverConfig = interactionOptions.features.rollover;
 
   const modifiers: InstanceType<typeof import('scichart').ChartModifierBase2D>[] = [
@@ -44,9 +45,6 @@ export const createSciChartModifiers = ({
           }
         : undefined,
     }),
-    new RubberBandXyZoomModifier({
-      executeCondition: toModifierExecuteCondition('leftClick'),
-    }),
   ];
 
   if (stretchConfig.enable) {
@@ -54,6 +52,14 @@ export const createSciChartModifiers = ({
       new AxisStretchModifier({
         executeCondition: toModifierExecuteCondition(stretchConfig.trigger),
         sensitivity: SCI_CHART_STRETCH_SENSITIVITY,
+      })
+    );
+  }
+
+  if (zoomConfig.enable) {
+    modifiers.push(
+      new RubberBandXyZoomModifier({
+        executeCondition: toModifierExecuteCondition(zoomConfig.trigger),
       })
     );
   }
